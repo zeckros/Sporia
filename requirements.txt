@@ -1,0 +1,26 @@
+# Pipeline de données (collect_day.py / interpret_day.py / soil_dynamic.py)
+schedule
+xarray
+rioxarray
+rasterio
+geopandas>=1.1.2
+pandas
+numpy
+scipy
+h5py
+requests>=2.33.0
+urllib3>=2.7.0
+idna>=3.15
+matplotlib
+Pillow>=12.2.0
+
+# Modèle SDM probabiliste (optionnel — scripts/train_sdm.py)
+scikit-learn
+
+# Application web (server.py + champi_core.py + web/)
+fastapi
+uvicorn[standard]
+itsdangerous
+bcrypt
+PyYAML
+python-dotenv>=1.2.2

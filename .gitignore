@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.env
+
+# Auth / secrets (identifiants, ne jamais committer)
+config.yaml
+.streamlit/secrets.toml
+
+# État utilisateur runtime (créé par l'app, propre à chaque déploiement)
+data/user_prefs.json
+data/user_spots.json
+
+# Data caches & artefacts générés (régénérés par le pipeline / l'app)
+data/cache/
+cache/
+data/daily/
+data/arome_wcs/
+data/radar_h5/
+data/state_fetch.json
+output/
+web/overlays/

@@ -1,0 +1,20 @@
+[Unit]
+Description=ChampiMap web app (FastAPI / uvicorn)
+After=network.target
+
+[Service]
+Type=simple
+User=app
+WorkingDirectory=/home/app/champi_pipeline_package
+# PROD=1 : cookie de session HTTPS-only + /docs masqué. Le secret de session est lu
+# depuis config.yaml (cookie.key forte) ou la variable d'env SESSION_SECRET.
+Environment=PROD=1
+# Écoute uniquement en local : seul nginx (reverse proxy TLS) expose le service.
+ExecStart=/home/app/champi_pipeline_package/venv/bin/uvicorn server:app --host 127.0.0.1 --port 8000
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

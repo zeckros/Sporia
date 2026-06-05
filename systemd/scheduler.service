@@ -1,0 +1,19 @@
+[Unit]
+Description=Champi Pipeline Scheduler
+After=network.target
+StartLimitIntervalSec=600
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=app
+WorkingDirectory=/home/app/champi_pipeline_package
+Environment="PATH=/home/app/champi_pipeline_package/venv/bin"
+ExecStart=/home/app/champi_pipeline_package/venv/bin/python scheduler.py
+Restart=on-failure
+RestartSec=30
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
