@@ -54,6 +54,7 @@ const state = {
   map: null, layers: {}, lastPoint: null, name: null,
   species: null, allSpecies: [], godmode: false, activeLayer: "radar", legendData: {},
   spots: [], spotLayer: null, lastSpot: null,
+  radarSpecies: null,   // sous-ensemble actif sur le calque radar (null = toute la pré-sélection)
   tab: "carte",
   // replié par défaut sur petit écran (téléphone) pour laisser la carte en plein
   sidebarCollapsed: !!(window.matchMedia && window.matchMedia("(max-width: 767px)").matches),
@@ -64,6 +65,7 @@ async function boot() {
   // Navigation accueil <-> connexion
   document.querySelectorAll(".open-login").forEach((b) => b.addEventListener("click", showLoginPage));
   document.querySelectorAll(".back-landing").forEach((b) => b.addEventListener("click", showLanding));
+  setupLandingNav();
   try {
     const me = await API.get("/api/me");
     if (me.authenticated) { state.name = me.name; startApp(); return; }
@@ -76,6 +78,32 @@ function showLanding() {
   document.getElementById("login-screen").classList.add("hidden");
   document.getElementById("app-screen").classList.add("hidden");
 }
+
+// Surligne le point de navigation de la section visible (slider de l'accueil).
+function setupLandingNav() {
+  const root = document.getElementById("landing-screen");
+  const dots = Array.from(document.querySelectorAll("[data-dot]"));
+  if (!root || !dots.length || !("IntersectionObserver" in window)) return;
+  const setActive = (id) => dots.forEach((d) => {
+    const on = d.dataset.dot === id;
+    d.classList.toggle("bg-brand-500", on);
+    d.classList.toggle("scale-150", on);
+    d.classList.toggle("bg-slate-300/80", !on);
+  });
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((e) => { if (e.isIntersecting) setActive(e.target.id); });
+  }, { root, threshold: 0.5 });
+  ["hero", "apercu", "contact"].forEach((id) => {
+    const el = document.getElementById(id); if (el) io.observe(el);
+  });
+  setActive("hero");
+}
+
+// Modale CGU (pied de page de l'accueil)
+document.querySelectorAll(".open-cgu").forEach((b) =>
+  b.addEventListener("click", () => document.getElementById("cgu-modal").classList.remove("hidden")));
+document.querySelectorAll(".cgu-close").forEach((b) =>
+  b.addEventListener("click", () => document.getElementById("cgu-modal").classList.add("hidden")));
 
 function showLoginPage() {
   document.getElementById("landing-screen").classList.add("hidden");
@@ -104,6 +132,32 @@ document.getElementById("login-form").addEventListener("submit", async (ev) => {
 document.getElementById("logout-btn").addEventListener("click", async () => {
   try { await API.post("/api/logout"); } catch (e) {}
   location.reload();
+});
+
+// Demande d'accès (landing, public) → POST /api/access-request
+document.getElementById("access-form").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const msg = document.getElementById("access-msg");
+  const btn = ev.target.querySelector("button[type=submit]");
+  const show = (text, ok) => {
+    msg.textContent = text;
+    msg.className = "text-sm font-semibold " + (ok ? "text-green-600" : "text-red-600");
+  };
+  btn.disabled = true;
+  try {
+    await API.post("/api/access-request", {
+      name: document.getElementById("ac-name").value.trim(),
+      email: document.getElementById("ac-email").value.trim(),
+      message: document.getElementById("ac-message").value.trim(),
+      hp: document.getElementById("ac-hp").value,
+    });
+    ev.target.reset();
+    show("Merci ! Votre demande a bien été envoyée — on vous recontacte vite.", true);
+  } catch (e) {
+    show(e.message || "Échec de l'envoi. Réessayez.", false);
+  } finally {
+    btn.disabled = false;
+  }
 });
 
 /* ---------- App ---------- */
@@ -186,12 +240,25 @@ async function refreshWeatherLayer(varName) {
   } catch (e) { console.warn("weather", e); }
 }
 
+// Espèces réellement affichées sur le radar = sous-ensemble coché (state.radarSpecies)
+// de la pré-sélection « Mes champignons » (state.species). null = toutes.
+function radarActiveSpecies() {
+  return (state.radarSpecies || state.species || []);
+}
+
 // Radar à champignons : carte agrégée OÙ (habitat, arbre-hôte) × QUAND (météo du jour),
-// sur les espèces de « Mes champignons ». Calque par défaut.
+// sur les espèces cochées du calque (parmi « Mes champignons »). Calque par défaut.
 async function refreshRadar() {
+  const active = radarActiveSpecies();
+  // Aucune espèce cochée (alors qu'une pré-sélection existe) → on retire le calque radar.
+  if (state.species && state.species.length && !active.length) {
+    if (state.layers.radar) { state.map.removeLayer(state.layers.radar); state.layers.radar = null; }
+    state.legendData.radar = { species: [] };
+    if (state.activeLayer === "radar") updateLegend();
+    return;
+  }
   try {
-    const sp = (state.species && state.species.length)
-      ? "?species=" + state.species.map(encodeURIComponent).join(",") : "";
+    const sp = active.length ? "?species=" + active.map(encodeURIComponent).join(",") : "";
     const res = await API.get(`/api/radar${sp}`);
     _setOverlay("radar", res, 1);
     state.legendData.radar = { species: res.species || [] };
@@ -245,14 +312,45 @@ function _swatch(label, color) {
   return `<div class="flex items-center gap-2"><span class="inline-block w-3.5 h-3.5 rounded-sm border border-slate-300" style="background:${color}"></span><span>${label}</span></div>`;
 }
 
+// Cases à cocher (calque radar) : les espèces de la pré-sélection « Mes champignons »,
+// cochées si actuellement actives. Permet de filtrer l'affichage sans toucher aux prefs.
+function radarChecksHtml() {
+  const sel = state.species || [];
+  if (!sel.length) return "";
+  const meta = {}; (state.allSpecies || []).forEach((s) => { meta[s.latin] = s; });
+  const active = new Set(radarActiveSpecies());
+  const rows = sel.map((latin) => {
+    const m = meta[latin] || { nom: latin, color: "#999" };
+    return `<label class="flex items-center gap-1.5 text-xs cursor-pointer py-px">
+      <input type="checkbox" class="radar-check accent-brand-500 w-3.5 h-3.5" value="${latin}" ${active.has(latin) ? "checked" : ""}>
+      <span class="inline-block w-2.5 h-2.5 rounded-full shrink-0" style="background:${m.color}"></span>
+      <span class="truncate">${m.nom}</span></label>`;
+  }).join("");
+  return `<div class="mb-2 pb-2 border-b border-slate-100">
+    <div class="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-1">Afficher (parmi mes champignons)</div>
+    <div class="grid grid-cols-1 gap-0.5 max-h-40 overflow-y-auto pr-1">${rows}</div></div>`;
+}
+
+// (Re)branche les cases du calque radar après chaque rendu de légende.
+function wireRadarChecks() {
+  const boxes = document.querySelectorAll(".radar-check");
+  if (!boxes.length) return;
+  boxes.forEach((c) => c.addEventListener("change", () => {
+    const checked = Array.from(document.querySelectorAll(".radar-check:checked")).map((x) => x.value);
+    // tout coché → null (toute la pré-sélection) ; sinon le sous-ensemble (éventuellement vide)
+    state.radarSpecies = (checked.length === (state.species || []).length) ? null : checked;
+    refreshRadar();   // re-fetch + updateLegend (re-render + re-wire des cases)
+  }));
+}
+
 function legendFor(key) {
   const d = state.legendData || {};
   if (key === "radar") {
     const sp = (d.radar && d.radar.species && d.radar.species.length)
-      ? d.radar.species.join(", ") : "aucune espèce modélisée sélectionnée";
-    return `<div class="font-semibold text-slate-600 mb-1">Radar à champignons</div>${_grad(CMAP.fav)}
+      ? d.radar.species.join(", ") : "aucune espèce cochée";
+    return `${radarChecksHtml()}<div class="font-semibold text-slate-600 mb-1">Radar à champignons</div>${_grad(CMAP.fav)}
       <div>Vert soutenu = bon coin <strong>et</strong> conditions favorables en ce moment. Pour : <strong>${sp}</strong>.</div>
-      <div class="text-[10px] text-slate-400 mt-1.5">Habitat (essence/sol/relief/climat) × pousse du jour (météo des ~21 j). Réglable via « Mes champignons ».</div>`;
+      <div class="text-[10px] text-slate-400 mt-1.5">Habitat (essence/sol/relief/climat) × pousse du jour (météo des ~21 j). Préréglage via « Mes champignons ».</div>`;
   }
   if (key === "temp" || key === "precip") {
     const w = d[key]; if (!w) return "";
@@ -300,6 +398,7 @@ function updateLegend() {
     document.getElementById("active-legend").innerHTML = html;
     top.classList.toggle("hidden", !html);
   }
+  if (state.activeLayer === "radar") wireRadarChecks();
 }
 
 /* ---------- Calques exclusifs (un seul affiché à la fois) ---------- */
@@ -460,6 +559,7 @@ async function saveSpecies() {
   try {
     await API.post("/api/preferences", { species: chosen });
     state.species = chosen;
+    state.radarSpecies = null;                            // la pré-sélection a changé → toutes les cases recochées
     closeSpeciesModal();
     await refreshRadar();                                 // re-render le radar (dépend de la sélection)
     if (state.activeLayer === "radar" && state.layers.radar) state.layers.radar.addTo(state.map);

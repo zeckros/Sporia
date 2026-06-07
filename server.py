@@ -26,6 +26,7 @@ from pydantic import BaseModel
 import champi_core as core
 import user_prefs
 import user_spots
+import access_requests
 
 # Métadonnées (nom FR, couleur) par latin, pour habiller les listes d'espèces.
 _SPECIES_META = {m["latin"]: m for m in core.MUSHROOMS}
@@ -109,6 +110,7 @@ async def security_headers(request: Request, call_next):
 
 # ===== Validation des entrées (anti path-traversal sur les noms de fichiers rasters) =====
 _DATE_RE = re.compile(r"^\d{8}$")
+_EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
 def _valid_date(d: str) -> str:
@@ -378,6 +380,39 @@ def api_delete_spot(spot_id: str, user=Depends(require_user)):
     if not user_spots.delete_spot(user["username"], spot_id):
         raise HTTPException(status_code=404, detail="Spot introuvable.")
     return {"ok": True}
+
+
+# ===== Demande d'accès / contact (site sur invitation) =====
+class AccessRequestIn(BaseModel):
+    name: str
+    email: str
+    message: str
+    hp: str | None = None          # honeypot anti-bot (doit rester vide)
+
+
+@app.post("/api/access-request")
+def api_access_request(body: AccessRequestIn):
+    """Demande d'accès publique (non authentifiée). Honeypot + validation + cap.
+    Rate-limitée par nginx (zone /api/)."""
+    if (body.hp or "").strip():                    # bot : on fait comme si OK, sans rien stocker
+        return {"ok": True}
+    name = (body.name or "").strip()
+    email = (body.email or "").strip()
+    message = (body.message or "").strip()
+    if not name or len(name) > 80:
+        raise HTTPException(status_code=400, detail="Nom invalide.")
+    if not _EMAIL_RE.match(email) or len(email) > 120:
+        raise HTTPException(status_code=400, detail="Email invalide.")
+    if not message or len(message) > 2000:
+        raise HTTPException(status_code=400, detail="Message invalide (1–2000 caractères).")
+    access_requests.add_request(name, email, message)
+    return {"ok": True}
+
+
+@app.get("/api/access-requests")
+def api_list_access_requests(user=Depends(require_user)):
+    """Liste des demandes d'accès (réservé aux comptes connectés / admin)."""
+    return {"requests": access_requests.list_requests()}
 
 
 # ===== Statique =====

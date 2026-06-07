@@ -11,6 +11,7 @@ config.yaml
 # État utilisateur runtime (créé par l'app, propre à chaque déploiement)
 data/user_prefs.json
 data/user_spots.json
+data/access_requests.json
 
 # Data caches & artefacts générés (régénérés par le pipeline / l'app)
 data/cache/

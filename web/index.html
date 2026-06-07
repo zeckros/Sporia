@@ -75,58 +75,74 @@
 <body class="h-full">
 
   <!-- ============ LANDING (accueil) ============ -->
-  <div id="landing-screen" class="hidden fixed inset-0 z-40 overflow-auto">
-    <div class="absolute inset-0 -z-10"
+  <div id="landing-screen" class="hidden fixed inset-0 z-40 overflow-y-auto snap-y snap-mandatory scroll-smooth">
+    <!-- Fond fixe (reste en place pendant le défilement) -->
+    <div class="fixed inset-0 -z-10"
          style="background:
            radial-gradient(1100px 540px at 12% -10%, #fbe7cf 0%, transparent 60%),
            radial-gradient(950px 560px at 95% 10%, #e7efce 0%, transparent 55%),
            linear-gradient(180deg,#fffdf9,#f6f3ec)"></div>
 
-    <!-- Barre supérieure -->
-    <div class="max-w-6xl mx-auto px-6 pt-6 flex items-center justify-between">
-      <div class="font-black text-brand-600 text-lg">Sporia</div>
-      <button class="open-login px-4 py-2 rounded-xl bg-white border border-slate-200 shadow-soft text-slate-700 font-semibold hover:bg-slate-50 transition">Se connecter</button>
-    </div>
-
-    <div class="max-w-6xl mx-auto px-6 min-h-[calc(100vh-76px)] grid lg:grid-cols-2 gap-10 items-center py-10">
-      <!-- Colonne gauche : accroche + appel à l'action -->
-      <div class="max-w-xl">
-        <span class="inline-block px-4 py-1.5 rounded-full bg-white border border-slate-200 shadow-soft text-brand-500 font-extrabold text-sm">Sporia</span>
-        <h1 class="mt-5 text-4xl sm:text-5xl font-black tracking-tight leading-[1.04]
-                   bg-gradient-to-br from-slate-900 to-brand-600 bg-clip-text text-transparent">
-          Trouvez les champignons<br>avant tout le monde.
-        </h1>
-        <p class="mt-4 text-slate-500 text-lg leading-relaxed">
-          Sporia croise la <strong class="text-slate-700">météo récente</strong>, les
-          <strong class="text-slate-700">forêts de France</strong> (BD&nbsp;Forêt® IGN) et les
-          <strong class="text-slate-700">essences d'arbres</strong> pour révéler, en un clic,
-          les coins où ça pousse — et quoi y ramasser.
-        </p>
-
-        <ul class="mt-6 space-y-2.5">
-          <li class="flex items-start gap-2.5">
-            <svg class="w-5 h-5 text-brand-500 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.6 13.4l-3-3 1.4-1.4 1.6 1.6 4.2-4.2 1.4 1.4-5.6 5.6z"/></svg>
-            <span class="text-slate-600"><strong>Carte de probabilité</strong> — densité forestière × pluie &amp; température récentes.</span>
-          </li>
-          <li class="flex items-start gap-2.5">
-            <svg class="w-5 h-5 text-brand-500 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.6 13.4l-3-3 1.4-1.4 1.6 1.6 4.2-4.2 1.4 1.4-5.6 5.6z"/></svg>
-            <span class="text-slate-600"><strong>Essence détectée au clic</strong> — pour savoir quelles espèces chercher sous quel arbre.</span>
-          </li>
-          <li class="flex items-start gap-2.5">
-            <svg class="w-5 h-5 text-brand-500 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.6 13.4l-3-3 1.4-1.4 1.6 1.6 4.2-4.2 1.4 1.4-5.6 5.6z"/></svg>
-            <span class="text-slate-600"><strong>Guide de cueillette</strong> — saison, température et délai après pluie, par espèce.</span>
-          </li>
-        </ul>
-
-        <div class="mt-8">
-          <button class="open-login px-7 py-3 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold shadow-card transition">
-            Se connecter
-          </button>
+    <!-- Barre supérieure (sticky) -->
+    <header class="sticky top-0 z-30 backdrop-blur-md bg-white/70 border-b border-white/50">
+      <div class="max-w-6xl mx-auto px-5 sm:px-6 h-14 flex items-center justify-between">
+        <div class="flex items-center gap-2 font-black text-brand-600 text-lg select-none">
+          <svg class="mush-logo w-7 h-7" viewBox="0 0 32 32" role="img" aria-label="champignon">
+            <rect x="13" y="16" width="6" height="12" rx="3" fill="#f3e6cf"/>
+            <path d="M4 17 Q16 3 28 17 Q22 21.5 16 21.5 Q10 21.5 4 17 Z" fill="#c2620e"/>
+            <circle cx="12" cy="12" r="1.6" fill="#fff7ed"/><circle cx="19.5" cy="10.5" r="2" fill="#fff7ed"/>
+          </svg>
+          Sporia
         </div>
+        <button class="open-login px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-semibold shadow-soft transition text-sm">Se connecter</button>
       </div>
+    </header>
 
-      <!-- Colonne droite : scène SVG animée (champignons sous la pluie) -->
-      <div class="hidden lg:flex justify-center items-center">
+    <!-- Points de navigation (verticaux, écrans moyens+) -->
+    <nav class="hidden sm:flex fixed right-5 top-1/2 -translate-y-1/2 z-30 flex-col gap-3">
+      <a href="#hero"    data-dot="hero"    class="w-2.5 h-2.5 rounded-full bg-slate-300/80 hover:bg-brand-500 transition-all duration-300" aria-label="Accueil"></a>
+      <a href="#apercu"  data-dot="apercu"  class="w-2.5 h-2.5 rounded-full bg-slate-300/80 hover:bg-brand-500 transition-all duration-300" aria-label="Aperçu"></a>
+      <a href="#contact" data-dot="contact" class="w-2.5 h-2.5 rounded-full bg-slate-300/80 hover:bg-brand-500 transition-all duration-300" aria-label="Demander un accès"></a>
+    </nav>
+
+    <!-- ===== Section 1 : HERO ===== -->
+    <section id="hero" class="relative snap-start min-h-[100dvh] flex items-center">
+      <div class="max-w-6xl mx-auto w-full px-5 sm:px-6 grid lg:grid-cols-2 gap-10 items-center py-16 sm:py-20">
+        <!-- Colonne gauche : accroche + appel à l'action -->
+        <div class="max-w-xl">
+          <span class="inline-block px-4 py-1.5 rounded-full bg-white border border-slate-200 shadow-soft text-brand-500 font-extrabold text-sm">Radar à champignons</span>
+          <h1 class="mt-5 text-4xl sm:text-5xl font-black tracking-tight leading-[1.04]
+                     bg-gradient-to-br from-slate-900 to-brand-600 bg-clip-text text-transparent">
+            Trouvez les champignons<br>avant tout le monde.
+          </h1>
+          <p class="mt-4 text-slate-500 text-base sm:text-lg leading-relaxed">
+            Sporia croise la <strong class="text-slate-700">météo des 3 dernières semaines</strong>, les
+            <strong class="text-slate-700">forêts de France</strong> (BD&nbsp;Forêt® IGN), les
+            <strong class="text-slate-700">essences</strong>, le <strong class="text-slate-700">sol</strong> et le
+            <strong class="text-slate-700">relief</strong> pour révéler, en un clic, où ça pousse aujourd'hui.
+          </p>
+
+          <ul class="mt-6 space-y-2.5">
+            <li class="flex items-start gap-2.5"><svg class="w-5 h-5 text-brand-500 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.6 13.4l-3-3 1.4-1.4 1.6 1.6 4.2-4.2 1.4 1.4-5.6 5.6z"/></svg><span class="text-slate-600"><strong>Radar du jour</strong> — habitat × pousse du moment, réglable par espèce.</span></li>
+            <li class="flex items-start gap-2.5"><svg class="w-5 h-5 text-brand-500 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.6 13.4l-3-3 1.4-1.4 1.6 1.6 4.2-4.2 1.4 1.4-5.6 5.6z"/></svg><span class="text-slate-600"><strong>Mes spots &amp; alertes</strong> — enregistrez vos coins, soyez prévenu quand l'un devient propice.</span></li>
+            <li class="flex items-start gap-2.5"><svg class="w-5 h-5 text-brand-500 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.6 13.4l-3-3 1.4-1.4 1.6 1.6 4.2-4.2 1.4 1.4-5.6 5.6z"/></svg><span class="text-slate-600"><strong>Fiche au clic</strong> — essence détectée, conditions du moment et guide par espèce.</span></li>
+          </ul>
+
+          <div class="mt-8 flex flex-wrap gap-3">
+            <button class="open-login px-7 py-3 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold shadow-card transition">Se connecter</button>
+            <a href="#contact" class="px-7 py-3 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold shadow-soft hover:bg-slate-50 transition">Demander un accès</a>
+          </div>
+
+          <!-- Bandeau de confiance -->
+          <div class="mt-7 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-semibold text-slate-400">
+            <span class="flex items-center gap-1.5"><span class="text-brand-500 text-[8px]">●</span> France entière</span>
+            <span class="flex items-center gap-1.5"><span class="text-brand-500 text-[8px]">●</span> 13 espèces modélisées</span>
+            <span class="flex items-center gap-1.5"><span class="text-brand-500 text-[8px]">●</span> Données IGN &amp; Météo-France</span>
+          </div>
+        </div>
+
+        <!-- Colonne droite : scène SVG animée (champignons sous la pluie) -->
+        <div class="hidden lg:flex justify-center items-center">
         <svg viewBox="0 0 440 440" class="w-full max-w-md drop-shadow-xl" role="img" aria-label="Illustration : champignons sous la pluie">
           <defs>
             <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
@@ -215,15 +231,213 @@
           <ellipse class="ripple" style="animation-delay:.1s" cx="200" cy="384" rx="13" ry="3.6" fill="none" stroke="#d8c7a8" stroke-width="2"/>
           <ellipse class="ripple" style="animation-delay:.7s" cx="250" cy="388" rx="13" ry="3.6" fill="none" stroke="#d8c7a8" stroke-width="2"/>
         </svg>
+        </div><!-- /colonne SVG -->
+      </div><!-- /grid hero -->
+
+      <!-- Indicateur « faites défiler » -->
+      <a href="#apercu" class="absolute left-1/2 -translate-x-1/2 bottom-6 flex flex-col items-center gap-1 text-slate-400 hover:text-brand-600 transition" aria-label="Faire défiler">
+        <span class="text-[11px] font-bold uppercase tracking-wider">Faites défiler</span>
+        <svg class="w-5 h-5 animate-bounce" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l5 5 5-5"/></svg>
+      </a>
+    </section>
+
+    <!-- ===== Section 2 : APERÇU (carte / guide) ===== -->
+    <section id="apercu" class="snap-start min-h-[100dvh] flex items-center">
+      <div class="max-w-6xl mx-auto w-full px-5 sm:px-6 py-16 sm:py-20 grid lg:grid-cols-2 gap-10 items-center">
+        <div class="max-w-xl order-2 lg:order-1">
+          <h2 class="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">Une carte qui raisonne comme un mycologue.</h2>
+          <p class="mt-4 text-slate-500 text-base sm:text-lg leading-relaxed">
+            Le <strong class="text-slate-700">radar</strong> agrège, pour vos espèces, le bon habitat
+            <em>et</em> les bonnes conditions du moment. Cliquez n'importe où : essence forestière,
+            pluie sur 7 et 15 jours, température, humidité du sol — tout est lu sur place.
+          </p>
+          <ul class="mt-6 space-y-2.5 text-slate-600">
+            <li class="flex items-start gap-2.5"><svg class="w-5 h-5 text-brand-500 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.6 13.4l-3-3 1.4-1.4 1.6 1.6 4.2-4.2 1.4 1.4-5.6 5.6z"/></svg><span>Calques pluie, température, sol, relief &amp; densité forestière.</span></li>
+            <li class="flex items-start gap-2.5"><svg class="w-5 h-5 text-brand-500 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.6 13.4l-3-3 1.4-1.4 1.6 1.6 4.2-4.2 1.4 1.4-5.6 5.6z"/></svg><span>Conditions colorées <span class="text-green-600 font-semibold">favorables</span> / <span class="text-amber-600 font-semibold">limitantes</span>, par espèce.</span></li>
+            <li class="flex items-start gap-2.5"><svg class="w-5 h-5 text-brand-500 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.6 13.4l-3-3 1.4-1.4 1.6 1.6 4.2-4.2 1.4 1.4-5.6 5.6z"/></svg><span>Recherche par commune et géolocalisation sur mobile.</span></li>
+          </ul>
+          <div class="mt-8"><button class="open-login px-7 py-3 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold shadow-card transition">Explorer la carte</button></div>
+        </div>
+
+        <!-- Cadre « navigateur » + capture (placeholder — déposer web/preview.png et remplacer par <img src="/static/preview.png">) -->
+        <div class="order-1 lg:order-2 rounded-2xl bg-white shadow-lg2 border border-slate-200 overflow-hidden">
+          <div class="flex items-center gap-1.5 px-4 h-9 bg-slate-100 border-b border-slate-200">
+            <span class="w-3 h-3 rounded-full bg-red-400"></span>
+            <span class="w-3 h-3 rounded-full bg-amber-400"></span>
+            <span class="w-3 h-3 rounded-full bg-green-400"></span>
+            <span class="ml-3 text-[11px] text-slate-400 font-medium truncate">sporia.duckdns.org</span>
+          </div>
+          <!-- Visualisation stylisée du calque « Radar à champignons » (mock — remplaçable par <img src="/static/preview.png"> si tu déposes une vraie capture) -->
+          <svg class="block w-full aspect-[16/10]" viewBox="0 0 640 400" role="img" aria-label="Aperçu du radar à champignons sur la carte">
+            <defs>
+              <radialGradient id="hot" cx="50%" cy="50%" r="50%">
+                <stop offset="0" stop-color="#004529" stop-opacity=".85"/>
+                <stop offset="35%" stop-color="#238443" stop-opacity=".65"/>
+                <stop offset="70%" stop-color="#78c679" stop-opacity=".4"/>
+                <stop offset="100%" stop-color="#d9f0a3" stop-opacity="0"/>
+              </radialGradient>
+              <radialGradient id="hot2" cx="50%" cy="50%" r="50%">
+                <stop offset="0" stop-color="#238443" stop-opacity=".6"/>
+                <stop offset="60%" stop-color="#addd8e" stop-opacity=".35"/>
+                <stop offset="100%" stop-color="#ffffe5" stop-opacity="0"/>
+              </radialGradient>
+              <linearGradient id="favbar" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="#ffffe5"/><stop offset=".25" stop-color="#d9f0a3"/>
+                <stop offset=".5" stop-color="#78c679"/><stop offset=".75" stop-color="#238443"/>
+                <stop offset="1" stop-color="#004529"/>
+              </linearGradient>
+            </defs>
+
+            <!-- Fond de carte -->
+            <rect width="640" height="400" fill="#eef3e6"/>
+            <g stroke="#dfe7d3" stroke-width="1">
+              <path d="M0 80H640M0 160H640M0 240H640M0 320H640"/>
+              <path d="M107 0V400M214 0V400M320 0V400M427 0V400M534 0V400"/>
+            </g>
+            <!-- Eau -->
+            <path d="M-10 308 C120 268 180 358 320 306 S520 256 660 306 L660 420 L-10 420 Z" fill="#cfe3ef" opacity=".75"/>
+            <ellipse cx="118" cy="118" rx="44" ry="24" fill="#cfe3ef" opacity=".75"/>
+            <!-- Massifs forestiers -->
+            <g fill="#cde0a0" opacity=".9">
+              <path d="M70 56 q60 -20 110 10 q30 50 -10 90 q-70 20 -110 -20 q-20 -50 10 -80z"/>
+              <path d="M360 36 q80 -10 120 40 q10 60 -50 80 q-80 0 -90 -60 q-5 -40 20 -60z"/>
+              <path d="M428 226 q70 -10 90 40 q0 50 -60 60 q-60 -5 -55 -55 q0 -30 25 -45z"/>
+              <path d="M150 248 q60 0 80 45 q-5 45 -65 50 q-55 0 -55 -50 q5 -35 40 -45z"/>
+            </g>
+            <!-- Routes -->
+            <g stroke="#e7c98f" stroke-width="2.5" fill="none" opacity=".8" stroke-linecap="round">
+              <path d="M0 200 C150 170 220 250 360 210 S560 180 640 220"/>
+              <path d="M300 0 C320 120 260 220 300 400"/>
+            </g>
+
+            <!-- Calque radar : foyers de favorabilité -->
+            <circle cx="150" cy="120" r="80" fill="url(#hot)"/>
+            <circle cx="422" cy="92"  r="66" fill="url(#hot)"/>
+            <circle cx="478" cy="280" r="58" fill="url(#hot2)"/>
+            <circle cx="186" cy="288" r="52" fill="url(#hot2)"/>
+            <circle cx="300" cy="200" r="40" fill="url(#hot2)"/>
+            <circle class="ripple" style="transform-box:fill-box;transform-origin:center" cx="150" cy="120" r="26" fill="none" stroke="#238443" stroke-width="2.5"/>
+
+            <!-- Marqueurs (coins enregistrés) -->
+            <g transform="translate(150,120)">
+              <ellipse cx="0" cy="2" rx="6" ry="2.2" fill="#0f172a" opacity=".18"/>
+              <path d="M0 0 C-8 -12 -8 -22 0 -22 C8 -22 8 -12 0 0 Z" fill="#c2620e"/>
+              <circle cx="0" cy="-14" r="4.4" fill="#fff"/>
+            </g>
+            <g transform="translate(422,92)">
+              <ellipse cx="0" cy="2" rx="6" ry="2.2" fill="#0f172a" opacity=".18"/>
+              <path d="M0 0 C-8 -12 -8 -22 0 -22 C8 -22 8 -12 0 0 Z" fill="#c2620e"/>
+              <circle cx="0" cy="-14" r="4.4" fill="#fff"/>
+            </g>
+
+            <!-- Fiche au clic -->
+            <g transform="translate(220,150)" font-family="Inter,sans-serif">
+              <rect width="210" height="76" rx="13" fill="#fff" stroke="#e2e8f0"/>
+              <circle cx="22" cy="26" r="7.5" fill="#16a34a"/>
+              <text x="40" y="24" font-size="15" font-weight="800" fill="#0f172a">Très propice</text>
+              <text x="40" y="42" font-size="11.5" fill="#64748b">Cèpe de Bordeaux · Girolle</text>
+              <text x="22" y="62" font-size="10.5" fill="#94a3b8">Chênaie · pluie 28 mm / 7 j · 14 °C</text>
+            </g>
+
+            <!-- Contrôle de zoom (style Leaflet) -->
+            <g transform="translate(20,20)" font-family="Inter,sans-serif">
+              <rect width="30" height="58" rx="7" fill="#fff" stroke="#e2e8f0"/>
+              <line x1="6" y1="29" x2="24" y2="29" stroke="#e2e8f0"/>
+              <text x="15" y="23" text-anchor="middle" font-size="20" font-weight="700" fill="#475569">+</text>
+              <text x="15" y="50" text-anchor="middle" font-size="22" font-weight="700" fill="#475569">−</text>
+            </g>
+
+            <!-- Échelle -->
+            <g transform="translate(22,372)" font-family="Inter,sans-serif">
+              <path d="M0 8 V0 H70 V8" fill="none" stroke="#334155" stroke-width="1.5"/>
+              <text x="0" y="20" font-size="9" fill="#334155">20 km</text>
+            </g>
+
+            <!-- Légende -->
+            <g transform="translate(424,332)" font-family="Inter,sans-serif">
+              <rect width="196" height="50" rx="10" fill="#fff" stroke="#e2e8f0"/>
+              <text x="12" y="18" font-size="11" font-weight="800" fill="#475569">Radar à champignons</text>
+              <rect x="12" y="24" width="172" height="8" rx="4" fill="url(#favbar)"/>
+              <text x="12" y="44" font-size="8.5" fill="#94a3b8">peu probable</text>
+              <text x="184" y="44" text-anchor="end" font-size="8.5" fill="#94a3b8">très probable</text>
+            </g>
+          </svg>
+        </div>
       </div>
-    </div>
+    </section>
+
+    <!-- ===== Section 3 : DEMANDE D'ACCÈS / CONTACT ===== -->
+    <section id="contact" class="snap-start min-h-[100dvh] flex flex-col">
+      <div class="flex-1 flex items-center">
+      <div class="max-w-xl mx-auto w-full px-5 sm:px-6 py-14 sm:py-16">
+        <h2 class="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">Demander un accès</h2>
+        <p class="mt-3 text-slate-500 leading-relaxed">
+          Sporia est ouvert sur invitation. Laissez-nous un mot : on vous recontacte pour créer votre accès.
+        </p>
+
+        <form id="access-form" class="mt-6 bg-white rounded-2xl shadow-card border border-slate-200 p-5 sm:p-6 space-y-4">
+          <!-- Honeypot anti-bot : doit rester vide (masqué aux humains) -->
+          <input type="text" id="ac-hp" name="hp" tabindex="-1" autocomplete="off" class="hidden" aria-hidden="true" />
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 mb-1">Nom</label>
+            <input id="ac-name" type="text" maxlength="80" required
+                   class="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 mb-1">Email</label>
+            <input id="ac-email" type="email" maxlength="120" required
+                   class="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 mb-1">Message</label>
+            <textarea id="ac-message" rows="3" maxlength="2000" required
+                      class="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 outline-none resize-none"></textarea>
+          </div>
+          <button type="submit"
+                  class="w-full py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold shadow-card transition">
+            Envoyer la demande
+          </button>
+          <p id="access-msg" class="hidden text-sm font-semibold"></p>
+        </form>
+
+        <div class="mt-5 text-sm">
+          <button class="open-login text-slate-500 hover:text-brand-600 font-semibold transition">← J'ai déjà un compte</button>
+        </div>
+      </div>
+      </div><!-- /flex-1 -->
+
+      <!-- Pied de page -->
+      <footer class="shrink-0 border-t border-slate-200/70 bg-white/60 backdrop-blur">
+        <div class="max-w-6xl mx-auto px-5 sm:px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-slate-400">
+          <span class="flex items-center gap-2"><span class="font-black text-brand-600">Sporia</span> © 2026 — Trouvez les champignons avant tout le monde.</span>
+          <div class="flex items-center gap-4">
+            <button class="open-cgu hover:text-brand-600 transition font-semibold">CGU</button>
+            <span class="hidden sm:inline text-slate-300">Données : IGN · Météo-France · SoilGrids · GBIF</span>
+          </div>
+        </div>
+      </footer>
+    </section>
   </div>
 
   <!-- ============ PAGE DE CONNEXION ============ -->
-  <div id="login-screen" class="hidden fixed inset-0 z-50 overflow-auto">
-    <div class="min-h-screen grid md:grid-cols-2">
+  <div id="login-screen" class="hidden fixed inset-0 z-50 overflow-auto flex flex-col bg-white">
+    <!-- Navbar (cohérente avec l'accueil) -->
+    <header class="shrink-0 sticky top-0 z-30 backdrop-blur-md bg-white/85 border-b border-slate-200">
+      <div class="max-w-6xl mx-auto px-5 sm:px-6 h-14 flex items-center justify-between">
+        <button class="back-landing flex items-center gap-2 font-black text-brand-600 text-lg select-none">
+          <svg class="mush-logo w-7 h-7" viewBox="0 0 32 32" role="img" aria-label="champignon">
+            <rect x="13" y="16" width="6" height="12" rx="3" fill="#f3e6cf"/>
+            <path d="M4 17 Q16 3 28 17 Q22 21.5 16 21.5 Q10 21.5 4 17 Z" fill="#c2620e"/>
+            <circle cx="12" cy="12" r="1.6" fill="#fff7ed"/><circle cx="19.5" cy="10.5" r="2" fill="#fff7ed"/>
+          </svg>
+          Sporia
+        </button>
+        <button class="back-landing px-4 py-2 rounded-xl bg-white border border-slate-200 shadow-soft text-slate-700 font-semibold hover:bg-slate-50 transition text-sm">← Accueil</button>
+      </div>
+    </header>
+    <div class="flex-1 grid md:grid-cols-2 min-h-0">
       <!-- Panneau gauche : dégradé automnal (forêt + bruns chauds) + scène SVG -->
-      <div class="relative overflow-hidden text-white p-10 flex flex-col justify-between min-h-[34vh]"
+      <div class="relative overflow-hidden text-white p-10 hidden md:flex flex-col justify-between min-h-[34vh]"
            style="background:
              radial-gradient(640px 360px at 84% 4%, #d97706 0%, transparent 52%),
              radial-gradient(720px 540px at -5% 105%, #14532d 0%, transparent 58%),
@@ -337,7 +551,6 @@
                   class="mt-3 w-full py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold transition">
             Se connecter
           </button>
-          <button type="button" class="back-landing mt-4 text-sm text-slate-400 hover:text-slate-600 block">← Retour à l'accueil</button>
         </form>
       </div>
     </div>
@@ -516,6 +729,62 @@
     </div>
   </div>
 
-  <script src="/static/app.js?v=21"></script>
+  <!-- ============ MODALE CGU ============ -->
+  <div id="cgu-modal" class="hidden fixed inset-0 z-[3000] flex items-center justify-center p-4">
+    <div class="cgu-close absolute inset-0 bg-slate-900/50"></div>
+    <div class="relative bg-white rounded-2xl shadow-lg2 w-full max-w-2xl max-h-[85vh] flex flex-col">
+      <div class="flex items-start justify-between p-5 border-b border-slate-100">
+        <div>
+          <div class="font-black text-lg text-slate-800">Conditions générales d'utilisation</div>
+          <div class="text-xs text-slate-400">Dernière mise à jour : juin 2026 — version simplifiée</div>
+        </div>
+        <button class="cgu-close text-slate-400 hover:text-slate-700 text-2xl leading-none -mt-1">×</button>
+      </div>
+      <div class="flex-1 overflow-y-auto nice-scroll p-6 text-sm text-slate-600 leading-relaxed space-y-4">
+        <div>
+          <div class="font-bold text-slate-800 mb-1">1. Objet</div>
+          Sporia est un service d'aide à la prospection de champignons. Il croise des données
+          météorologiques, forestières, pédologiques et d'occurrences d'espèces pour estimer, à titre
+          purement <strong>indicatif</strong>, les zones et moments favorables à la pousse.
+        </div>
+        <div>
+          <div class="font-bold text-slate-800 mb-1">2. Accès au service</div>
+          L'accès se fait sur invitation, via un compte nominatif. Vous êtes responsable de la
+          confidentialité de vos identifiants et des activités réalisées depuis votre compte.
+        </div>
+        <div>
+          <div class="font-bold text-slate-800 mb-1">3. Sécurité &amp; usage — avertissement important</div>
+          Les estimations de Sporia ne constituent <strong>en aucun cas</strong> une garantie de présence
+          ni une identification d'espèce. <strong>Ne consommez jamais</strong> un champignon sans
+          identification formelle par une personne compétente (pharmacien, société mycologique). Certaines
+          espèces sont mortelles. Respectez la réglementation locale de cueillette, la propriété privée et
+          les espaces protégés. L'éditeur décline toute responsabilité en cas d'intoxication, d'accident ou
+          d'infraction.
+        </div>
+        <div>
+          <div class="font-bold text-slate-800 mb-1">4. Données personnelles</div>
+          Les données saisies (compte, préférences, spots enregistrés, demandes d'accès) servent uniquement
+          au fonctionnement du service et ne sont pas cédées à des tiers. Vous pouvez demander leur
+          rectification ou leur suppression en nous contactant.
+        </div>
+        <div>
+          <div class="font-bold text-slate-800 mb-1">5. Sources de données</div>
+          Données issues notamment de l'IGN (BD&nbsp;Forêt®, RGE&nbsp;ALTI®), de Météo-France, de SoilGrids®
+          (ISRIC) et de GBIF. Les marques et droits associés restent la propriété de leurs détenteurs
+          respectifs.
+        </div>
+        <div>
+          <div class="font-bold text-slate-800 mb-1">6. Responsabilité &amp; évolutions</div>
+          Le service est fourni « en l'état », sans garantie de disponibilité ni d'exactitude. Ces
+          conditions peuvent évoluer ; la version en vigueur est celle présentée ici.
+        </div>
+      </div>
+      <div class="p-4 border-t border-slate-100 flex justify-end">
+        <button class="cgu-close px-5 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-bold">J'ai compris</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js?v=23"></script>
 </body>
 </html>
