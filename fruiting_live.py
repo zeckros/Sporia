@@ -271,6 +271,12 @@ def blended_species(species: str, date_str: str | None = None, params: dict | No
     fruit, date = score_species(species, date_str)
     if fruit is None:
         return None, date
+    # Garde-fou saison : hors des mois de l'espèce, on ne la montre pas (le modèle de
+    # pousse ne connaît pas le calendrier → sinon une météo « de saison » l'allume à
+    # contre-saison). Cohérent avec la fiche qui affiche « Hors saison ».
+    months = (params or {}).get("months")
+    if months and dt.date.fromisoformat(date).month not in months:
+        return None, date
     tf = timing_grid(params, date_str)
     fruit_eff = np.nan_to_num(fruit, nan=0.0)
     if tf is not None:
@@ -282,6 +288,44 @@ def blended_species(species: str, date_str: str | None = None, params: dict | No
     else:
         blended = fruit_eff
     return blended.astype(np.float32), date
+
+
+def blended_at_point(species: str, lat: float, lon: float,
+                     date_str: str | None = None, params: dict | None = None):
+    """Valeur du radar (habitat × pousse) pour UNE espèce à UN point, calculée
+    EXACTEMENT comme blended_species mais sur une seule cellule (memmap → instantané).
+    Renvoie (score_float, date_iso), ou (None, date) si le pré-score de pousse du jour
+    n'est pas encore baké (l'appelant fait alors un repli). Source unique de vérité
+    pour la fiche, les spots et la carte."""
+    today = date_str or dt.date.today().isoformat()
+    row = int(round((LAT0 - float(lat)) / RES))
+    col = int(round((float(lon) - LON0) / RES))
+    if not (0 <= row < GRID_H and 0 <= col < GRID_W):
+        return None, today
+    fscore = CACHE / f"fruiting_score_{species.replace(' ', '_')}_{today.replace('-', '')}.npy"
+    if not fscore.exists():
+        return None, today                       # pas de pré-score du jour → repli appelant
+    try:
+        fr = float(np.load(fscore, mmap_mode="r")[row, col])
+    except Exception:
+        return None, today
+    if not np.isfinite(fr):
+        fr = 0.0
+    tf_grid = timing_grid(params, today)
+    tf = float(tf_grid[row, col]) if tf_grid is not None else 1.0
+    fruit_eff = float(np.clip(fr * tf, 0.0, 1.0))
+    sdm = CACHE / f"sdm_{species.replace(' ', '_')}.npy"
+    if sdm.exists():
+        try:
+            hab = float(np.load(sdm, mmap_mode="r")[row, col])
+        except Exception:
+            hab = 0.0
+        if not np.isfinite(hab):
+            hab = 0.0
+        blended = hab * (HAB_FLOOR + (1.0 - HAB_FLOOR) * fruit_eff)
+    else:
+        blended = fruit_eff
+    return float(blended), today
 
 
 def radar(species_list, date_str: str | None = None, params: dict | None = None):

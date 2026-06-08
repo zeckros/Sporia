@@ -467,6 +467,24 @@ function wireControls() {
   document.querySelectorAll(".tab-btn").forEach((b) =>
     b.addEventListener("click", () => setTab(b.dataset.tab)));
 
+  // Menu sandwich (mobile) : ouvre/ferme le tiroir de navigation
+  const navToggle = document.getElementById("nav-toggle");
+  const navMenu = document.getElementById("nav-menu");
+  const closeNavMenu = () => { navMenu.classList.remove("mobile-open"); navToggle.setAttribute("aria-expanded", "false"); };
+  navToggle.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const open = navMenu.classList.toggle("mobile-open");
+    navToggle.setAttribute("aria-expanded", open ? "true" : "false");
+  });
+  // Referme après une action de navigation (onglet, espèces, déconnexion) — pas sur la cloche
+  navMenu.addEventListener("click", (e) => {
+    if (e.target.closest(".tab-btn, #species-btn, #logout-btn")) closeNavMenu();
+  });
+  // Referme si on clique ailleurs
+  document.addEventListener("click", (e) => {
+    if (navMenu.classList.contains("mobile-open") && !navMenu.contains(e.target) && !navToggle.contains(e.target)) closeNavMenu();
+  });
+
   // Replier / déployer la barre latérale (pratique sur téléphone)
   document.getElementById("sidebar-toggle").addEventListener("click", toggleSidebar);
 
@@ -756,7 +774,7 @@ function showPointCard(lat, lon, r) {
         const [, fg, bg] = LEVEL[m.level];
         return `<div class="flex items-center gap-2 text-sm">
           <span class="flex-1 truncate">${m.nom} ${hostDot(m.host)}</span>
-          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${fg} ${bg}">${m.label}</span></div>`;
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${fg} ${bg}">${m.label}${m.score_pct != null ? " · " + m.score_pct + "%" : ""}</span></div>`;
       }).join("") : '<div class="text-xs text-slate-400">Aucune espèce en saison.</div>'}
     </div>
     <button class="pc-guide mt-2 w-full py-1.5 rounded-lg bg-brand-50 text-brand-700 text-sm font-semibold hover:bg-brand-100">Voir le guide complet</button>
@@ -881,7 +899,7 @@ function renderGuide() {
     return `<div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-soft">
       <div class="flex items-center gap-2">
         <span class="font-bold flex-1">${m.nom}</span>
-        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${fg} ${bg}">${m.label}</span>
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${fg} ${bg}">${m.label}${m.score_pct != null ? " · " + m.score_pct + "%" : ""}</span>
         ${hostBadge}
       </div>
       <div class="text-xs italic text-slate-400">${m.latin}</div>

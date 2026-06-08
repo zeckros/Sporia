@@ -549,7 +549,8 @@ def _radar_species_params():
     """Paramètres mycologiques par espèce (depuis MUSHROOMS) passés au radar pour
     moduler la fenêtre de pousse : délai post-pluie, cumul mini, plage de température."""
     return {m["latin"]: {"rain_lag": tuple(m["rain_lag"]), "rain_min": m["rain_min"],
-                         "t_min": m["t_min"], "t_max": m["t_max"]} for m in MUSHROOMS}
+                         "t_min": m["t_min"], "t_max": m["t_max"],
+                         "months": list(m["months"])} for m in MUSHROOMS}
 
 
 def spots_status(spots, ref_date: str | None = None, selected: list[str] | None = None):
@@ -779,6 +780,23 @@ def mushroom_suitability(m, w, soil=None, terrain=None):
     return ("Peu probable", "bad", 2.0 + terr_adj, phm)
 
 
+def _radar_label(score, score_pct, in_season):
+    """Libellé + niveau d'une espèce à un point, DÉRIVÉS DE LA VALEUR RADAR
+    (habitat × pousse) — même source que la carte et les spots, donc cohérence totale.
+    Bandes alignées sur RADAR_VMAX / PROPICE_*."""
+    if not in_season:
+        return ("Hors saison", "off")
+    if score is None or score_pct is None:
+        return ("n.d.", "off")
+    if score >= PROPICE_MIN and score_pct >= PROPICE_PCT:
+        return ("Très propice", "good")
+    if score_pct >= 45:
+        return ("Favorable", "good")
+    if score_pct >= 20:
+        return ("Possible", "mid")
+    return ("Peu probable", "bad")
+
+
 def point_report(lat: float, lon: float, ref_date: str, selected: list[str] | None = None):
     """Rapport complet d'un point : commune, météo, sol (texture/pH/humidité/T°),
     relief (altitude/exposition), essence forestière et classement des champignons.
@@ -809,25 +827,41 @@ def point_report(lat: float, lon: float, ref_date: str, selected: list[str] | No
     # une espèce sans modèle affiché (p.ex. la morille) n'apparaît pas dans la fiche.
     served = set(fruiting_models())
 
+    params_all = _radar_species_params()
+    ref_iso = datetime.datetime.strptime(ref_date, "%Y%m%d").date().isoformat()
     items = []
     for m in MUSHROOMS:
         if m["latin"] not in served:
             continue
-        label, level, prio, phm = mushroom_suitability(m, w, soil, terrain)
+        in_season = w["month"] in m["months"]
         hm = mmap.host_match(m.get("latin", ""), family)
-        host_adj = {"ok": -0.5, "no": 1.5, "unknown": 0.0}[hm]
+        phm = _ph_match(soil.get("ph") if soil else None, m.get("ph_opt", (4.0, 8.5)))
+        score_pct = None
+        if not in_season:
+            label, level = ("Hors saison", "off")
+        else:
+            # Verdict = valeur radar (habitat × pousse) au point, identique à la carte/aux spots.
+            score, _d = fruiting_live.blended_at_point(m["latin"], lat, lon, ref_iso,
+                                                       params_all.get(m["latin"]))
+            if score is not None:
+                score_pct = int(max(0, min(100, round(100.0 * score / RADAR_VMAX))))
+                label, level = _radar_label(score, score_pct, True)
+            else:
+                # Repli (pré-score du jour non baké, p.ex. en dev) : ancienne logique météo.
+                label, level, _prio, _phm = mushroom_suitability(m, w, soil, terrain)
         items.append({
             "nom": m["nom"], "latin": m["latin"], "color": m["color"],
             "months": sorted(m["months"]), "t_min": m["t_min"], "t_max": m["t_max"],
             "rain_lag": list(m["rain_lag"]), "habitat": m["habitat"],
             "ph_opt": list(m["ph_opt"]), "soil_pref": m.get("soil_pref", ""),
-            "label": label, "level": level, "host": hm, "soil_ph": phm,
+            "label": label, "level": level, "score_pct": score_pct,
+            "host": hm, "soil_ph": phm,
             "selected": (sel is None) or (m["latin"] in sel),
-            "_score": prio + host_adj,
+            "_rank": (0 if in_season else 1, -(score_pct if score_pct is not None else -1)),
         })
-    items.sort(key=lambda e: (e["_score"], e["nom"]))
+    items.sort(key=lambda e: (e["_rank"], e["nom"]))
     for it in items:
-        it.pop("_score", None)
+        it.pop("_rank", None)
 
     return {
         "lat": lat, "lon": lon, "commune": comm_name, "month": MONTHS_FR[w["month"] - 1],
