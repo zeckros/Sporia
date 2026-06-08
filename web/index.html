@@ -621,19 +621,6 @@
           <div id="city-results" class="mt-1 space-y-1"></div>
         </div>
 
-        <!-- Légende du calque actif (visible quand le panneau est replié) -->
-        <div id="active-legend-wrap">
-          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Légende</label>
-          <div id="active-legend" class="rounded-xl border border-slate-200 bg-white shadow-soft p-3 text-xs text-slate-500"></div>
-        </div>
-
-        <!-- Bouton « god mode » : déplie tous les calques -->
-        <button id="godmode-btn"
-                class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold shadow-card transition">
-          <span class="text-lg leading-none">🍄</span>
-          <span id="godmode-label">Fou des champignons</span>
-        </button>
-
         <!-- Panneau calques (caché par défaut) -->
         <div id="layers-panel" class="hidden space-y-5">
           <!-- Calques (exclusifs : un seul affiché à la fois) -->
@@ -661,9 +648,30 @@
             </div>
             <div id="period-label" class="mt-2 text-xs font-semibold text-slate-500 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5"></div>
           </div>
+        </div>
 
-          <!-- Légende du calque actif (dans le panneau quand il est ouvert) -->
-          <div id="panel-legend" class="rounded-xl border border-slate-200 bg-white shadow-soft p-3 text-xs text-slate-500"></div>
+        <!-- Titre du calque sélectionné — visible quand le volet est replié -->
+        <div id="active-layer-name" class="hidden text-center text-sm font-bold text-brand-700 bg-brand-50 border border-brand-100 rounded-xl px-3 py-2"></div>
+
+        <!-- Bouton « Fou des champignons » : déplie / replie le volet. Placé APRÈS le panneau
+             → volet ouvert, la légende reste au-dessus du bouton « Réduire les calques ». -->
+        <button id="godmode-btn"
+                class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold shadow-card transition">
+          <span class="text-lg leading-none">🍄</span>
+          <span id="godmode-label">Fou des champignons</span>
+        </button>
+
+        <!-- Champignons affichés sur le radar (sous-ensemble de « Mes champignons ») —
+             HORS du volet calques → visible même quand le volet est replié. -->
+        <div id="radar-species" class="hidden">
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Radar à champignons</label>
+          <div id="radar-species-list" class="space-y-0.5"></div>
+        </div>
+
+        <!-- Légende du calque actif — tout en bas (visible quand le volet calques est replié) -->
+        <div id="active-legend-wrap">
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Légende</label>
+          <div id="active-legend" class="rounded-xl border border-slate-200 bg-white shadow-soft p-3 text-xs text-slate-500"></div>
         </div>
         </div><!-- /scroll -->
         <!-- Flèche au bord : replie (« ) / déploie ( » ) la barre — glisse avec elle -->
@@ -789,6 +797,6 @@
     </div>
   </div>
 
-  <script src="/static/app.js?v=25"></script>
+  <script src="/static/app.js?v=34"></script>
 </body>
 </html>

@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(venv/Scripts/python.exe -c ' *)",
-      "Bash(venv/Scripts/python.exe -m py_compile champi_core.py fruiting_live.py)"
+      "Bash(venv/Scripts/python.exe -m py_compile champi_core.py fruiting_live.py)",
+      "Bash(curl -s -o /dev/null -w 'HTTP %{http_code} | type=%{content_type} | %{size_download} octets | %{time_total}s\\\\n' 'https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=LANDCOVER.FORESTINVENTORY.V2&STYLE=normal&TILEMATRIXSET=PM&FORMAT=image/png&TILEMATRIX=10&TILEROW=366&TILECOL=519')",
+      "Bash(curl -s -o /dev/null -w 'HTTP %{http_code} | type=%{content_type} | %{size_download} octets | %{time_total}s\\\\n' 'https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=LANDCOVER.FORESTINVENTORY.V2&STYLE=normal&TILEMATRIXSET=PM&FORMAT=image/png&TILEMATRIX=15&TILEROW=11750&TILECOL=16040')",
+      "Bash(curl -s -o /dev/null -w 'HTTP %{http_code} | type=%{content_type} | %{size_download} octets | %{time_total}s\\\\n' 'https://data.geopf.fr/wms-r/wms?SERVICE=WMS&REQUEST=GetMap&VERSION=1.3.0&LAYERS=LANDCOVER.FORESTINVENTORY.V2&STYLES=normal&FORMAT=image/png&TRANSPARENT=true&CRS=EPSG:3857&WIDTH=256&HEIGHT=256&BBOX=-100000,5500000,-80000,5520000')"
     ]
   }
 }

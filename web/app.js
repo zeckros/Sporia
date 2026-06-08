@@ -193,11 +193,15 @@ function initMap() {
   }).addTo(state.map);
   L.control.scale({ metric: true, imperial: false, position: "bottomright" }).addTo(state.map);
 
-  state.layers.forest = L.tileLayer.wms("https://data.geopf.fr/wms-r/wms", {
-    layers: "LANDCOVER.FORESTINVENTORY.V2", styles: "normal", format: "image/png",
-    transparent: true, version: "1.3.0", opacity: 0.6, attribution: "IGN — BD Forêt® V2",
-    maxZoom: 19, maxNativeZoom: 18,   // essences visibles jusqu'au zoom max (sur-échantillonné au-delà de 18)
-  });
+  // WMTS (tuiles pré-calculées en cache) plutôt que WMS (rendu à la volée, lent aux
+  // zooms serrés). Le cache BD Forêt® va jusqu'à z16 → au-delà, Leaflet sur-échantillonne
+  // la tuile z16 (instantané, légèrement adouci) au lieu d'attendre un rendu serveur.
+  state.layers.forest = L.tileLayer(
+    "https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0" +
+    "&LAYER=LANDCOVER.FORESTINVENTORY.V2&STYLE=normal&TILEMATRIXSET=PM&FORMAT=image/png" +
+    "&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}",
+    { opacity: 0.6, attribution: "IGN — BD Forêt® V2",
+      maxZoom: 19, maxNativeZoom: 16 });
 
   state.map.on("click", (e) => loadPoint(e.latlng.lat, e.latlng.lng));
   // La carte d'info reste ancrée au point cliqué quand on déplace/zoome la carte.
@@ -296,13 +300,41 @@ async function refreshAspect() {
 }
 
 /* ---------- Légende (calque actif) ---------- */
-// Familles d'hôte BD Forêt (couleurs indicatives ; la carte colore par essence fine).
-const FOREST_FAMILIES = [
-  ["Feuillus (chênes, hêtre, châtaignier…)", "#4d9a4d"],
-  ["Conifères (pins, sapin, épicéa…)", "#1f6f5c"],
-  ["Forêt mixte", "#8a9a3a"],
-  ["Peupleraie", "#9ac94a"],
-  ["Lande / milieu ouvert", "#c9b275"],
+// BD Forêt® V2 (IGN) — 32 types de formation végétale, couleurs exactes du calque
+// (échantillonnées sur la légende officielle IGN). [couleur, libellé court, libellé complet].
+const FOREST_TFV = [
+  ["#e5c45d", "Sans couvert arboré", "Forêt fermée sans couvert arboré"],
+  ["#008c4d", "Feuillus en îlots", "Forêt fermée de feuillus purs en îlots"],
+  ["#004d2e", "Chênes décidus", "Forêt fermée de chênes décidus purs"],
+  ["#668040", "Chênes sempervirents", "Forêt fermée de chênes sempervirents purs"],
+  ["#00ff80", "Hêtre", "Forêt fermée de hêtre pur"],
+  ["#40ff1c", "Châtaignier", "Forêt fermée de châtaignier pur"],
+  ["#915633", "Robinier", "Forêt fermée de robinier pur"],
+  ["#afca59", "Autre feuillu", "Forêt fermée d'un autre feuillu pur"],
+  ["#00d92f", "Mélange feuillus", "Forêt fermée à mélange de feuillus"],
+  ["#8080ff", "Conifères en îlots", "Forêt fermée de conifères purs en îlots"],
+  ["#bf26ff", "Pin maritime", "Forêt fermée de pin maritime pur"],
+  ["#9926ff", "Pin sylvestre", "Forêt fermée de pin sylvestre pur"],
+  ["#4d33ff", "Pin laricio / noir", "Forêt fermée de pin laricio ou pin noir pur"],
+  ["#ff1aff", "Pin d'Alep", "Forêt fermée de pin d'Alep pur"],
+  ["#734de6", "Pin à crochets / cembro", "Forêt fermée de pin à crochets ou pin cembro pur"],
+  ["#a666ff", "Autre pin", "Forêt fermée d'un autre pin pur"],
+  ["#d999ff", "Mélange de pins", "Forêt fermée à mélange de pins purs"],
+  ["#1ae6e6", "Sapin / épicéa", "Forêt fermée de sapin ou épicéa"],
+  ["#4d80ff", "Mélèze", "Forêt fermée de mélèze pur"],
+  ["#3399ff", "Douglas", "Forêt fermée de douglas pur"],
+  ["#00929f", "Mélange autres conifères", "Forêt fermée à mélange d'autres conifères"],
+  ["#59ffff", "Autre conifère", "Forêt fermée d'un autre conifère pur autre que pin"],
+  ["#404dff", "Mélange conifères", "Forêt fermée à mélange de conifères"],
+  ["#ff6633", "Feuillus + conifères", "Forêt fermée à mélange de feuillus prépondérants et conifères"],
+  ["#ff4033", "Conifères + feuillus", "Forêt fermée à mélange de conifères prépondérants et feuillus"],
+  ["#b3b3b3", "Ouverte : sans couvert", "Forêt ouverte sans couvert arboré"],
+  ["#ccffbf", "Ouverte : feuillus", "Forêt ouverte de feuillus purs"],
+  ["#99b3cc", "Ouverte : conifères", "Forêt ouverte de conifères purs"],
+  ["#ffd138", "Ouverte : mixte", "Forêt ouverte à mélange de feuillus et conifères"],
+  ["#ffff00", "Peupleraie", "Peupleraie"],
+  ["#ffe6bf", "Lande", "Lande"],
+  ["#fff9a5", "Formation herbacée", "Formation herbacée"],
 ];
 
 function _grad(colors) {
@@ -312,34 +344,34 @@ function _swatch(label, color) {
   return `<div class="flex items-center gap-2"><span class="inline-block w-3.5 h-3.5 rounded-sm border border-slate-300" style="background:${color}"></span><span>${label}</span></div>`;
 }
 
-// Cases à cocher (calque radar) : les espèces de la pré-sélection « Mes champignons »,
-// cochées si actuellement actives. Permet de filtrer l'affichage sans toucher aux prefs.
-function radarChecksHtml() {
+// Liste « Radar à champignons » (sidebar) : espèces de la pré-sélection « Mes champignons »,
+// cochées si affichées. Filtre l'affichage du radar sans toucher aux prefs enregistrées.
+// Liste COMPLÈTE (sans scroll), hors de la légende ; visible quand le calque radar est actif.
+function updateRadarSpecies() {
+  const wrap = document.getElementById("radar-species");
+  const list = document.getElementById("radar-species-list");
+  if (!wrap || !list) return;
   const sel = state.species || [];
-  if (!sel.length) return "";
+  if (state.activeLayer !== "radar" || !sel.length) {
+    wrap.classList.add("hidden");
+    list.innerHTML = "";
+    return;
+  }
   const meta = {}; (state.allSpecies || []).forEach((s) => { meta[s.latin] = s; });
   const active = new Set(radarActiveSpecies());
-  const rows = sel.map((latin) => {
+  list.innerHTML = sel.map((latin) => {
     const m = meta[latin] || { nom: latin, color: "#999" };
-    return `<label class="flex items-center gap-1.5 text-xs cursor-pointer py-px">
+    return `<label class="flex items-center gap-2 text-sm cursor-pointer py-0.5">
       <input type="checkbox" class="radar-check accent-brand-500 w-3.5 h-3.5" value="${latin}" ${active.has(latin) ? "checked" : ""}>
       <span class="inline-block w-2.5 h-2.5 rounded-full shrink-0" style="background:${m.color}"></span>
       <span class="truncate">${m.nom}</span></label>`;
   }).join("");
-  return `<div class="mb-2 pb-2 border-b border-slate-100">
-    <div class="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-1">Afficher (parmi mes champignons)</div>
-    <div class="grid grid-cols-1 gap-0.5 max-h-40 overflow-y-auto pr-1">${rows}</div></div>`;
-}
-
-// (Re)branche les cases du calque radar après chaque rendu de légende.
-function wireRadarChecks() {
-  const boxes = document.querySelectorAll(".radar-check");
-  if (!boxes.length) return;
-  boxes.forEach((c) => c.addEventListener("change", () => {
-    const checked = Array.from(document.querySelectorAll(".radar-check:checked")).map((x) => x.value);
+  wrap.classList.remove("hidden");
+  list.querySelectorAll(".radar-check").forEach((c) => c.addEventListener("change", () => {
+    const checked = Array.from(list.querySelectorAll(".radar-check:checked")).map((x) => x.value);
     // tout coché → null (toute la pré-sélection) ; sinon le sous-ensemble (éventuellement vide)
-    state.radarSpecies = (checked.length === (state.species || []).length) ? null : checked;
-    refreshRadar();   // re-fetch + updateLegend (re-render + re-wire des cases)
+    state.radarSpecies = (checked.length === sel.length) ? null : checked;
+    refreshRadar();   // re-fetch overlay + légende ; updateLegend rappelle updateRadarSpecies
   }));
 }
 
@@ -348,9 +380,9 @@ function legendFor(key) {
   if (key === "radar") {
     const sp = (d.radar && d.radar.species && d.radar.species.length)
       ? d.radar.species.join(", ") : "aucune espèce cochée";
-    return `${radarChecksHtml()}<div class="font-semibold text-slate-600 mb-1">Radar à champignons</div>${_grad(CMAP.fav)}
+    return `${_grad(CMAP.fav)}
       <div>Vert soutenu = bon coin <strong>et</strong> conditions favorables en ce moment. Pour : <strong>${sp}</strong>.</div>
-      <div class="text-[10px] text-slate-400 mt-1.5">Habitat (essence/sol/relief/climat) × pousse du jour (météo des ~21 j). Préréglage via « Mes champignons ».</div>`;
+      <div class="text-[10px] text-slate-400 mt-1.5">Habitat (essence/sol/relief/climat) × pousse du jour (météo des ~21 j).</div>`;
   }
   if (key === "temp" || key === "precip") {
     const w = d[key]; if (!w) return "";
@@ -359,9 +391,13 @@ function legendFor(key) {
       <div class="flex justify-between text-[10px] text-slate-400">${[w.vmin, (w.vmin + w.vmax) / 2, w.vmax].map((v) => `<span>${v.toFixed(1)} ${w.unit}</span>`).join("")}</div>`;
   }
   if (key === "forest") {
+    const rows = FOREST_TFV.map(([c, short, full]) =>
+      `<div class="flex items-center gap-1.5 min-w-0" title="${full}">
+         <span class="inline-block w-3 h-3 rounded-sm border border-slate-300 shrink-0" style="background:${c}"></span>
+         <span class="truncate">${short}</span></div>`).join("");
     return `<div class="font-semibold text-slate-600 mb-1.5">Essences forestières — BD Forêt® V2 (IGN)</div>
-      <div class="grid grid-cols-1 gap-1">${FOREST_FAMILIES.map(([l, c]) => _swatch(l, c)).join("")}</div>
-      <div class="text-[10px] text-slate-400 mt-1.5">Familles d'hôte (couleurs indicatives) ; la carte colore chaque essence.</div>`;
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1 text-[10px] leading-tight">${rows}</div>
+      <div class="text-[10px] text-slate-400 mt-1.5">32 types (IGN) · essence précise au clic.</div>`;
   }
   if (key === "soil") {
     const cls = d.soil || [];
@@ -386,19 +422,26 @@ function legendFor(key) {
 
 // Affiche la légende du calque actif : dans le panneau s'il est ouvert, sinon en haut.
 function updateLegend() {
+  // Une seule légende, TOUJOURS en bas de la barre (volet calques ouvert comme replié).
   const html = legendFor(state.activeLayer);
-  const top = document.getElementById("active-legend-wrap");
-  const panel = document.getElementById("panel-legend");
-  if (state.godmode) {
-    top.classList.add("hidden");
-    panel.innerHTML = html;
-    panel.classList.toggle("hidden", !html);
-  } else {
-    panel.classList.add("hidden");
-    document.getElementById("active-legend").innerHTML = html;
-    top.classList.toggle("hidden", !html);
-  }
-  if (state.activeLayer === "radar") wireRadarChecks();
+  const wrap = document.getElementById("active-legend-wrap");
+  document.getElementById("active-legend").innerHTML = html;
+  wrap.classList.toggle("hidden", !html);
+  updateRadarSpecies();      // liste des espèces du radar (affichée/masquée selon le calque)
+  updateActiveLayerName();   // titre du calque sélectionné (visible quand le volet est replié)
+}
+
+// Noms lisibles des calques (pour le titre affiché quand le volet est replié).
+const LAYER_NAMES = {
+  radar: "🍄 Radar à champignons", temp: "Température moyenne", precip: "Précipitations",
+  forest: "Forêts — BD Forêt® IGN", soil: "Type de sol — SoilGrids®",
+  soilmoist: "Humidité du sol", altitude: "Altitude / relief", aspect: "Exposition (versants)",
+};
+function updateActiveLayerName() {
+  const el = document.getElementById("active-layer-name");
+  if (!el) return;
+  el.textContent = LAYER_NAMES[state.activeLayer] || "";
+  el.classList.toggle("hidden", state.godmode || !el.textContent);   // caché quand le volet est ouvert
 }
 
 /* ---------- Calques exclusifs (un seul affiché à la fois) ---------- */
@@ -452,7 +495,16 @@ function wireControls() {
     document.getElementById("layers-panel").classList.toggle("hidden", !state.godmode);
     document.getElementById("godmode-label").textContent =
       state.godmode ? "Réduire les calques" : "Fou des champignons";
-    updateLegend();   // bascule la légende panneau ↔ haut
+    if (!state.godmode) {
+      // Réduire : on garde affiché EXCLUSIVEMENT le calque sélectionné (sans re-télécharger)
+      LAYER_KEYS.forEach((k) => {
+        const lyr = state.layers[k];
+        if (!lyr) return;
+        if (k === state.activeLayer) { if (!state.map.hasLayer(lyr)) lyr.addTo(state.map); }
+        else if (state.map.hasLayer(lyr)) state.map.removeLayer(lyr);
+      });
+    }
+    updateLegend();   // légende toujours en bas
   });
 
   // Modale « Mes champignons »
