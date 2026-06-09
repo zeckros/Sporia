@@ -10,7 +10,8 @@ par erreur si le pipeline a été à l'arrêt.
 Ne touche JAMAIS : output/tiff récents (l'appli en a besoin), les couches dérivées
 (clim_/lc_/host_/soil_/terrain_/altitude/sdm_/fruiting_*.npy/pkl), les .gpkg/.csv de
 référence. Supprime : tuiles AROME brutes, radar H5 bruts, daily déjà interprétés
-anciens, rasters output trop vieux, et la zip WorldClim une fois extraite.
+anciens, rasters output trop vieux, la zip WorldClim une fois extraite, et les anciennes
+tuiles radar (cache d'affichage ; les tuiles forêt statiques sont conservées).
 
 Usage : python scripts/prune_data.py [--dry-run]
 """
@@ -92,6 +93,28 @@ def prune_worldclim_zip(dry):
     return 0, 0
 
 
+def prune_radar_tiles(dry, keep=2):
+    """Cache des tuiles radar (data/cache/radartiles/<YYYYMMDD>/<sel>/z/x/y.png) : on ne
+    garde que les `keep` dates les plus récentes. Les tuiles forêt (foresttiles/) sont
+    statiques → jamais purgées."""
+    import shutil
+    base = ROOT / "data/cache/radartiles"
+    if not base.exists():
+        return 0, 0
+    dates = sorted(d for d in base.iterdir() if d.is_dir() and d.name.isdigit())
+    old = dates[:-keep] if len(dates) > keep else []
+    n = sz = 0
+    for d in old:
+        for f in d.rglob("*"):
+            if f.is_file():
+                sz += f.stat().st_size; n += 1
+        if not dry:
+            shutil.rmtree(d, ignore_errors=True)
+    print(f"  radartiles         : {n} tuiles, {sz/1e6:.0f} Mo "
+          f"({'à supprimer' if dry else 'supprimées'}) — conserve {keep} dates")
+    return n, sz
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true", help="liste sans supprimer")
@@ -102,6 +125,8 @@ def main():
         n, sz = prune_dir(rel, pats, keep, a.dry_run)
         tot_n += n; tot_sz += sz
     n, sz = prune_worldclim_zip(a.dry_run)
+    tot_n += n; tot_sz += sz
+    n, sz = prune_radar_tiles(a.dry_run)
     tot_n += n; tot_sz += sz
     verb = "libérables" if a.dry_run else "libérés"
     print(f"\nTotal : {tot_n} fichiers, {tot_sz/1e6:.0f} Mo {verb}.")

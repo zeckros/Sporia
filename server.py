@@ -18,7 +18,7 @@ from pathlib import Path
 import bcrypt
 import yaml
 from fastapi import FastAPI, Request, HTTPException, Depends
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from pydantic import BaseModel
@@ -298,6 +298,28 @@ def api_radar(date: str | None = None, species: str | None = None, user=Depends(
     if res is None:
         raise HTTPException(status_code=404, detail="Radar indisponible (aucune espèce modélisée sélectionnée).")
     return res
+
+
+def _radar_selection(species: str | None, username: str) -> list[str]:
+    sel = _parse_species(species) if species is not None else user_prefs.get_species(username)
+    served = set(core.fruiting_models())
+    return [s for s in (sel or [m["latin"] for m in core.MUSHROOMS]) if s in served]
+
+
+@app.get("/api/radar/meta")
+def api_radar_meta(species: str | None = None, user=Depends(require_user)):
+    """Espèces (noms FR) réellement affichées sur le radar (en saison) — pour la légende."""
+    return {"species": core.radar_tile_species(_radar_selection(species, user["username"]))}
+
+
+@app.get("/api/radar/tiles/{z}/{x}/{y}.png")
+def api_radar_tile(z: int, x: int, y: int, sp: str | None = None,
+                   d: str | None = None, user=Depends(require_user)):
+    """Tuile PNG du « Radar à champignons » (valeur lissée × contour forêt exact). `d`
+    ne sert qu'au cache navigateur (invalidation quotidienne)."""
+    png = core.radar_tile_png(z, x, y, _radar_selection(sp, user["username"]))
+    return Response(content=png, media_type="image/png",
+                    headers={"Cache-Control": "public, max-age=86400"})
 
 
 @app.get("/api/fruiting-models")

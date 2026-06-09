@@ -250,24 +250,29 @@ function radarActiveSpecies() {
   return (state.radarSpecies || state.species || []);
 }
 
-// Radar à champignons : carte agrégée OÙ (habitat, arbre-hôte) × QUAND (météo du jour),
-// sur les espèces cochées du calque (parmi « Mes champignons »). Calque par défaut.
+// Radar à champignons : calque de TUILES (habitat × pousse du jour, clippé au contour
+// forêt exact côté serveur). Sur les espèces cochées du calque (parmi « Mes champignons »).
 async function refreshRadar() {
   const active = radarActiveSpecies();
-  // Aucune espèce cochée (alors qu'une pré-sélection existe) → on retire le calque radar.
+  if (state.layers.radar) { state.map.removeLayer(state.layers.radar); state.layers.radar = null; }
+  // Aucune espèce cochée (alors qu'une pré-sélection existe) → rien à afficher.
   if (state.species && state.species.length && !active.length) {
-    if (state.layers.radar) { state.map.removeLayer(state.layers.radar); state.layers.radar = null; }
     state.legendData.radar = { species: [] };
     if (state.activeLayer === "radar") updateLegend();
     return;
   }
+  const d = (state.dates && state.dates.length) ? state.dates[state.dates.length - 1] : "";
+  const spq = active.length ? "&sp=" + active.map(encodeURIComponent).join(",") : "";
+  // maxNativeZoom=16 (cache BD Forêt) → au-delà, Leaflet sur-échantillonne les tuiles.
+  state.layers.radar = L.tileLayer(`/api/radar/tiles/{z}/{x}/{y}.png?d=${d}${spq}`,
+    { opacity: 1, tileSize: 256, maxZoom: 19, maxNativeZoom: 16, keepBuffer: 2, updateWhenIdle: false });
+  if (state.activeLayer === "radar") state.layers.radar.addTo(state.map);
   try {
-    const sp = active.length ? "?species=" + active.map(encodeURIComponent).join(",") : "";
-    const res = await API.get(`/api/radar${sp}`);
-    _setOverlay("radar", res, 1);
-    state.legendData.radar = { species: res.species || [] };
-    if (state.activeLayer === "radar") updateLegend();
-  } catch (e) { console.warn("radar", e); }
+    const q = active.length ? "?species=" + active.map(encodeURIComponent).join(",") : "";
+    const meta = await API.get(`/api/radar/meta${q}`);
+    state.legendData.radar = { species: meta.species || [] };
+  } catch (e) { state.legendData.radar = { species: [] }; }
+  if (state.activeLayer === "radar") updateLegend();
 }
 
 async function refreshSoil() {

@@ -280,16 +280,68 @@ def _reproject_to_3857(arr_src, raster_path, resampling=RioResampling.bilinear):
     return dst, {"left": float(left), "bottom": float(bottom), "right": float(right), "top": float(top)}
 
 
-def _save_png(rgba_uint8, fname, resample=None):
+def _reproject_to_grid(arr_src, ref_path, west, south, east, north, W, H):
+    """Reprojette la grille source sur une grille 3857 FIXE (bbox + dimensions données),
+    en plus proche voisin. Sert à aligner le radar sur le masque forêt baké."""
+    from rasterio.transform import from_bounds as _from_bounds
+    with rasterio.open(ref_path) as src:
+        src_crs = src.crs or RioCRS.from_epsg(4326)
+        src_transform = src.transform
+    dst = np.full((H, W), np.nan, dtype=np.float32)
+    rio_reproject(source=np.ascontiguousarray(arr_src, dtype=np.float32), destination=dst,
+                  src_transform=src_transform, src_crs=src_crs,
+                  dst_transform=_from_bounds(west, south, east, north, W, H),
+                  dst_crs=RioCRS.from_epsg(3857), resampling=RioResampling.nearest,
+                  src_nodata=np.nan, dst_nodata=np.nan)
+    return dst
+
+
+# Table de couleurs YlGn pré-calculée (uint8) → colorisation des grands rendus sans
+# passer par du float64 matplotlib (qui exploserait la mémoire sur une grande image).
+_YLGN_LUT = (plt.cm.YlGn(np.linspace(0.0, 1.0, 256))[:, :3] * 255).astype(np.uint8)  # [256,3]
+
+# Masque forêt haute résolution (BD Forêt®, baké par scripts/bake_forest_mask.py).
+_FOREST_MASK_NPZ = MASK_CACHE / "forest_mask.npz"
+_forest_mask_cache = None
+_forest_mask_tried = False
+
+
+def _forest_mask():
+    """(mask bool HxW, (west,south,east,north) 3857, bounds_latlon) ou None si non baké."""
+    global _forest_mask_cache, _forest_mask_tried
+    if _forest_mask_tried:
+        return _forest_mask_cache
+    _forest_mask_tried = True
+    if not _FOREST_MASK_NPZ.exists():
+        return None
+    try:
+        z = np.load(_FOREST_MASK_NPZ)
+        H, W = int(z["shape"][0]), int(z["shape"][1])
+        mask = np.unpackbits(z["packed"])[:H * W].reshape(H, W).astype(bool)
+        west, south, east, north = (float(v) for v in z["bounds"])
+        ll = rio_transform_bounds(RioCRS.from_epsg(3857), RioCRS.from_epsg(4326),
+                                  west, south, east, north)
+        bounds = {"left": float(ll[0]), "bottom": float(ll[1]),
+                  "right": float(ll[2]), "top": float(ll[3])}
+        _forest_mask_cache = (mask, (west, south, east, north), bounds)
+    except Exception as e:
+        print(f"[radar] masque forêt illisible : {e}", flush=True)
+        _forest_mask_cache = None
+    return _forest_mask_cache
+
+
+def _save_png(rgba_uint8, fname, resample=None, max_px=2048, optimize=True, compress_level=6):
     from PIL import Image
     if resample is None:
         resample = Image.LANCZOS
     im = Image.fromarray(rgba_uint8, mode="RGBA")
     w, h = im.size
-    if max(w, h) > 2048:
-        s = 2048 / max(w, h)
+    if max(w, h) > max_px:
+        s = max_px / max(w, h)
         im = im.resize((max(1, int(w * s)), max(1, int(h * s))), resample)
-    im.save(OVERLAY_DIR / fname, format="PNG", optimize=True, compress_level=6)
+    # optimize=True force un encodage lent (utile pour les petits overlays stables) ;
+    # on le désactive pour les grands rendus (radar) où la vitesse prime.
+    im.save(OVERLAY_DIR / fname, format="PNG", optimize=optimize, compress_level=compress_level)
     return f"/overlays/{fname}"
 
 
@@ -515,24 +567,179 @@ def render_radar_overlay(species_list, ref_date: str | None = None):
     ref = _grid_ref()
     if ref is None:
         return None
-    arr, bounds = _reproject_to_3857(np.ascontiguousarray(_mask_to_france(grid, ref)), str(ref))
+    noms = {m["latin"]: m["nom"] for m in MUSHROOMS}
+    species = [noms.get(s, s) for s in used]
+
+    # Masque forêt HAUTE RÉSOLUTION (BD Forêt®, baké) : le radar épouse les contours réels
+    # des forêts (même source que le calque forêt). Échelle ABSOLUE (RADAR_VMAX). Rendu mis
+    # en cache (clé = date + espèces) car plus lourd. Les indices fiche/spots ne sont PAS
+    # masqués (requêtes ponctuelles sur la grille brute).
+    fm = _forest_mask()
+    if fm is not None:
+        mask, (west, south, east, north), bounds = fm
+        H, W = mask.shape
+        key = hashlib.md5(("radarF" + str(date) + ",".join(sorted(used))).encode()).hexdigest()[:12]
+        out = OVERLAY_DIR / f"radar_{key}.png"
+        if not out.exists():
+            val = _reproject_to_grid(grid, str(ref), west, south, east, north, W, H)
+            norm = np.clip(np.nan_to_num(val, nan=0.0) / RADAR_VMAX, 0.0, 1.0).astype(np.float32)
+            finite = np.isfinite(val) & mask          # vert seulement sur forêt ET habitat présent
+            del val
+            img = np.zeros((H, W, 4), np.uint8)
+            img[..., :3] = _YLGN_LUT[(norm * 255).astype(np.uint8)]
+            img[..., 3] = (np.clip(np.where(finite, 0.15 + 0.8 * norm, 0.0), 0, 1) * 255).astype(np.uint8)
+            del norm, finite
+            _save_png(img, out.name, max_px=max(H, W), optimize=False)  # grande image → encodage rapide
+            del img
+        return {"url": _bust(out.name), "bounds": bounds, "date": date,
+                "species": species, "legend": {"species": species}}
+
+    # --- Repli (masque pas encore baké) : rendu 1 km masqué par la densité forêt 1 km ---
+    dens = mmap.load_forest_density()
+    if dens is not None and dens.shape == grid.shape:
+        grid = np.where(dens >= FOREST_MASK_MIN, grid, np.nan).astype(np.float32)
+    arr, bounds = _reproject_to_3857(np.ascontiguousarray(_mask_to_france(grid, ref)),
+                                     str(ref), resampling=RioResampling.nearest)
     finite = np.isfinite(arr)
     if not finite.any():
         return None
-    # Échelle ABSOLUE (RADAR_VMAX) et non P99 du jour : hors-saison reste sombre au lieu
-    # d'afficher faussement « la moins pire = vert foncé ». Cohérent avec spots_status.
     norm = np.clip(np.where(finite, arr, 0.0) / RADAR_VMAX, 0.0, 1.0)
     rgba = plt.cm.YlGn(norm)
     img = np.zeros((arr.shape[0], arr.shape[1], 4), np.uint8)
     img[..., :3] = (rgba[..., :3] * 255).astype(np.uint8)
-    alpha = np.where(finite, 0.15 + 0.8 * norm, 0.0)      # transparent où faible, marqué où chaud
-    img[..., 3] = (np.clip(alpha, 0, 1) * 255).astype(np.uint8)
+    img[..., 3] = (np.clip(np.where(finite, 0.15 + 0.8 * norm, 0.0), 0, 1) * 255).astype(np.uint8)
     key = hashlib.md5(("radar" + str(date) + ",".join(sorted(used))).encode()).hexdigest()[:12]
     _save_png(img, f"radar_{key}.png")
-    noms = {m["latin"]: m["nom"] for m in MUSHROOMS}
     return {"url": _bust(f"radar_{key}.png"), "bounds": bounds, "date": date,
-            "species": [noms.get(s, s) for s in used],
-            "legend": {"species": [noms.get(s, s) for s in used]}}
+            "species": species, "legend": {"species": species}}
+
+
+# ===== « Radar à champignons » en TUILES (contours forêt exacts à tous les zooms) =====
+# Une tuile = valeur (habitat×pousse) 1 km RÉÉCHANTILLONNÉE LISSE (bilinéaire) à la résolution
+# du zoom, CLIPPÉE au contour forêt via la tuile BD Forêt WMTS de mêmes z/x/y (pixel-alignée
+# → contours exacts, identiques au calque forêt). Rendu mis en cache disque.
+_WORLD_3857 = 20037508.342789244
+_FOREST_TILE_DIR = MASK_CACHE / "foresttiles"     # cache permanent (couche statique)
+_RADAR_TILE_DIR = MASK_CACHE / "radartiles"       # cache par jour/sélection
+_radar_grid_cache: dict = {}
+_blank_png_bytes = None
+
+
+def _tile_bbox_3857(z, x, y):
+    n = 2 ** z
+    size = 2.0 * _WORLD_3857 / n
+    west = -_WORLD_3857 + x * size
+    north = _WORLD_3857 - y * size
+    return west, north - size, west + size, north
+
+
+def _blank_tile() -> bytes:
+    global _blank_png_bytes
+    if _blank_png_bytes is None:
+        import io
+        from PIL import Image
+        buf = io.BytesIO()
+        Image.new("RGBA", (256, 256), (0, 0, 0, 0)).save(buf, format="PNG")
+        _blank_png_bytes = buf.getvalue()
+    return _blank_png_bytes
+
+
+def _forest_tile_alpha(z, x, y):
+    """Alpha 256×256 de la tuile BD Forêt WMTS (z/x/y) = masque forêt. Cache disque
+    permanent (couche statique). None si hors couverture / indisponible."""
+    fp = _FOREST_TILE_DIR / str(z) / str(x) / f"{y}.png"
+    if not fp.exists():
+        import requests
+        url = ("https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0"
+               "&LAYER=LANDCOVER.FORESTINVENTORY.V2&STYLE=normal&TILEMATRIXSET=PM"
+               f"&FORMAT=image/png&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}")
+        try:
+            r = requests.get(url, timeout=20)
+        except Exception:
+            return None
+        if r.status_code != 200 or "image" not in r.headers.get("content-type", ""):
+            return None
+        fp.parent.mkdir(parents=True, exist_ok=True)
+        fp.write_bytes(r.content)
+    try:
+        from PIL import Image
+        return np.asarray(Image.open(fp).convert("RGBA"))[..., 3]
+    except Exception:
+        return None
+
+
+def _radar_grid(species_list, ref_date=None):
+    """Grille radar 1 km (habitat×pousse), mise en cache mémoire par (date, espèces)."""
+    key = (ref_date or "_today", tuple(sorted(species_list)))
+    if key not in _radar_grid_cache:
+        if len(_radar_grid_cache) > 8:
+            _radar_grid_cache.clear()
+        _radar_grid_cache[key] = fruiting_live.radar(species_list, ref_date,
+                                                     params=_radar_species_params())
+    return _radar_grid_cache[key]
+
+
+def radar_tile_png(z, x, y, species_list, ref_date=None) -> bytes:
+    """PNG 256×256 d'une tuile radar (cache disque). Transparent si rien à montrer."""
+    z, x, y = int(z), int(x), int(y)
+    if not (0 <= z <= 19 and 0 <= x < 2 ** z and 0 <= y < 2 ** z):
+        return _blank_tile()
+    grid, used, date = _radar_grid(species_list, ref_date)
+    if grid is None or not used:
+        return _blank_tile()
+    sphash = hashlib.md5(",".join(sorted(used)).encode()).hexdigest()[:10]
+    cache = _RADAR_TILE_DIR / str(date).replace("-", "") / sphash / str(z) / str(x) / f"{y}.png"
+    if cache.exists():
+        return cache.read_bytes()
+    ref = _grid_ref()
+    if ref is None:
+        return _blank_tile()
+    alpha_forest = _forest_tile_alpha(z, x, y)            # masque = contour forêt exact
+    if alpha_forest is None or not bool((alpha_forest > 10).any()):
+        return _blank_tile()                              # hors forêt → rien (pas de cache)
+    from rasterio.transform import from_bounds as _fb
+    west, south, east, north = _tile_bbox_3857(z, x, y)
+    with rasterio.open(str(ref)) as src:
+        src_crs = src.crs or RioCRS.from_epsg(4326)
+        src_tr = src.transform
+    val = np.full((256, 256), np.nan, np.float32)
+    rio_reproject(source=np.ascontiguousarray(grid, np.float32), destination=val,
+                  src_transform=src_tr, src_crs=src_crs,
+                  dst_transform=_fb(west, south, east, north, 256, 256),
+                  dst_crs=RioCRS.from_epsg(3857), resampling=RioResampling.bilinear,
+                  src_nodata=np.nan, dst_nodata=np.nan)
+    finite = np.isfinite(val) & (alpha_forest > 10)
+    if not bool(finite.any()):
+        png = _blank_tile()
+    else:
+        norm = np.clip(np.nan_to_num(val, nan=0.0) / RADAR_VMAX, 0.0, 1.0).astype(np.float32)
+        img = np.zeros((256, 256, 4), np.uint8)
+        img[..., :3] = _YLGN_LUT[(norm * 255).astype(np.uint8)]
+        img[..., 3] = (np.clip(np.where(finite, 0.15 + 0.8 * norm, 0.0), 0, 1) * 255).astype(np.uint8)
+        import io
+        from PIL import Image
+        buf = io.BytesIO()
+        Image.fromarray(img, "RGBA").save(buf, format="PNG", optimize=False, compress_level=2)
+        png = buf.getvalue()
+    cache.parent.mkdir(parents=True, exist_ok=True)
+    cache.write_bytes(png)
+    return png
+
+
+def radar_tile_species(species_list, ref_date=None):
+    """Noms FR des espèces réellement affichées (en saison + servies) — pour la légende."""
+    served = set(fruiting_models())
+    if ref_date:
+        try:
+            month = datetime.datetime.strptime(str(ref_date), "%Y%m%d").month
+        except Exception:
+            month = datetime.date.today().month
+    else:
+        month = datetime.date.today().month
+    noms = {m["latin"]: m["nom"] for m in MUSHROOMS}
+    mset = {m["latin"]: set(m["months"]) for m in MUSHROOMS}
+    return [noms.get(s, s) for s in species_list
+            if s in served and month in mset.get(s, set())]
 
 
 # ===== Statut « propice » des spots enregistrés =====
@@ -543,6 +750,7 @@ def render_radar_overlay(species_list, ref_date: str | None = None):
 RADAR_VMAX = 0.60    # valeur radar brute (habitat×moment) correspondant à l'indice 100 %
 PROPICE_MIN = 0.30   # garde-fou absolu sur la valeur radar brute
 PROPICE_PCT = 70     # % de l'indice (vs RADAR_VMAX) requis pour « propice »
+FOREST_MASK_MIN = 0.05  # densité forêt (BD Forêt 1 km) mini pour AFFICHER le radar sur la maille
 
 
 def _radar_species_params():
