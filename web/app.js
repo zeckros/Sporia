@@ -263,9 +263,11 @@ async function refreshRadar() {
   }
   const d = (state.dates && state.dates.length) ? state.dates[state.dates.length - 1] : "";
   const spq = active.length ? "&sp=" + active.map(encodeURIComponent).join(",") : "";
-  // maxNativeZoom=16 (cache BD Forêt) → au-delà, Leaflet sur-échantillonne les tuiles.
+  // maxNativeZoom=13 : contours forêt pré-stockés jusqu'à z13 (cache disque, rendu net sans
+  // réseau) ; au-delà Leaflet sur-échantillonne la tuile z13 (la donnée radar est en mailles
+  // de 1 km, donc on ne perd quasi rien, et on évite les z14-16 = des Go de tuiles forêt).
   state.layers.radar = L.tileLayer(`/api/radar/tiles/{z}/{x}/{y}.png?d=${d}${spq}`,
-    { opacity: 1, tileSize: 256, maxZoom: 19, maxNativeZoom: 16, keepBuffer: 2, updateWhenIdle: false });
+    { opacity: 1, tileSize: 256, maxZoom: 19, maxNativeZoom: 13, keepBuffer: 2, updateWhenIdle: false });
   if (state.activeLayer === "radar") state.layers.radar.addTo(state.map);
   try {
     const q = active.length ? "?species=" + active.map(encodeURIComponent).join(",") : "";
