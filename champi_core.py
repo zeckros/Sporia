@@ -13,6 +13,8 @@ Sorties overlays : PNG écrits dans web/overlays/, servis en statique par FastAP
 from __future__ import annotations
 import hashlib
 import datetime
+import math
+import threading
 from functools import lru_cache
 from pathlib import Path
 
@@ -621,7 +623,15 @@ def render_radar_overlay(species_list, ref_date: str | None = None):
 _WORLD_3857 = 20037508.342789244
 _FOREST_TILE_DIR = MASK_CACHE / "foresttiles"     # cache permanent (couche statique)
 _RADAR_TILE_DIR = MASK_CACHE / "radartiles"       # cache par jour/sélection
+# Contour forêt du radar : tuile BD Forêt WMTS pixel-exacte (bordures NETTES) à partir de
+# ce zoom, masque baké 400 m en-dessous. Mis à 0 → contours nets À TOUS LES ZOOMS, servis
+# depuis le cache disque pré-rempli (scripts/bake_forest_tiles.py) : zéro réseau en régime
+# permanent. Le masque ne sert plus que de repli si une tuile WMTS manque encore au cache.
+# (Le zoom natif du radar est plafonné côté carte → on n'a jamais besoin de z > FOREST_MAX_Z.)
+FOREST_CRISP_ZOOM = 0
+FOREST_MAX_Z = 13                                 # zoom natif max pré-stocké (cf. app.js maxNativeZoom)
 _radar_grid_cache: dict = {}
+_radar_grid_lock = threading.Lock()
 _blank_png_bytes = None
 
 
@@ -646,9 +656,15 @@ def _blank_tile() -> bytes:
 
 def _forest_tile_alpha(z, x, y):
     """Alpha 256×256 de la tuile BD Forêt WMTS (z/x/y) = masque forêt. Cache disque
-    permanent (couche statique). None si hors couverture / indisponible."""
+    permanent (couche statique). None si hors couverture / indisponible.
+
+    Stockage : on ne garde que le CANAL ALPHA (PNG mode 'L', forêt/pas forêt) — pas les
+    couleurs des 32 types de forêt → cache ~6× plus léger (cf. scripts/bake_forest_tiles.py).
+    Lecture rétro-compatible avec d'anciennes tuiles RGBA."""
+    from PIL import Image
     fp = _FOREST_TILE_DIR / str(z) / str(x) / f"{y}.png"
     if not fp.exists():
+        import io
         import requests
         url = ("https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0"
                "&LAYER=LANDCOVER.FORESTINVENTORY.V2&STYLE=normal&TILEMATRIXSET=PM"
@@ -659,24 +675,90 @@ def _forest_tile_alpha(z, x, y):
             return None
         if r.status_code != 200 or "image" not in r.headers.get("content-type", ""):
             return None
+        try:
+            alpha = np.asarray(Image.open(io.BytesIO(r.content)).convert("RGBA"))[..., 3]
+        except Exception:
+            return None
         fp.parent.mkdir(parents=True, exist_ok=True)
-        fp.write_bytes(r.content)
+        Image.fromarray(alpha, "L").save(fp, format="PNG", optimize=True)  # alpha seul
+        return alpha
     try:
-        from PIL import Image
-        return np.asarray(Image.open(fp).convert("RGBA"))[..., 3]
+        im = Image.open(fp)
+        # nouveau format = 'L' (alpha seul) ; ancien = RGBA → on prend le canal alpha.
+        return np.asarray(im) if im.mode == "L" else np.asarray(im.convert("RGBA"))[..., 3]
     except Exception:
         return None
 
 
+def _forest_alpha_from_mask(z, x, y):
+    """Alpha 256×256 (uint8, 0/255) de la tuile z/x/y dérivée du MASQUE FORÊT BAKÉ en
+    mémoire (BD Forêt®, même source que `_forest_tile_alpha`) — SANS aucun appel réseau.
+    Renvoie None si le masque n'est pas baké ou si la tuile est hors couverture.
+
+    C'est le chemin rapide du « Radar à champignons » : clipper chaque tuile au contour
+    forêt sans aller chercher la tuile WMTS de l'IGN (un aller-retour HTTP bloquant par
+    tuile, dominant au changement de zoom)."""
+    fm = _forest_mask()
+    if fm is None:
+        return None
+    mask, (mw, ms, me, mn), _bounds = fm
+    H, W = mask.shape
+    px = (me - mw) / W            # taille pixel masque (m, 3857)
+    py = (mn - ms) / H
+    tw, ts, te, tn = _tile_bbox_3857(z, x, y)
+    # Fenêtre du masque couvrant la tuile (+1 px de marge), bornée à la grille.
+    c0 = max(0, int(math.floor((tw - mw) / px)) - 1)
+    c1 = min(W, int(math.ceil((te - mw) / px)) + 1)
+    r0 = max(0, int(math.floor((mn - tn) / py)) - 1)
+    r1 = min(H, int(math.ceil((mn - ts) / py)) + 1)
+    if c1 <= c0 or r1 <= r0:
+        return np.zeros((256, 256), np.uint8)   # hors emprise (océan/étranger) → pas de forêt
+    sub = mask[r0:r1, c0:c1]
+    if not sub.any():
+        return np.zeros((256, 256), np.uint8)   # dans l'emprise mais aucune forêt
+    from rasterio.transform import from_bounds as _fb
+    sw, se = mw + c0 * px, mw + c1 * px
+    sn, ss = mn - r0 * py, mn - r1 * py
+    dst = np.zeros((256, 256), np.float32)
+    rio_reproject(source=np.ascontiguousarray(sub, np.float32), destination=dst,
+                  src_transform=_fb(sw, ss, se, sn, sub.shape[1], sub.shape[0]),
+                  src_crs=RioCRS.from_epsg(3857),
+                  dst_transform=_fb(tw, ts, te, tn, 256, 256),
+                  dst_crs=RioCRS.from_epsg(3857), resampling=RioResampling.nearest)
+    return (dst > 0.5).astype(np.uint8) * 255
+
+
+_grid_ref_geo_cache: dict = {}
+
+
+def _grid_ref_geo(ref_path):
+    """(crs, transform) du raster de référence, mis en cache (constants → on évite de
+    rouvrir le GeoTIFF à chaque tuile)."""
+    key = str(ref_path)
+    if key not in _grid_ref_geo_cache:
+        with rasterio.open(key) as src:
+            _grid_ref_geo_cache[key] = (src.crs or RioCRS.from_epsg(4326), src.transform)
+    return _grid_ref_geo_cache[key]
+
+
 def _radar_grid(species_list, ref_date=None):
-    """Grille radar 1 km (habitat×pousse), mise en cache mémoire par (date, espèces)."""
+    """Grille radar 1 km (habitat×pousse), mise en cache mémoire par (date, espèces).
+
+    Verrou : au 1er chargement, le navigateur tire des dizaines de tuiles d'un coup, qui
+    réclament toutes la MÊME grille (non encore en cache). Sans verrou, chaque requête la
+    recalcule (~14 s × espèces) en parallèle → threadpool saturé, serveur figé. Le verrou
+    sérialise : un seul thread bâtit la grille, les autres attendent puis lisent le cache."""
     key = (ref_date or "_today", tuple(sorted(species_list)))
-    if key not in _radar_grid_cache:
-        if len(_radar_grid_cache) > 8:
-            _radar_grid_cache.clear()
-        _radar_grid_cache[key] = fruiting_live.radar(species_list, ref_date,
-                                                     params=_radar_species_params())
-    return _radar_grid_cache[key]
+    cached = _radar_grid_cache.get(key)
+    if cached is not None:
+        return cached
+    with _radar_grid_lock:
+        if key not in _radar_grid_cache:                 # double-check après acquisition
+            if len(_radar_grid_cache) > 8:
+                _radar_grid_cache.clear()
+            _radar_grid_cache[key] = fruiting_live.radar(species_list, ref_date,
+                                                         params=_radar_species_params())
+        return _radar_grid_cache[key]
 
 
 def radar_tile_png(z, x, y, species_list, ref_date=None) -> bytes:
@@ -694,14 +776,25 @@ def radar_tile_png(z, x, y, species_list, ref_date=None) -> bytes:
     ref = _grid_ref()
     if ref is None:
         return _blank_tile()
-    alpha_forest = _forest_tile_alpha(z, x, y)            # masque = contour forêt exact
+    # Contour forêt — stratégie HYBRIDE :
+    #  • zooms larges (z < FOREST_CRISP_ZOOM) : masque baké en mémoire (rapide, zéro réseau ;
+    #    à ces échelles 400 m << 1 px de tuile → bordure visuellement identique au WMTS).
+    #  • zooms serrés (z ≥ FOREST_CRISP_ZOOM) : tuile BD Forêt WMTS pixel-exacte (contours nets
+    #    « comme avant », là où l'aspect carré du masque deviendrait visible). Réseau au 1er
+    #    affichage puis cache disque permanent. Repli sur le masque si WMTS indisponible.
+    if z >= FOREST_CRISP_ZOOM:
+        alpha_forest = _forest_tile_alpha(z, x, y)
+        if alpha_forest is None:
+            alpha_forest = _forest_alpha_from_mask(z, x, y)
+    else:
+        alpha_forest = _forest_alpha_from_mask(z, x, y)
+        if alpha_forest is None:
+            alpha_forest = _forest_tile_alpha(z, x, y)
     if alpha_forest is None or not bool((alpha_forest > 10).any()):
         return _blank_tile()                              # hors forêt → rien (pas de cache)
     from rasterio.transform import from_bounds as _fb
     west, south, east, north = _tile_bbox_3857(z, x, y)
-    with rasterio.open(str(ref)) as src:
-        src_crs = src.crs or RioCRS.from_epsg(4326)
-        src_tr = src.transform
+    src_crs, src_tr = _grid_ref_geo(str(ref))
     val = np.full((256, 256), np.nan, np.float32)
     rio_reproject(source=np.ascontiguousarray(grid, np.float32), destination=val,
                   src_transform=src_tr, src_crs=src_crs,

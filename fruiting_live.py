@@ -117,7 +117,8 @@ def _fetch_recent_points(step=0.3, batch=150):
     P, V = [], []
     for i in range(0, len(pts), batch):
         chunk = pts[i:i + batch]
-        for attempt in range(4):
+        j = None                       # garanti défini même si tous les essais échouent
+        for attempt in range(4):       # (ex. 429 répété → on ne crashait plus sur `if not j`)
             try:
                 r = requests.get(FORECAST, params={
                     "latitude": ",".join(f"{la:.3f}" for la in chunk[:, 1]),
@@ -134,7 +135,10 @@ def _fetch_recent_points(step=0.3, batch=150):
                     j = None
                 time.sleep(4 * (attempt + 1))
         if not j:
-            continue
+            # Échec complet d'un chunk = Open-Meteo indisponible (429 / réseau). Inutile
+            # de marteler les ~10 chunks restants (minutes de `sleep`) : on abandonne le
+            # fetch live tout de suite et le caller se rabat sur le dernier cache météo.
+            break
         recs = j if isinstance(j, list) else [j]
         for pt, rec in zip(chunk, recs):
             f = _feats_from_daily(rec.get("daily", {}))
@@ -147,11 +151,29 @@ def _fetch_recent_points(step=0.3, batch=150):
 _wx_mem_cache: dict[str, dict] = {}
 
 
-def recent_temporal_grid(date_str: str | None = None, step=0.3):
+def _latest_wx_fallback(today):
+    """Dernière grille météo récente déjà calculée (repli quand celle du jour manque).
+    La météo varie peu d'un jour à l'autre → radar légèrement décalé mais PRÉSENT."""
+    fb = sorted(CACHE.glob("wx_recent_*.npz"))
+    if not fb:
+        return None
+    z = np.load(fb[-1])
+    grids = {k: z[k] for k in TEMPORAL}
+    _wx_mem_cache[today] = grids
+    print(f"[radar] meteo {today} indisponible -> repli sur {fb[-1].name}", flush=True)
+    return grids
+
+
+def recent_temporal_grid(date_str: str | None = None, step=0.3, allow_fetch=False):
     """Grilles 0.01° des 6 variables météo récentes (IDW depuis la grille grossière),
     mises en cache sur disque (npz) ET en mémoire par date — la lecture du npz (~40 Mo)
     coûte ~200 ms, donc on garde le dict décompressé en RAM pour les appels suivants
-    (point_report, radar, spots restent instantanés). Renvoie dict {feat: grid2d} ou None."""
+    (point_report, radar, spots restent instantanés). Renvoie dict {feat: grid2d} ou None.
+
+    `allow_fetch` : SEUL le prewarm (tâche de fond) interroge Open-Meteo pour bâtir la
+    grille du jour. Les requêtes interactives (radar, fiche point, spots) restent à False
+    → elles n'attendent JAMAIS le réseau : cache du jour si présent, sinon repli immédiat
+    sur la dernière grille disponible (évite de bloquer une tuile pendant les retries 429)."""
     today = date_str or dt.date.today().isoformat()
     if today in _wx_mem_cache:
         return _wx_mem_cache[today]
@@ -161,9 +183,11 @@ def recent_temporal_grid(date_str: str | None = None, step=0.3):
         grids = {k: z[k] for k in TEMPORAL}
         _wx_mem_cache[today] = grids
         return grids
+    if not allow_fetch:
+        return _latest_wx_fallback(today)
     P, V = _fetch_recent_points(step=step)
     if len(P) < 10:
-        return None
+        return _latest_wx_fallback(today)
     lonv = (LON0 + np.arange(GRID_W) * RES)
     latv = (LAT0 - np.arange(GRID_H) * RES)
     LON, LAT = np.meshgrid(lonv, latv)
@@ -354,7 +378,7 @@ def prewarm(date_str: str | None = None):
     l'endpoint /api/fruiting réponde vite). Appelé par le scheduler."""
     import time
     t0 = time.time()
-    grids = recent_temporal_grid(date_str)
+    grids = recent_temporal_grid(date_str, allow_fetch=True)   # seul appelant qui interroge Open-Meteo
     if grids is None:
         print("prewarm : météo récente indisponible", flush=True)
         return 1
