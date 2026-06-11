@@ -267,7 +267,11 @@ async function refreshRadar() {
   // réseau) ; au-delà Leaflet sur-échantillonne la tuile z13 (la donnée radar est en mailles
   // de 1 km, donc on ne perd quasi rien, et on évite les z14-16 = des Go de tuiles forêt).
   state.layers.radar = L.tileLayer(`/api/radar/tiles/{z}/{x}/{y}.png?d=${d}${spq}`,
-    { opacity: 1, tileSize: 256, maxZoom: 19, maxNativeZoom: 13, keepBuffer: 2, updateWhenIdle: false });
+    { opacity: 1, tileSize: 256, maxZoom: 19, maxNativeZoom: 13,
+      // updateWhenZooming:false → on ne réclame pas de tuiles pendant l'animation de zoom
+      // (elles apparaissent une fois le zoom posé → geste fluide). keepBuffer élargi → on
+      // garde plus de tuiles hors écran en cache → moins de rechargements en déplaçant.
+      keepBuffer: 4, updateWhenIdle: false, updateWhenZooming: false });
   if (state.activeLayer === "radar") state.layers.radar.addTo(state.map);
   try {
     const q = active.length ? "?species=" + active.map(encodeURIComponent).join(",") : "";
