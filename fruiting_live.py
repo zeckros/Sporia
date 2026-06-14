@@ -27,6 +27,7 @@ import requests
 import mushroom_map as mmap
 import soil_data
 import terrain_data
+import wx_features
 from interpret_day import idw
 
 GRID_H, GRID_W, RES = 1051, 1601, 0.01
@@ -34,10 +35,10 @@ LON0, LAT0 = -5.5, 51.5
 BBOX = (-5.5, 10.5, 41.0, 51.5)
 FORECAST = "https://api.open-meteo.com/v1/forecast"
 CACHE = Path("data/cache")
-WIN = 21
+WIN = wx_features.LONG          # jours de météo antécédente récupérés (cf. wx_features)
 
 STATIC = ["forest_density", "ph", "clay", "sand", "silt", "altitude", "slope", "northness"]
-TEMPORAL = ["rain7", "rain14", "rain21", "tmean14", "sm_mean", "days_since_rain"]
+TEMPORAL = wx_features.TEMPORAL  # ordre canonique partagé entraînement/live
 
 
 # Espèces NON servies dans le calque « pousse en ce moment » : modèle d'HABITAT
@@ -91,20 +92,9 @@ def _static_layers():
 
 
 def _feats_from_daily(d) -> list[float] | None:
-    """6 variables météo antécédentes depuis le bloc `daily` d'un point Open-Meteo.
-    Identique à train_fruiting.antecedent_wx (mêmes fenêtres / seuils / ordre)."""
-    pr = np.array([x if x is not None else np.nan for x in d.get("precipitation_sum", [])], float)
-    tm = np.array([x if x is not None else np.nan for x in d.get("temperature_2m_mean", [])], float)
-    sm = np.array([x if x is not None else np.nan for x in d.get("soil_moisture_0_to_7cm_mean", [])], float)
-    if pr.size < WIN:
-        return None
-    dsr = WIN
-    for k in range(len(pr) - 1, -1, -1):
-        if np.isfinite(pr[k]) and pr[k] >= 8.0:
-            dsr = (len(pr) - 1) - k
-            break
-    return [float(np.nansum(pr[-7:])), float(np.nansum(pr[-14:])), float(np.nansum(pr)),
-            float(np.nanmean(tm[-14:])), float(np.nanmean(sm[-7:])), float(dsr)]
+    """Variables météo antécédentes (ordre TEMPORAL) depuis le bloc `daily` d'un
+    point Open-Meteo. Délègue à wx_features (même calcul que l'entraînement)."""
+    return wx_features.features_list(d)
 
 
 def _fetch_recent_points(step=0.3, batch=150):
@@ -123,7 +113,7 @@ def _fetch_recent_points(step=0.3, batch=150):
                 r = requests.get(FORECAST, params={
                     "latitude": ",".join(f"{la:.3f}" for la in chunk[:, 1]),
                     "longitude": ",".join(f"{lo:.3f}" for lo in chunk[:, 0]),
-                    "daily": "precipitation_sum,temperature_2m_mean,soil_moisture_0_to_7cm_mean",
+                    "daily": wx_features.DAILY_VARS,
                     "past_days": WIN, "forecast_days": 1, "timezone": "UTC"}, timeout=60)
                 if r.status_code == 429:
                     time.sleep(12 * (attempt + 1)); continue
@@ -154,14 +144,15 @@ _wx_mem_cache: dict[str, dict] = {}
 def _latest_wx_fallback(today):
     """Dernière grille météo récente déjà calculée (repli quand celle du jour manque).
     La météo varie peu d'un jour à l'autre → radar légèrement décalé mais PRÉSENT."""
-    fb = sorted(CACHE.glob("wx_recent_*.npz"))
-    if not fb:
-        return None
-    z = np.load(fb[-1])
-    grids = {k: z[k] for k in TEMPORAL}
-    _wx_mem_cache[today] = grids
-    print(f"[radar] meteo {today} indisponible -> repli sur {fb[-1].name}", flush=True)
-    return grids
+    for f in reversed(sorted(CACHE.glob("wx_recent_*.npz"))):
+        z = np.load(f)
+        if not all(k in z for k in TEMPORAL):       # cache d'un ancien jeu de variables → ignoré
+            continue
+        grids = {k: z[k] for k in TEMPORAL}
+        _wx_mem_cache[today] = grids
+        print(f"[radar] meteo {today} indisponible -> repli sur {f.name}", flush=True)
+        return grids
+    return None
 
 
 def recent_temporal_grid(date_str: str | None = None, step=0.3, allow_fetch=False):
@@ -180,9 +171,10 @@ def recent_temporal_grid(date_str: str | None = None, step=0.3, allow_fetch=Fals
     cache = CACHE / f"wx_recent_{today.replace('-', '')}.npz"
     if cache.exists():
         z = np.load(cache)
-        grids = {k: z[k] for k in TEMPORAL}
-        _wx_mem_cache[today] = grids
-        return grids
+        if all(k in z for k in TEMPORAL):           # sinon : cache d'un ancien jeu → on régénère
+            grids = {k: z[k] for k in TEMPORAL}
+            _wx_mem_cache[today] = grids
+            return grids
     if not allow_fetch:
         return _latest_wx_fallback(today)
     P, V = _fetch_recent_points(step=step)

@@ -49,6 +49,12 @@ BLOCK_DEG = 0.75                    # taille des blocs spatiaux de validation
 # (1051×1601) est ajouté automatiquement (bake via scripts/bake_worldclim.py).
 STATIC_FEATURES = ["forest_density", "ph", "clay", "sand", "silt",
                    "altitude", "slope", "northness"]
+# Prédicteurs d'habitat supplémentaires (bakes dédiés), chargés par nom de fichier s'ils
+# existent — valides partout (≠ host_*, qui est NaN hors-forêt et propre à la guilde) :
+#   twi/tpi/dist_water/slope_dem (humidité topographique, bake_terrain_wetness.py),
+#   soc/cec (matière organique & fertilité du sol, bake_soil_extra.py),
+#   edge_density (lisières, bake_forest_edge.py).
+EXTRA_STATIC = ["twi", "tpi", "dist_water", "slope_dem", "soc", "cec", "edge_density"]
 # Proxys géographiques : utilisés UNIQUEMENT en l'absence de couches climat réelles
 # (sinon lat/lon dominent et provoquent un sur-apprentissage spatial — cf. #3).
 GEO_PROXY = ["lat", "lon"]
@@ -86,6 +92,17 @@ def load_layers():
         "lat": latv, "lon": lonv,
     }
     feats = list(STATIC_FEATURES)
+    for name in EXTRA_STATIC:                                     # prédicteurs habitat dédiés
+        p = Path("data/cache") / f"{name}.npy"
+        try:
+            if p.exists():
+                arr = np.load(p)
+                if arr.shape == (GRID_H, GRID_W):
+                    layers[name] = arr.astype(np.float32)
+                    feats.append(name)
+                    print(f"  + couche habitat {name}")
+        except Exception:
+            pass
     clim = []
     for f in sorted(Path("data/cache").glob("clim_*.npy")):       # hook WorldClim/CHELSA
         try:

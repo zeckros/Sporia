@@ -46,7 +46,10 @@ WC_DIR = CACHE / "worldclim"
 BASE_URL = "https://geodata.ucdavis.edu/climate/worldclim/2_1/base"
 
 # variable bioclim → nom de sortie clim_<nom>.npy
-WANT = {1: "bio1", 4: "bio4", 6: "bio6", 12: "bio12", 15: "bio15", 18: "bio18"}
+#   bio5  T° max du mois le plus chaud (stress thermique estival, espèces thermophiles)
+#   bio17 précip. du trimestre le plus sec (sécheresse estivale → mémoire hydrique)
+WANT = {1: "bio1", 4: "bio4", 5: "bio5", 6: "bio6",
+        12: "bio12", 15: "bio15", 17: "bio17", 18: "bio18"}
 
 
 def download_zip(res: str) -> Path:

@@ -30,17 +30,20 @@ import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import champi_core as core                      # noqa: E402
+import wx_features                              # noqa: E402  (features météo partagées)
 from train_sdm import (load_layers, cell_rc, match_key, blocks, boyce_index,  # noqa: E402
                        GRID_H, GRID_W, BBOX, GBIF_OCC)
 
 ARCHIVE = "https://archive-api.open-meteo.com/v1/archive"
-WX_DIR = Path("data/cache/wx_archive")
+# v2 : jeu de variables enrichi (ET0, tmax/tmin, humidité 7-28 cm) → nouveau dossier de
+# cache pour ne PAS réutiliser les anciens JSON à 3 variables.
+WX_DIR = Path("data/cache/wx_archive_v2")
 WX_DIR.mkdir(parents=True, exist_ok=True)
 
 STATIC = ["forest_density", "ph", "clay", "sand", "silt", "altitude", "slope", "northness"]
-TEMPORAL = ["rain7", "rain14", "rain21", "tmean14", "sm_mean", "days_since_rain"]
+TEMPORAL = wx_features.TEMPORAL                  # ordre canonique partagé entraînement/live
 FEATURES = STATIC + TEMPORAL
-WIN = 21  # jours de météo antécédente
+WIN = wx_features.LONG  # jours de météo antécédente récupérés
 MAX_PER_CELL = 6  # plafond d'occurrences par maille (amincissement anti-biais GBIF)
 
 
@@ -96,7 +99,7 @@ def antecedent_wx(lat, lon, date_str):
                 r = requests.get(ARCHIVE, params={
                     "latitude": round(lat, 3), "longitude": round(lon, 3),
                     "start_date": start.isoformat(), "end_date": end.isoformat(),
-                    "daily": "precipitation_sum,temperature_2m_mean,soil_moisture_0_to_7cm_mean",
+                    "daily": wx_features.DAILY_VARS,
                     "timezone": "UTC"}, timeout=40)
                 if r.status_code == 429:
                     time.sleep(12 * (attempt + 1)); continue
@@ -112,21 +115,7 @@ def antecedent_wx(lat, lon, date_str):
         fp.write_text(json.dumps(d))
         time.sleep(0.2)
 
-    pr = np.array([x if x is not None else np.nan for x in d.get("precipitation_sum", [])], float)
-    tm = np.array([x if x is not None else np.nan for x in d.get("temperature_2m_mean", [])], float)
-    sm = np.array([x if x is not None else np.nan for x in d.get("soil_moisture_0_to_7cm_mean", [])], float)
-    if pr.size < WIN:
-        return None
-    dsr = WIN
-    for k in range(len(pr) - 1, -1, -1):
-        if np.isfinite(pr[k]) and pr[k] >= 8.0:
-            dsr = (len(pr) - 1) - k
-            break
-    return {
-        "rain7": float(np.nansum(pr[-7:])), "rain14": float(np.nansum(pr[-14:])),
-        "rain21": float(np.nansum(pr)), "tmean14": float(np.nanmean(tm[-14:])),
-        "sm_mean": float(np.nanmean(sm[-7:])), "days_since_rain": float(dsr),
-    }
+    return wx_features.features_from_daily(d)
 
 
 def sample_static(layers, lon, lat):
