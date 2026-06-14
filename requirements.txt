@@ -15,8 +15,11 @@ idna>=3.15
 matplotlib
 Pillow>=12.2.0
 
-# Modèle SDM probabiliste (optionnel — scripts/train_sdm.py)
-scikit-learn
+# Modèle SDM probabiliste (scripts/train_sdm.py + scoring fruiting_live).
+# Version ÉPINGLÉE : les modèles .pkl sont sensibles à la version de sklearn au
+# (dé)picklage — un écart entraînement/serveur fausse les prédictions. Garder
+# entraînement local et serveur sur la même mineure (1.8.x).
+scikit-learn>=1.8,<1.9
 
 # Application web (server.py + champi_core.py + web/)
 fastapi
