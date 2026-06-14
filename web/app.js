@@ -452,7 +452,7 @@ function updateActiveLayerName() {
   const el = document.getElementById("active-layer-name");
   if (!el) return;
   el.textContent = LAYER_NAMES[state.activeLayer] || "";
-  el.classList.toggle("hidden", state.godmode || !el.textContent);   // caché quand le volet est ouvert
+  el.classList.toggle("hidden", !el.textContent);   // titre TOUJOURS visible (sauf si vide)
 }
 
 /* ---------- Calques exclusifs (un seul affiché à la fois) ---------- */

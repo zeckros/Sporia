@@ -143,11 +143,31 @@
             <a href="#contact" class="px-7 py-3 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold shadow-soft hover:bg-slate-50 transition">Demander un accès</a>
           </div>
 
-          <!-- Bandeau de confiance -->
-          <div class="mt-7 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-semibold text-slate-400">
-            <span class="flex items-center gap-1.5"><span class="text-brand-500 text-[8px]">●</span> France entière</span>
-            <span class="flex items-center gap-1.5"><span class="text-brand-500 text-[8px]">●</span> 13 espèces modélisées</span>
-            <span class="flex items-center gap-1.5"><span class="text-brand-500 text-[8px]">●</span> Données IGN &amp; Météo-France</span>
+          <!-- Chiffres clés (preuve de sérieux du modèle) -->
+          <div class="mt-7 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <div class="rounded-xl bg-white/70 border border-slate-200 shadow-soft px-3 py-2 text-center">
+              <div class="text-xl font-black text-brand-600 leading-none">40+</div>
+              <div class="mt-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400 leading-tight">paramètres croisés</div>
+            </div>
+            <div class="rounded-xl bg-white/70 border border-slate-200 shadow-soft px-3 py-2 text-center">
+              <div class="text-xl font-black text-brand-600 leading-none">13</div>
+              <div class="mt-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400 leading-tight">espèces modélisées</div>
+            </div>
+            <div class="rounded-xl bg-white/70 border border-slate-200 shadow-soft px-3 py-2 text-center">
+              <div class="text-xl font-black text-brand-600 leading-none">0,90</div>
+              <div class="mt-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400 leading-tight">indice de Boyce<span class="normal-case font-medium"> (fiabilité)</span></div>
+            </div>
+            <div class="rounded-xl bg-white/70 border border-slate-200 shadow-soft px-3 py-2 text-center">
+              <div class="text-xl font-black text-brand-600 leading-none">2&nbsp;M</div>
+              <div class="mt-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400 leading-tight">parcelles de forêt</div>
+            </div>
+          </div>
+
+          <!-- Bandeau de confiance (sources) -->
+          <div class="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-semibold text-slate-400">
+            <span class="flex items-center gap-1.5"><span class="text-brand-500 text-[8px]">●</span> France entière · maille 1&nbsp;km</span>
+            <span class="flex items-center gap-1.5"><span class="text-brand-500 text-[8px]">●</span> Modèle probabiliste (SDM) validé</span>
+            <span class="flex items-center gap-1.5"><span class="text-brand-500 text-[8px]">●</span> IGN · SoilGrids · Copernicus · Open-Meteo</span>
           </div>
         </div>
 
@@ -258,11 +278,14 @@
           <h2 class="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">Une carte qui raisonne comme un mycologue.</h2>
           <p class="mt-4 text-slate-500 text-base sm:text-lg leading-relaxed">
             Le <strong class="text-slate-700">radar</strong> agrège, pour vos espèces, le bon habitat
-            <em>et</em> les bonnes conditions du moment. Cliquez n'importe où : essence forestière,
-            pluie sur 7 et 15 jours, température, humidité du sol — tout est lu sur place.
+            <em>et</em> les bonnes conditions du moment. Sous le capot : un modèle probabiliste qui croise
+            <strong class="text-slate-700">l'essence d'arbre précise</strong> (BD&nbsp;Forêt® IGN), le
+            <strong class="text-slate-700">sol</strong> (pH, texture, carbone), le <strong class="text-slate-700">climat</strong>,
+            l'<strong class="text-slate-700">humidité topographique</strong> et le <strong class="text-slate-700">bilan
+            hydrique</strong> de la météo récente. Cliquez n'importe où : tout est lu sur place.
           </p>
           <ul class="mt-6 space-y-2.5 text-slate-600">
-            <li class="flex items-start gap-2.5"><svg class="w-5 h-5 text-brand-500 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.6 13.4l-3-3 1.4-1.4 1.6 1.6 4.2-4.2 1.4 1.4-5.6 5.6z"/></svg><span>Calques pluie, température, sol, relief &amp; densité forestière.</span></li>
+            <li class="flex items-start gap-2.5"><svg class="w-5 h-5 text-brand-500 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.6 13.4l-3-3 1.4-1.4 1.6 1.6 4.2-4.2 1.4 1.4-5.6 5.6z"/></svg><span>Calques essences, pluie, température, sol, relief &amp; densité forestière.</span></li>
             <li class="flex items-start gap-2.5"><svg class="w-5 h-5 text-brand-500 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.6 13.4l-3-3 1.4-1.4 1.6 1.6 4.2-4.2 1.4 1.4-5.6 5.6z"/></svg><span>Conditions colorées <span class="text-green-600 font-semibold">favorables</span> / <span class="text-amber-600 font-semibold">limitantes</span>, par espèce.</span></li>
             <li class="flex items-start gap-2.5"><svg class="w-5 h-5 text-brand-500 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.6 13.4l-3-3 1.4-1.4 1.6 1.6 4.2-4.2 1.4 1.4-5.6 5.6z"/></svg><span>Recherche par commune et géolocalisation sur mobile.</span></li>
           </ul>
@@ -606,9 +629,9 @@
     <div class="flex-1 flex min-h-0 relative">
       <!-- Sidebar : tiroir ABSOLU par-dessus la carte (glissement fluide, pas de reflow) -->
       <aside id="sidebar" class="absolute inset-y-0 left-0 z-[900] w-96 max-w-[85vw] transition-transform duration-300 will-change-transform">
-        <div class="h-full overflow-y-auto nice-scroll bg-white border-r border-slate-200 shadow-card p-4 space-y-5">
+        <div class="h-full flex flex-col gap-4 bg-white border-r border-slate-200 shadow-card p-4">
         <!-- Recherche -->
-        <div>
+        <div class="shrink-0">
           <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Rechercher</label>
           <div class="flex gap-2">
             <button id="geolocate-btn" type="button" title="Me localiser"
@@ -621,8 +644,35 @@
           <div id="city-results" class="mt-1 space-y-1"></div>
         </div>
 
-        <!-- Panneau calques (caché par défaut) -->
-        <div id="layers-panel" class="hidden space-y-5">
+        <!-- Titre du calque actif — TOUJOURS visible, en évidence (« en gros ») -->
+        <div id="active-layer-name" class="shrink-0 text-lg font-black text-brand-700 leading-snug"></div>
+
+        <!-- Zone légende + espèces : flex-1 scrollable → footprint CONSTANT, donc le bouton
+             ci-dessous NE BOUGE PAS quand on change de calque (la hauteur de légende varie). -->
+        <div class="flex-1 min-h-0 overflow-y-auto nice-scroll space-y-4 pr-0.5">
+          <!-- Légende du calque actif -->
+          <div id="active-legend-wrap">
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Légende</label>
+            <div id="active-legend" class="rounded-xl border border-slate-200 bg-white shadow-soft p-3 text-xs text-slate-500"></div>
+          </div>
+
+          <!-- Champignons affichés sur le radar (sous-ensemble de « Mes champignons ») — radar uniquement -->
+          <div id="radar-species" class="hidden">
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Radar à champignons</label>
+            <div id="radar-species-list" class="space-y-0.5"></div>
+          </div>
+        </div>
+
+        <!-- Bouton « Fou des champignons » : épinglé (shrink-0) sous la zone légende → position
+             STABLE au changement de calque. Déplie / replie le sélecteur de calques ci-dessous. -->
+        <button id="godmode-btn"
+                class="shrink-0 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold shadow-card transition">
+          <span class="text-lg leading-none">🍄</span>
+          <span id="godmode-label">Fou des champignons</span>
+        </button>
+
+        <!-- Sélecteur de calques (déplié par le bouton) + période -->
+        <div id="layers-panel" class="hidden shrink-0 space-y-5 overflow-y-auto nice-scroll">
           <!-- Calques (exclusifs : un seul affiché à la fois) -->
           <div>
             <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Afficher un calque</label>
@@ -648,30 +698,6 @@
             </div>
             <div id="period-label" class="mt-2 text-xs font-semibold text-slate-500 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5"></div>
           </div>
-        </div>
-
-        <!-- Titre du calque sélectionné — visible quand le volet est replié -->
-        <div id="active-layer-name" class="hidden text-center text-sm font-bold text-brand-700 bg-brand-50 border border-brand-100 rounded-xl px-3 py-2"></div>
-
-        <!-- Bouton « Fou des champignons » : déplie / replie le volet. Placé APRÈS le panneau
-             → volet ouvert, la légende reste au-dessus du bouton « Réduire les calques ». -->
-        <button id="godmode-btn"
-                class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold shadow-card transition">
-          <span class="text-lg leading-none">🍄</span>
-          <span id="godmode-label">Fou des champignons</span>
-        </button>
-
-        <!-- Champignons affichés sur le radar (sous-ensemble de « Mes champignons ») —
-             HORS du volet calques → visible même quand le volet est replié. -->
-        <div id="radar-species" class="hidden">
-          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Radar à champignons</label>
-          <div id="radar-species-list" class="space-y-0.5"></div>
-        </div>
-
-        <!-- Légende du calque actif — tout en bas (visible quand le volet calques est replié) -->
-        <div id="active-legend-wrap">
-          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Légende</label>
-          <div id="active-legend" class="rounded-xl border border-slate-200 bg-white shadow-soft p-3 text-xs text-slate-500"></div>
         </div>
         </div><!-- /scroll -->
         <!-- Flèche au bord : replie (« ) / déploie ( » ) la barre — glisse avec elle -->
