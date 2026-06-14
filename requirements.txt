@@ -16,10 +16,11 @@ matplotlib
 Pillow>=12.2.0
 
 # Modèle SDM probabiliste (scripts/train_sdm.py + scoring fruiting_live).
-# Version ÉPINGLÉE : les modèles .pkl sont sensibles à la version de sklearn au
-# (dé)picklage — un écart entraînement/serveur fausse les prédictions. Garder
-# entraînement local et serveur sur la même mineure (1.8.x).
-scikit-learn>=1.8,<1.9
+# Version ÉPINGLÉE sur 1.7.x : les modèles .pkl sont sensibles à la version de sklearn
+# au (dé)picklage. Le serveur prod est en Python 3.10 → sklearn plafonne à 1.7.2
+# (1.8+ exige Python ≥ 3.11). On entraîne donc les modèles en 1.7.x pour qu'ils
+# chargent sans avertissement ni résultat faussé côté serveur.
+scikit-learn>=1.7,<1.8
 
 # Application web (server.py + champi_core.py + web/)
 fastapi
