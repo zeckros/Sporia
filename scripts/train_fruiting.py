@@ -21,6 +21,7 @@ import argparse
 import datetime as dt
 import hashlib
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -91,6 +92,8 @@ def antecedent_wx(lat, lon, date_str):
     fp = WX_DIR / f"{key}.json"
     if fp.exists():
         d = json.loads(fp.read_text())
+    elif os.environ.get("WX_CACHE_ONLY"):
+        return None                                  # mode hors-ligne : pas d'appel réseau sur cache-miss
     else:
         end = dt.date.fromisoformat(date_str)
         start = end - dt.timedelta(days=WIN)
