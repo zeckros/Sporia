@@ -52,7 +52,7 @@ const LEVEL = {
 const state = {
   dates: [], period: "jour", selectedDates: [],
   map: null, layers: {}, lastPoint: null, name: null,
-  species: null, allSpecies: [], godmode: false, activeLayer: "radar", legendData: {},
+  species: null, allSpecies: [], godmode: false, activeLayer: "radar", legendData: {}, legendMaxH: 0,
   spots: [], spotLayer: null, lastSpot: null,
   radarSpecies: null,   // sous-ensemble actif sur le calque radar (null = toute la pré-sélection)
   tab: "carte",
@@ -438,8 +438,17 @@ function updateLegend() {
   const wrap = document.getElementById("active-legend-wrap");
   document.getElementById("active-legend").innerHTML = html;
   wrap.classList.toggle("hidden", !html);
-  updateRadarSpecies();      // liste des espèces du radar (affichée/masquée selon le calque)
-  updateActiveLayerName();   // titre du calque sélectionné (visible quand le volet est replié)
+  updateRadarSpecies();      // liste des espèces du radar (peuple #radar-species)
+  updateActiveLayerName();   // titre du calque (toujours visible)
+  // Hauteur de la zone légende = la PLUS GRANDE hauteur de contenu observée (légende +
+  // sélecteur d'espèces du radar = le plus haut) → empreinte fixe, le bouton ne bouge pas.
+  // On mesure le contenu réel du calque courant et on ne garde que le max (jamais réduit).
+  const region = document.getElementById("legend-region");
+  if (region) {
+    region.style.height = "auto";                 // libère pour mesurer le contenu réel
+    state.legendMaxH = Math.max(state.legendMaxH || 0, region.scrollHeight);
+    region.style.height = (state.legendMaxH + 12) + "px";   // +12 : absorbe arrondis / gouttière → pas de scroll
+  }
 }
 
 // Noms lisibles des calques (pour le titre affiché quand le volet est replié).

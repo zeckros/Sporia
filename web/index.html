@@ -647,10 +647,10 @@
         <!-- Titre du calque actif — TOUJOURS visible, en évidence (« en gros ») -->
         <div id="active-layer-name" class="text-lg font-black text-brand-700 leading-snug"></div>
 
-        <!-- Zone légende + espèces : HAUTEUR FIXE (calée sur le calque radar, le plus haut)
-             → empreinte constante ; le bouton ci-dessous reste à une position STABLE au changement
-             de calque, sans être collé au bas du volet. Dépassement éventuel : défile dans la zone. -->
-        <div id="legend-region" class="h-72 overflow-y-auto nice-scroll space-y-4 pr-0.5">
+        <!-- Zone légende + espèces : hauteur fixée EN JS à la plus grande hauteur de contenu
+             observée (légende + sélecteur d'espèces du radar = le plus haut) → empreinte constante,
+             le bouton ci-dessous reste STABLE au changement de calque, sans être collé au bas. -->
+        <div id="legend-region" class="overflow-y-auto nice-scroll space-y-4 pr-0.5">
           <!-- Légende du calque actif -->
           <div id="active-legend-wrap">
             <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Légende</label>
