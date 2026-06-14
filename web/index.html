@@ -629,9 +629,9 @@
     <div class="flex-1 flex min-h-0 relative">
       <!-- Sidebar : tiroir ABSOLU par-dessus la carte (glissement fluide, pas de reflow) -->
       <aside id="sidebar" class="absolute inset-y-0 left-0 z-[900] w-96 max-w-[85vw] transition-transform duration-300 will-change-transform">
-        <div class="h-full flex flex-col gap-4 bg-white border-r border-slate-200 shadow-card p-4">
+        <div class="h-full overflow-y-auto nice-scroll bg-white border-r border-slate-200 shadow-card p-4 space-y-5">
         <!-- Recherche -->
-        <div class="shrink-0">
+        <div>
           <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Rechercher</label>
           <div class="flex gap-2">
             <button id="geolocate-btn" type="button" title="Me localiser"
@@ -645,11 +645,12 @@
         </div>
 
         <!-- Titre du calque actif — TOUJOURS visible, en évidence (« en gros ») -->
-        <div id="active-layer-name" class="shrink-0 text-lg font-black text-brand-700 leading-snug"></div>
+        <div id="active-layer-name" class="text-lg font-black text-brand-700 leading-snug"></div>
 
-        <!-- Zone légende + espèces : flex-1 scrollable → footprint CONSTANT, donc le bouton
-             ci-dessous NE BOUGE PAS quand on change de calque (la hauteur de légende varie). -->
-        <div class="flex-1 min-h-0 overflow-y-auto nice-scroll space-y-4 pr-0.5">
+        <!-- Zone légende + espèces : HAUTEUR FIXE (calée sur le calque radar, le plus haut)
+             → empreinte constante ; le bouton ci-dessous reste à une position STABLE au changement
+             de calque, sans être collé au bas du volet. Dépassement éventuel : défile dans la zone. -->
+        <div id="legend-region" class="h-72 overflow-y-auto nice-scroll space-y-4 pr-0.5">
           <!-- Légende du calque actif -->
           <div id="active-legend-wrap">
             <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Légende</label>
@@ -663,16 +664,16 @@
           </div>
         </div>
 
-        <!-- Bouton « Fou des champignons » : épinglé (shrink-0) sous la zone légende → position
+        <!-- Bouton « Fou des champignons » : sous la zone légende à hauteur fixe → position
              STABLE au changement de calque. Déplie / replie le sélecteur de calques ci-dessous. -->
         <button id="godmode-btn"
-                class="shrink-0 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold shadow-card transition">
+                class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold shadow-card transition">
           <span class="text-lg leading-none">🍄</span>
           <span id="godmode-label">Fou des champignons</span>
         </button>
 
         <!-- Sélecteur de calques (déplié par le bouton) + période -->
-        <div id="layers-panel" class="hidden shrink-0 space-y-5 overflow-y-auto nice-scroll">
+        <div id="layers-panel" class="hidden space-y-5">
           <!-- Calques (exclusifs : un seul affiché à la fois) -->
           <div>
             <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Afficher un calque</label>
