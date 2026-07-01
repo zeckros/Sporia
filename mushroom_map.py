@@ -410,10 +410,8 @@ def _altitude_fit(alt_grid, alt_opt):
     return np.where(np.isnan(alt_grid), 1.0, f).astype(np.float32)
 
 
-# Pondération exposition par mois : >0 favorise les versants nord (frais/humides),
-# <0 favorise les versants sud (plus chauds). Été→nord, fin d'automne/hiver→sud.
-_ASPECT_W = {1: -0.10, 2: -0.10, 3: 0.05, 4: 0.05, 5: 0.05, 6: 0.10,
-             7: 0.10, 8: 0.10, 9: -0.05, 10: -0.05, 11: -0.10, 12: -0.10}
+# _ASPECT_W (pondération saisonnière d'exposition) est désormais canonisé dans le domaine.
+from sporia.domain.suitability import _ASPECT_W
 
 
 def _aspect_fit(north_grid, month):

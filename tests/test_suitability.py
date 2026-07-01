@@ -64,3 +64,18 @@ def test_suitability_partial_when_dry_and_no_recent_rain():
     }
     label, level, prio, phm = core.mushroom_suitability(CEPE, w, soil={"ph": 5.5})
     assert level in {"mid", "bad"}
+
+
+def test_suitability_importable_from_domain():
+    from sporia.domain.suitability import _ph_match, mushroom_suitability
+
+    assert _ph_match(5.5, (4.5, 6.5)) == "ok"
+    w = {
+        "month": 3,
+        "temp_mean": 15,
+        "soil_temp": 14,
+        "days_since_rain": 8,
+        "rain14": 40,
+        "soil_moisture": 0.3,
+    }
+    assert mushroom_suitability(CEPE, w)[0] == "Hors saison"
