@@ -35,6 +35,7 @@ import mushroom_map as mmap
 import soil_data
 import terrain_data
 import fruiting_live
+from sporia.domain.species import MUSHROOMS
 
 # ===== Configuration =====
 DATA_DIR = Path("output/tiff")
@@ -55,70 +56,6 @@ FOREST_DISPLAY_FULL = 0.40  # au-dessus, opacité maximale
 MONTHS_FR =["janvier", "février", "mars", "avril", "mai", "juin", "juillet",
              "août", "septembre", "octobre", "novembre", "décembre"]
 
-# Champignons comestibles de France. Champs :
-#   months, t_min/t_max (T° air propice), rain_lag/rain_min (délai & cumul post-pluie),
-#   habitat ; ph_opt = plage de pH du sol favorable (calcicole vs acidophile),
-#   soil_pref = libellé sol affiché. Le pH est documenté en mycologie (les bolets/
-#   girolles/chanterelles sont acidophiles ; morilles & mousseron calcicoles ; le
-#   pleurote, saprophyte du bois mort, est indifférent au pH du sol).
-MUSHROOMS = [
-    {"nom": "Morille", "latin": "Morchella esculenta", "color": "#a16207",
-     "months": {3, 4, 5}, "t_min": 8, "t_max": 16, "rain_lag": (5, 16), "rain_min": 15,
-     "ph_opt": (6.5, 8.0), "soil_pref": "Calcicole (sols calcaires/neutres)",
-     "habitat": "Frênes, ormes, vergers, sols calcaires, anciennes coupes/brûlures"},
-    {"nom": "Mousseron de la St-Georges", "latin": "Calocybe gambosa", "color": "#ca8a04",
-     "months": {4, 5}, "t_min": 10, "t_max": 17, "rain_lag": (4, 12), "rain_min": 12,
-     "ph_opt": (6.3, 7.8), "soil_pref": "Sols neutres à calcaires",
-     "habitat": "Prés, lisières, ronds de sorcière (« mousseron de printemps »)"},
-    {"nom": "Cèpe d'été / bronzé", "latin": "Boletus aereus", "color": "#92400e",
-     "months": {6, 7, 8, 9}, "t_min": 16, "t_max": 25, "rain_lag": (6, 13), "rain_min": 20,
-     "ph_opt": (5.0, 7.0), "soil_pref": "Sols acides à neutres", "alt_opt": (0, 900),
-     "habitat": "Chênes, châtaigniers, zones chaudes ensoleillées (plaine/colline)"},
-    {"nom": "Girolle / Chanterelle", "latin": "Cantharellus cibarius", "color": "#eab308",
-     "months": {6, 7, 8, 9, 10}, "t_min": 14, "t_max": 23, "rain_lag": (2, 8), "rain_min": 10,
-     "ph_opt": (4.3, 6.0), "soil_pref": "Acidophile (sols acides, moussus)",
-     "habitat": "Feuillus & conifères, mousses, talus"},
-    {"nom": "Cèpe de Bordeaux", "latin": "Boletus edulis", "color": "#854d0e",
-     "months": {8, 9, 10, 11}, "t_min": 12, "t_max": 20, "rain_lag": (7, 16), "rain_min": 20,
-     "ph_opt": (4.5, 6.5), "soil_pref": "Sols acides à neutres",
-     "habitat": "Chênes, hêtres, châtaigniers, épicéas"},
-    {"nom": "Coulemelle (lépiote élevée)", "latin": "Macrolepiota procera", "color": "#a8a29e",
-     "months": {7, 8, 9, 10, 11}, "t_min": 12, "t_max": 20, "rain_lag": (4, 11), "rain_min": 12,
-     "ph_opt": (5.5, 7.5), "soil_pref": "Sols neutres, riches",
-     "habitat": "Prés, lisières, clairières, bords de chemins"},
-    {"nom": "Rosé des prés", "latin": "Agaricus campestris", "color": "#fb7185",
-     "months": {8, 9, 10}, "t_min": 12, "t_max": 20, "rain_lag": (3, 9), "rain_min": 12,
-     "ph_opt": (6.0, 7.5), "soil_pref": "Sols neutres riches (prairies)",
-     "habitat": "Prairies pâturées, pelouses (non traitées)"},
-    {"nom": "Trompette de la mort", "latin": "Craterellus cornucopioides", "color": "#334155",
-     "months": {9, 10, 11}, "t_min": 8, "t_max": 17, "rain_lag": (5, 13), "rain_min": 12,
-     "ph_opt": (5.0, 7.2), "soil_pref": "Sols acides à calcaires, humides",
-     "habitat": "Feuillus (hêtres, charmes), sols humides moussus"},
-    {"nom": "Chanterelle en tube", "latin": "Craterellus tubaeformis", "color": "#d97706",
-     "months": {9, 10, 11, 12}, "t_min": 5, "t_max": 15, "rain_lag": (5, 13), "rain_min": 10,
-     "ph_opt": (4.0, 5.5), "soil_pref": "Acidophile (conifères, mousses)",
-     "habitat": "Conifères, mousses, sols acides"},
-    {"nom": "Pied de mouton", "latin": "Hydnum repandum", "color": "#d6d3d1",
-     "months": {9, 10, 11, 12}, "t_min": 6, "t_max": 15, "rain_lag": (5, 13), "rain_min": 12,
-     "ph_opt": (4.5, 6.5), "soil_pref": "Sols acides à neutres",
-     "habitat": "Feuillus & conifères, après écart de température sol/air"},
-    {"nom": "Lactaire délicieux", "latin": "Lactarius deliciosus", "color": "#ea580c",
-     "months": {9, 10, 11}, "t_min": 8, "t_max": 16, "rain_lag": (5, 12), "rain_min": 12,
-     "ph_opt": (5.5, 7.5), "soil_pref": "Sols neutres à calcaires (pins)",
-     "habitat": "Pins et conifères"},
-    {"nom": "Bolet bai", "latin": "Imleria badia", "color": "#78350f",
-     "months": {8, 9, 10, 11}, "t_min": 8, "t_max": 18, "rain_lag": (6, 13), "rain_min": 15,
-     "ph_opt": (4.0, 5.8), "soil_pref": "Acidophile (conifères)",
-     "habitat": "Conifères surtout, parfois feuillus"},
-    {"nom": "Pied bleu", "latin": "Lepista nuda", "color": "#7c3aed",
-     "months": {10, 11, 12}, "t_min": 4, "t_max": 13, "rain_lag": (5, 15), "rain_min": 12,
-     "ph_opt": (5.5, 7.5), "soil_pref": "Sols neutres, litière riche",
-     "habitat": "Feuillus, tas de feuilles, composts ; résiste au frais"},
-    {"nom": "Pleurote en huître", "latin": "Pleurotus ostreatus", "color": "#64748b",
-     "months": {11, 12, 1, 2}, "t_min": 2, "t_max": 12, "rain_lag": (3, 12), "rain_min": 8,
-     "ph_opt": (4.0, 8.5), "soil_pref": "Sur bois mort (sol indifférent)",
-     "habitat": "Bois mort (peupliers, hêtres), pousse après refroidissement"},
-]
 
 
 # ===== Données statiques (chargées une fois) =====
