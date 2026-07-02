@@ -24,4 +24,5 @@ async def security_headers(request: Request, call_next):
     resp.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
     resp.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
     resp.headers.setdefault("Content-Security-Policy", CSP)
+    resp.headers.setdefault("Permissions-Policy", "geolocation=(), camera=(), microphone=()")
     return resp
