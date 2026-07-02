@@ -22,12 +22,12 @@ from pydantic import BaseModel
 from starlette.middleware.sessions import SessionMiddleware
 
 from sporia import api as core
-from sporia.config import settings
+from sporia.config import resolve_session_secret, settings
 from sporia.enrich import forest as mmap
 from sporia.users import access_requests
 from sporia.users import prefs as user_prefs
 from sporia.users import spots as user_spots
-from sporia.web.auth import load_config, require_admin, require_user, verify
+from sporia.web.auth import require_admin, require_user, verify
 from sporia.web.security import security_headers
 
 # Métadonnées (nom FR, couleur) par latin, pour habiller les listes d'espèces.
@@ -59,19 +59,8 @@ OVERLAY_DIR = WEB_DIR / "overlays"
 PROD = os.environ.get("PROD") == "1"
 
 
-_cfg = load_config()
-# Secret de signature de session : variable d'env prioritaire, sinon clé de config.yaml.
-_SESSION_SECRET = os.environ.get("SESSION_SECRET") or _cfg.get("cookie", {}).get("key", "")
-if not _SESSION_SECRET or "change" in _SESSION_SECRET.lower() or len(_SESSION_SECRET) < 32:
-    # Clé absente/faible : on génère une clé éphémère (les sessions ne survivront pas à un
-    # redémarrage). En prod, DÉFINIR SESSION_SECRET ou une cookie.key forte (>=32 octets).
-    import secrets as _secrets
-
-    _SESSION_SECRET = _secrets.token_urlsafe(48)
-    print(
-        "[WARN] cookie.key faible/absente — secret de session éphémère généré. "
-        "Définissez SESSION_SECRET (env) ou une cookie.key forte dans config.yaml pour la prod."
-    )
+# Secret de session : SESSION_SECRET (env) uniquement. Fail-closed en PROD (cf. config.py).
+_SESSION_SECRET = resolve_session_secret(PROD)
 
 app = FastAPI(
     title="Sporia",
