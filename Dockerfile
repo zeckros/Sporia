@@ -8,12 +8,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
 COPY . .
+RUN pip install --no-cache-dir -e .
 
 EXPOSE 8000
 ENV PROD=1
 # config.yaml et .env (secrets) doivent être montés en volume au run, ils ne sont pas dans l'image.
-CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "sporia.web.app:app", "--host", "0.0.0.0", "--port", "8000"]

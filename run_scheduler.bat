@@ -20,6 +20,6 @@ REM Start scheduler
 echo.
 echo Starting Pipeline Scheduler...
 echo.
-python scheduler.py
+python -m sporia.pipeline.scheduler
 
 pause

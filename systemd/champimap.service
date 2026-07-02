@@ -10,7 +10,7 @@ WorkingDirectory=/home/app/champi_pipeline_package
 # depuis config.yaml (cookie.key forte) ou la variable d'env SESSION_SECRET.
 Environment=PROD=1
 # Écoute uniquement en local : seul nginx (reverse proxy TLS) expose le service.
-ExecStart=/home/app/champi_pipeline_package/venv/bin/uvicorn server:app --host 127.0.0.1 --port 8000
+ExecStart=/home/app/champi_pipeline_package/venv/bin/uvicorn sporia.web.app:app --host 127.0.0.1 --port 8000
 Restart=on-failure
 RestartSec=5
 StandardOutput=journal

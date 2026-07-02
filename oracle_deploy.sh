@@ -51,7 +51,7 @@ fi
 echo -e "${YELLOW}[4/9] Environnement virtuel + dépendances...${NC}"
 [ -d "$APP_DIR/venv" ] || sudo -u "$APP_USER" python3 -m venv "$APP_DIR/venv"
 sudo -u "$APP_USER" "$PIP" install --upgrade pip setuptools wheel
-sudo -u "$APP_USER" "$PIP" install -r "$APP_DIR/requirements.txt"
+sudo -u "$APP_USER" "$PIP" install -e "$APP_DIR"
 sudo -u "$APP_USER" "$PIP" install schedule   # boucle du scheduler
 
 # --- 5. Secrets : config.yaml (auth + clé de session) ---

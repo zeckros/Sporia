@@ -15,11 +15,9 @@ python -m venv venv
 pip install -e ".[dev]"
 pre-commit install
 pytest -q
-uvicorn server:app --reload --port 8000   # entrypoint actuel (voir NOTE)
+uvicorn sporia.web.app:app --reload --port 8000
 ```
 
-> **NOTE** : l'entrypoint bascule vers `sporia.web.app:app` en fin de
-> restructuration (voir `docs/superpowers/plans/`).
 
 ## Architecture
 

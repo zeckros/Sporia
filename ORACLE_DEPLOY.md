@@ -159,3 +159,22 @@ Oracle suspend les VM Free Tier inactives 7+ jours. Le `scheduler.service` (coll
 5 min) maintient la VM active en continu. ✓
 
 ## Coûts : 0 € (VM 1 ARM/1 Go, 20 Go disque, 1 To/mois sortant, TLS Let's Encrypt — tous gratuits).
+
+## Redéploiement après restructuration (entrypoint = sporia.web.app:app)
+
+La restructuration (chantier Fondations) change l'entrypoint et installe le code en
+package. Sur le serveur :
+
+```bash
+cd /home/app/champi_pipeline_package
+git pull
+source venv/bin/activate && pip install -e .
+# services (ExecStart déjà mis à jour dans systemd/*.service — recharger si copiés) :
+sudo cp systemd/champimap.service systemd/scheduler.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl restart champimap scheduler
+curl -s https://sporia.duckdns.org/api/me   # -> {"authenticated": false, "name": null}
+```
+
+**Rôle admin** : pour voir `/api/access-requests`, ajouter `role: admin` sous le compte
+voulu dans `config.yaml` (sinon 403).

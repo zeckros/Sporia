@@ -9,7 +9,7 @@ Type=simple
 User=app
 WorkingDirectory=/home/app/champi_pipeline_package
 Environment="PATH=/home/app/champi_pipeline_package/venv/bin"
-ExecStart=/home/app/champi_pipeline_package/venv/bin/python scheduler.py
+ExecStart=/home/app/champi_pipeline_package/venv/bin/python -m sporia.pipeline.scheduler
 Restart=on-failure
 RestartSec=30
 StandardOutput=journal
