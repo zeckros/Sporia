@@ -98,8 +98,8 @@ fi
 # --- 7. Dossiers de sortie + services systemd ---
 echo -e "${YELLOW}[7/9] Dossiers + services systemd...${NC}"
 sudo -u "$APP_USER" mkdir -p "$APP_DIR/output/tiff" "$APP_DIR/data/cache" "$APP_DIR/web/overlays"
-sudo cp "$APP_DIR/systemd/champimap.service" /etc/systemd/system/
-sudo cp "$APP_DIR/systemd/scheduler.service" /etc/systemd/system/
+sudo ln -sf "$APP_DIR/systemd/champimap.service" /etc/systemd/system/champimap.service
+sudo ln -sf "$APP_DIR/systemd/scheduler.service" /etc/systemd/system/scheduler.service
 sudo systemctl daemon-reload
 sudo systemctl enable --now scheduler.service
 sudo systemctl enable --now champimap.service

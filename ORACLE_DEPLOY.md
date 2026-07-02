@@ -139,7 +139,7 @@ sudo systemctl restart champimap.service scheduler.service
 ```bash
 # Service web qui ne démarre pas ?
 sudo journalctl -u champimap.service -n 50
-./venv/bin/python -c "import fastapi, champi_core; print('imports OK')"
+./venv/bin/python -c "import fastapi; from sporia.web.app import app; print('imports OK')"
 
 # uvicorn écoute-t-il en local ?
 sudo ss -tlnp | grep 8000
@@ -148,7 +148,7 @@ sudo ss -tlnp | grep 8000
 sudo nginx -t && sudo systemctl reload nginx
 
 # Collecte ne produit rien ? → clés API manquantes/expirées
-cd /home/app/champi_pipeline_package && ./venv/bin/python collect_day.py
+cd /home/app/champi_pipeline_package && ./venv/bin/python -m sporia.pipeline.collect_day
 sudo journalctl -u scheduler.service -f
 ```
 
@@ -160,20 +160,31 @@ Oracle suspend les VM Free Tier inactives 7+ jours. Le `scheduler.service` (coll
 
 ## Coûts : 0 € (VM 1 ARM/1 Go, 20 Go disque, 1 To/mois sortant, TLS Let's Encrypt — tous gratuits).
 
-## Redéploiement après restructuration (entrypoint = sporia.web.app:app)
+## Redéploiement (entrypoint = sporia.web.app:app)
 
-La restructuration (chantier Fondations) change l'entrypoint et installe le code en
-package. Sur le serveur :
+Entrypoint = `sporia.web.app:app`, code installé en package editable. Les units systemd
+sont **symlinkées** vers le repo (setup ci-dessous) : un `git pull` met alors l'unit à
+jour toute seule — plus besoin de la recopier.
+
+> ⚠️ Les commandes `sudo` se lancent depuis un compte **sudoer (`ubuntu`)**, PAS depuis
+> `app` (le compte applicatif n'a pas les droits sudo — sinon le `cp`/`systemctl` échoue
+> et l'ancien entrypoint reste en service → 502).
+
+Setup unique des symlinks (en `ubuntu`) :
 
 ```bash
-cd /home/app/champi_pipeline_package
-git pull
-source venv/bin/activate && pip install -e .
-# services (ExecStart déjà mis à jour dans systemd/*.service — recharger si copiés) :
-sudo cp systemd/champimap.service systemd/scheduler.service /etc/systemd/system/
+sudo ln -sf /home/app/champi_pipeline_package/systemd/champimap.service /etc/systemd/system/champimap.service
+sudo ln -sf /home/app/champi_pipeline_package/systemd/scheduler.service /etc/systemd/system/scheduler.service
+sudo systemctl daemon-reload
+```
+
+Redéploiement courant (code en `app`, services en `ubuntu`) :
+
+```bash
+sudo -u app bash -c 'cd /home/app/champi_pipeline_package && git pull && ./venv/bin/pip install -e .'
 sudo systemctl daemon-reload
 sudo systemctl restart champimap scheduler
-curl -s https://sporia.duckdns.org/api/me   # -> {"authenticated": false, "name": null}
+curl -s https://sporia.duckdns.org/api/me
 ```
 
 **Rôle admin** : pour voir `/api/access-requests`, ajouter `role: admin` sous le compte
