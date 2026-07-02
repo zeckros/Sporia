@@ -22,3 +22,5 @@ jobs:
         run: python -m ruff format --check src tests
       - name: Pytest
         run: python -m pytest -q -m "not slow"
+      - name: pip-audit (runtime deps)
+        run: python -m pip_audit -r requirements.lock --strict
