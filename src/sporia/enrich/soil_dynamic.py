@@ -25,7 +25,7 @@ from pathlib import Path
 import numpy as np
 import requests
 
-from interpret_day import build_grid, idw, write_geotiff
+from sporia.pipeline.interpret_day import build_grid, idw, write_geotiff
 
 OUT_TIF_DIR = Path("output/tiff")
 DAILY_DIR = Path("data/daily")

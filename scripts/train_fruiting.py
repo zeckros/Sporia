@@ -31,7 +31,7 @@ import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import champi_core as core                      # noqa: E402
-import wx_features                              # noqa: E402  (features météo partagées)
+from sporia.pipeline import wx_features  # noqa: E402
 from train_sdm import (load_layers, cell_rc, match_key, blocks, boyce_index,  # noqa: E402
                        GRID_H, GRID_W, BBOX, GBIF_OCC)
 

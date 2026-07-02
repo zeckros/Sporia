@@ -25,11 +25,11 @@ from pathlib import Path
 import numpy as np
 import requests
 
-import wx_features
-from interpret_day import idw
 from sporia.enrich import forest as mmap
 from sporia.enrich import soil_static as soil_data
 from sporia.enrich import terrain as terrain_data
+from sporia.pipeline import wx_features
+from sporia.pipeline.interpret_day import idw
 
 GRID_H, GRID_W, RES = 1051, 1601, 0.01
 LON0, LAT0 = -5.5, 51.5
