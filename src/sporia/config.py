@@ -43,3 +43,21 @@ class Settings:
 
 
 settings = Settings()
+
+
+def resolve_session_secret(prod: bool) -> str:
+    """Secret de signature de session. Fort (>=32 car., pas « change ») depuis
+    SESSION_SECRET → renvoyé tel quel. En PROD sans secret fort → RuntimeError
+    (refus de démarrer). En DEV → clé éphémère (sessions non persistantes)."""
+    secret = os.environ.get("SESSION_SECRET") or ""
+    if len(secret) >= 32 and "change" not in secret.lower():
+        return secret
+    if prod:
+        raise RuntimeError(
+            "SESSION_SECRET manquant ou faible en PROD : définissez une clé forte "
+            "(>=32 caractères) dans l'environnement. Refus de démarrer."
+        )
+    import secrets as _secrets
+
+    print("[WARN] SESSION_SECRET absent/faible — clé de session éphémère (DEV uniquement).")
+    return _secrets.token_urlsafe(48)
