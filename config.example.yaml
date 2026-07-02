@@ -1,0 +1,10 @@
+# Gabarit d'authentification — COPIER en config.yaml (gitignoré) et remplir.
+# Le secret de session n'est PLUS ici : il vient de la variable d'env SESSION_SECRET
+# (voir ORACLE_DEPLOY.md). Générer les hash bcrypt via scripts/make_users.py.
+credentials:
+  usernames:
+    admin:
+      name: Admin
+      email: admin@example.com
+      role: admin            # requis pour /api/access-requests
+      password: "$2b$12$REMPLACER_PAR_UN_HASH_BCRYPT"
