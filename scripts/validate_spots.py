@@ -25,9 +25,9 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-import mushroom_map as mmap                       # noqa: E402
-import champi_core as core                        # noqa: E402
-import fruiting_live as fl                        # noqa: E402
+from sporia.enrich import forest as mmap                       # noqa: E402
+from sporia import api as core                        # noqa: E402
+from sporia.enrich import fruiting_live as fl                        # noqa: E402
 
 CACHE = Path("data/cache")
 GRID_H, GRID_W, RES = 1051, 1601, 0.01

@@ -25,7 +25,7 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-import soil_data                                # noqa: E402
+from sporia.enrich import soil_static as soil_data                                # noqa: E402
 
 CACHE = Path("data/cache")
 # clé sortie → (propriété SoilGrids, facteur d'échelle vers unité « lisible »)

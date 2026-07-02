@@ -35,11 +35,11 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
-import champi_core as core                            # noqa: E402
-import mushroom_map as mmap                           # noqa: E402
+from sporia import api as core                            # noqa: E402
+from sporia.enrich import forest as mmap                           # noqa: E402
 import train_fruiting as tf                           # noqa: E402
 from train_sdm import boyce_index                     # noqa: E402
-from fruiting_live import HAB_FLOOR                    # noqa: E402
+from sporia.enrich.fruiting_live import HAB_FLOOR                    # noqa: E402
 
 CACHE = Path("data/cache")
 NOMS = {m["latin"]: m["nom"] for m in core.MUSHROOMS}

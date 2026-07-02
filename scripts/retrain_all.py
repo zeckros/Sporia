@@ -20,7 +20,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
-import champi_core as core                        # noqa: E402
+from sporia import api as core                        # noqa: E402
 
 PY = sys.executable
 

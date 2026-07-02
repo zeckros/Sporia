@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-import champi_core as core
+from sporia import api as core
 
 CACHE = Path("data/cache")
 NOMS = {m["latin"]: m["nom"] for m in core.MUSHROOMS}

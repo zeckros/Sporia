@@ -31,9 +31,8 @@ def test_access_request_capped_and_listed(tmp_path, monkeypatch):
     assert reqs[-1]["email"] == "a@b.co"
 
 
-def test_root_shims_reexport():
-    import user_prefs
-    import user_spots
+def test_users_package_api():
+    from sporia.users import prefs, spots
 
-    assert hasattr(user_prefs, "get_species")
-    assert hasattr(user_spots, "list_spots")
+    assert hasattr(prefs, "get_species")
+    assert hasattr(spots, "list_spots")

@@ -30,7 +30,7 @@ import numpy as np
 import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-import champi_core as core                      # noqa: E402
+from sporia import api as core                      # noqa: E402
 from sporia.pipeline import wx_features  # noqa: E402
 from train_sdm import (load_layers, cell_rc, match_key, blocks, boyce_index,  # noqa: E402
                        GRID_H, GRID_W, BBOX, GBIF_OCC)

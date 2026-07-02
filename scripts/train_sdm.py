@@ -31,10 +31,10 @@ import numpy as np
 import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-import champi_core as core          # noqa: E402
-import mushroom_map as mmap         # noqa: E402
-import soil_data                    # noqa: E402
-import terrain_data                 # noqa: E402
+from sporia import api as core          # noqa: E402
+from sporia.enrich import forest as mmap         # noqa: E402
+from sporia.enrich import soil_static as soil_data                    # noqa: E402
+from sporia.enrich import terrain as terrain_data                 # noqa: E402
 
 GBIF_MATCH = "https://api.gbif.org/v1/species/match"
 GBIF_OCC = "https://api.gbif.org/v1/occurrence/search"

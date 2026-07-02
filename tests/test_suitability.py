@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import pytest
 
-import champi_core as core
+from sporia import api as core
 
 CEPE = next(m for m in core.MUSHROOMS if m["latin"] == "Boletus edulis")  # months {8,9,10,11}
 
