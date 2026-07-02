@@ -9,7 +9,7 @@ import pytest
 from fastapi import HTTPException
 from starlette.testclient import TestClient
 
-import server
+from sporia.web import app as server
 
 
 @pytest.fixture

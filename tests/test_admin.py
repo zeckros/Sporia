@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from starlette.testclient import TestClient
 
-import server
+from sporia.web import app as server
 from sporia.web.auth import admin_usernames
 
 

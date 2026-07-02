@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 from starlette.testclient import TestClient
 
-import server
+from sporia.web import app as server
 from sporia.web.auth import verify
 
 
