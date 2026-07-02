@@ -41,6 +41,18 @@ from sporia.domain.suitability import (  # noqa: F401  (re-export legacy facade)
     _radar_label, RADAR_VMAX, PROPICE_MIN, PROPICE_PCT,
 )
 
+from sporia.geo.rasters import (  # noqa: F401  (re-export legacy facade)
+    sample_raster, _france_mask, _aggregate, _reproject_to_3857, _reproject_to_grid,
+    _forest_mask, _grid_ref, _mask_to_france, _tile_bbox_3857, _grid_ref_geo,
+)
+from sporia.geo.render import (  # noqa: F401
+    _save_png, _bust, _render_grid_overlay, _blank_tile, _hex_to_rgb,
+)
+
+from sporia.places import (  # noqa: F401  (re-export legacy facade)
+    _static, search_cities, find_commune_at, france_outline_geojson, available_dates,
+)
+
 # ===== Configuration =====
 DATA_DIR = Path("output/tiff")
 VILLES_CSV = "data/villes_france.csv"
@@ -63,180 +75,25 @@ MONTHS_FR =["janvier", "février", "mars", "avril", "mai", "juin", "juillet",
 
 
 # ===== Données statiques (chargées une fois) =====
-@lru_cache(maxsize=1)
-def _static():
-    villes = pd.read_csv(VILLES_CSV, sep=";")
-    for c in ["nom1", "nom2", "nom3", "nom4", "code_postal"]:
-        if c not in villes.columns:
-            villes[c] = ""
-    villes["all_names"] = (
-        villes[["nom1", "nom2", "nom3", "nom4", "code_postal"]]
-        .astype(str).agg(" ".join, axis=1).str.lower()
-    )
-    comm = gpd.read_file(COMMUNES_GPKG)
-    if comm.crs and comm.crs.to_epsg() != 4326:
-        comm = comm.to_crs("EPSG:4326")
-    comm = comm.dropna(subset=["geometry"])
-    france_boundary = comm.geometry.union_all()
-
-    outline_gdf = None
-    try:
-        comm_proj = comm.to_crs("EPSG:2154")
-        centroids = gpd.GeoSeries(comm_proj.geometry.centroid, crs="EPSG:2154").to_crs("EPSG:4326")
-        mask_c = centroids.x.between(-10.0, 12.0) & centroids.y.between(41.0, 52.0)
-        mainland = comm[mask_c].copy()
-        rep = mainland.geometry.representative_point()
-        mainland["sample_lon"] = rep.x
-        mainland["sample_lat"] = rep.y
-        name_col = next((c for c in ["DCOE_L_LIB", "nom", "name", "NOM_COM", "NOM_COMM", "NOM", "libelle"]
-                         if c in mainland.columns), None)
-        if name_col:
-            mainland = mainland.rename(columns={name_col: "nom_com"})
-        cols = ["geometry", "sample_lon", "sample_lat"] + (["nom_com"] if "nom_com" in mainland.columns else [])
-        outline_gdf = mainland[cols].copy()
-        outline_gdf.geometry = outline_gdf.geometry.simplify(0.01, preserve_topology=False)
-        outline_gdf = outline_gdf.rename(columns={"sample_lon": "lon", "sample_lat": "lat"})
-    except Exception:
-        outline_gdf = None
-    return villes, comm, france_boundary, outline_gdf
 
 
-def search_cities(query: str, limit: int = 12):
-    villes, *_ = _static()
-    q = (query or "").strip().lower()
-    if not q:
-        return []
-    m = villes[villes["all_names"].str.contains(q, na=False)].head(limit)
-    out = []
-    for _, r in m.iterrows():
-        out.append({"label": f"{r['nom1']} ({r['code_postal']})",
-                    "name": str(r["nom1"]), "lat": float(r["latitude"]), "lon": float(r["longitude"])})
-    return out
 
 
-def find_commune_at(lat: float, lon: float):
-    _, _, _, outline_gdf = _static()
-    if outline_gdf is None or outline_gdf.empty:
-        return None
-    try:
-        pt = Point(lon, lat)
-        idx = list(outline_gdf.sindex.query(pt, predicate="intersects"))
-        if idx:
-            return outline_gdf.iloc[idx[0]]
-        dists = outline_gdf.geometry.distance(pt)
-        nearest = dists.idxmin()
-        if dists[nearest] < 0.05:
-            return outline_gdf.loc[nearest]
-    except Exception:
-        pass
-    return None
 
 
-@lru_cache(maxsize=1)
-def france_outline_geojson():
-    _, _, france_boundary, _ = _static()
-    if france_boundary is None:
-        return None
-    try:
-        return mapping(france_boundary.simplify(0.01, preserve_topology=True))
-    except Exception:
-        return None
 
 
 # ===== Dates / rasters =====
-def available_dates():
-    out = []
-    for f in DATA_DIR.glob("RR_*.tif"):
-        try:
-            out.append(datetime.datetime.strptime(f.stem.replace("RR_", "").split("_")[0], "%Y%m%d").date())
-        except Exception:
-            pass
-    return sorted(set(out))
 
 
-def sample_raster(raster_path, lon, lat):
-    try:
-        with rasterio.open(raster_path) as src:
-            raw = list(src.sample([(lon, lat)]))[0][0]
-            if src.nodata is not None and raw == src.nodata:
-                return None
-            return float(raw) if raw is not None and not np.isnan(raw) else None
-    except Exception:
-        return None
 
 
-def _france_mask(raster_path: str):
-    cache_file = MASK_CACHE / f"france_mask_{Path(raster_path).stem}.npy"
-    if cache_file.exists():
-        try:
-            m = np.load(cache_file)
-            if m.dtype == bool:
-                return m
-        except Exception:
-            pass
-    _, _, france_boundary, _ = _static()
-    with rasterio.open(raster_path) as src:
-        out_shape = (src.height, src.width)
-        transform = src.transform
-    mask_bool = features.rasterize([(france_boundary, 1)], out_shape=out_shape, transform=transform,
-                                   fill=0, default_value=1, dtype="uint8").astype(bool)
-    try:
-        np.save(cache_file, mask_bool)
-    except Exception:
-        pass
-    return mask_bool
 
 
-def _aggregate(dates, var):
-    arrs = []
-    for d in dates:
-        f = DATA_DIR / (f"RR_{d}.tif" if var == "RR" else f"T_{d}.tif")
-        if not f.exists():
-            continue
-        with rasterio.open(f) as src:
-            a = src.read(1).astype(np.float32)
-            if src.nodata is not None:
-                a[a == src.nodata] = np.nan
-            arrs.append(np.ma.masked_invalid(a))
-    if not arrs:
-        return None
-    stacked = np.ma.stack(arrs)
-    return stacked.sum(axis=0) if var == "RR" else stacked.mean(axis=0)
 
 
-def _reproject_to_3857(arr_src, raster_path, resampling=RioResampling.bilinear):
-    """Reprojette un tableau (grille du raster) en EPSG:3857 ; renvoie (arr, bounds_latlon).
-    resampling=nearest pour les champs catégoriels (ex. classes de sol)."""
-    with rasterio.open(raster_path) as src:
-        src_crs = src.crs or RioCRS.from_epsg(4326)
-        src_transform, src_w, src_h, src_bounds = src.transform, src.width, src.height, src.bounds
-    left, bottom, right, top = src_bounds
-    wm = RioCRS.from_epsg(3857)
-    dtr, dw, dh = calculate_default_transform(src_crs, wm, src_w, src_h, *src_bounds)
-    dst = np.full((dh, dw), np.nan, dtype=np.float32)
-    rio_reproject(source=arr_src, destination=dst, src_transform=src_transform, src_crs=src_crs,
-                  dst_transform=dtr, dst_crs=wm, resampling=resampling,
-                  src_nodata=np.nan, dst_nodata=np.nan)
-    el, et = dtr.c, dtr.f
-    er, eb = el + dw * dtr.a, et + dh * dtr.e
-    left, bottom, right, top = rio_transform_bounds(wm, RioCRS.from_epsg(4326), el, eb, er, et)
-    return dst, {"left": float(left), "bottom": float(bottom), "right": float(right), "top": float(top)}
 
 
-def _reproject_to_grid(arr_src, ref_path, west, south, east, north, W, H):
-    """Reprojette la grille source sur une grille 3857 FIXE (bbox + dimensions données),
-    en plus proche voisin. Sert à aligner le radar sur le masque forêt baké."""
-    from rasterio.transform import from_bounds as _from_bounds
-    with rasterio.open(ref_path) as src:
-        src_crs = src.crs or RioCRS.from_epsg(4326)
-        src_transform = src.transform
-    dst = np.full((H, W), np.nan, dtype=np.float32)
-    rio_reproject(source=np.ascontiguousarray(arr_src, dtype=np.float32), destination=dst,
-                  src_transform=src_transform, src_crs=src_crs,
-                  dst_transform=_from_bounds(west, south, east, north, W, H),
-                  dst_crs=RioCRS.from_epsg(3857), resampling=RioResampling.nearest,
-                  src_nodata=np.nan, dst_nodata=np.nan)
-    return dst
 
 
 # Table de couleurs YlGn pré-calculée (uint8) → colorisation des grands rendus sans
@@ -244,48 +101,10 @@ def _reproject_to_grid(arr_src, ref_path, west, south, east, north, W, H):
 _YLGN_LUT = (plt.cm.YlGn(np.linspace(0.0, 1.0, 256))[:, :3] * 255).astype(np.uint8)  # [256,3]
 
 # Masque forêt haute résolution (BD Forêt®, baké par scripts/bake_forest_mask.py).
-_FOREST_MASK_NPZ = MASK_CACHE / "forest_mask.npz"
-_forest_mask_cache = None
-_forest_mask_tried = False
 
 
-def _forest_mask():
-    """(mask bool HxW, (west,south,east,north) 3857, bounds_latlon) ou None si non baké."""
-    global _forest_mask_cache, _forest_mask_tried
-    if _forest_mask_tried:
-        return _forest_mask_cache
-    _forest_mask_tried = True
-    if not _FOREST_MASK_NPZ.exists():
-        return None
-    try:
-        z = np.load(_FOREST_MASK_NPZ)
-        H, W = int(z["shape"][0]), int(z["shape"][1])
-        mask = np.unpackbits(z["packed"])[:H * W].reshape(H, W).astype(bool)
-        west, south, east, north = (float(v) for v in z["bounds"])
-        ll = rio_transform_bounds(RioCRS.from_epsg(3857), RioCRS.from_epsg(4326),
-                                  west, south, east, north)
-        bounds = {"left": float(ll[0]), "bottom": float(ll[1]),
-                  "right": float(ll[2]), "top": float(ll[3])}
-        _forest_mask_cache = (mask, (west, south, east, north), bounds)
-    except Exception as e:
-        print(f"[radar] masque forêt illisible : {e}", flush=True)
-        _forest_mask_cache = None
-    return _forest_mask_cache
 
 
-def _save_png(rgba_uint8, fname, resample=None, max_px=2048, optimize=True, compress_level=6):
-    from PIL import Image
-    if resample is None:
-        resample = Image.LANCZOS
-    im = Image.fromarray(rgba_uint8, mode="RGBA")
-    w, h = im.size
-    if max(w, h) > max_px:
-        s = max_px / max(w, h)
-        im = im.resize((max(1, int(w * s)), max(1, int(h * s))), resample)
-    # optimize=True force un encodage lent (utile pour les petits overlays stables) ;
-    # on le désactive pour les grands rendus (radar) où la vitesse prime.
-    im.save(OVERLAY_DIR / fname, format="PNG", optimize=optimize, compress_level=compress_level)
-    return f"/overlays/{fname}"
 
 
 def render_weather_overlay(var: str, dates: list[str]):
@@ -329,25 +148,8 @@ def render_weather_overlay(var: str, dates: list[str]):
             "cmap": "YlGnBu" if var == "RR" else "RdYlBu_r"}
 
 
-def _bust(fname: str) -> str:
-    """URL d'overlay avec cache-busting (?v=mtime) pour les noms de fichiers
-    stables (sol/humidité/altitude/exposition) — évite un PNG périmé en cache."""
-    import os
-    try:
-        return f"/overlays/{fname}?v={int(os.path.getmtime(OVERLAY_DIR / fname))}"
-    except Exception:
-        return f"/overlays/{fname}"
 
 
-def _grid_ref():
-    """Raster de référence (géoréférencement de la grille) : n'importe quel RR/T."""
-    dts = available_dates()
-    if dts:
-        cand = DATA_DIR / f"RR_{dts[-1].strftime('%Y%m%d')}.tif"
-        if cand.exists():
-            return cand
-    tifs = sorted(DATA_DIR.glob("RR_*.tif")) or sorted(DATA_DIR.glob("T_*.tif"))
-    return tifs[-1] if tifs else None
 
 
 def render_favorability_overlay(ref_date: str, species: list[str] | None = None):
@@ -395,38 +197,8 @@ def render_favorability_overlay(ref_date: str, species: list[str] | None = None)
             "has_terrain": res.get("has_terrain", False)}
 
 
-def _mask_to_france(grid2d, ref):
-    """Met à NaN les cellules hors frontière France → l'overlay épouse les contours
-    (et n'apparaît pas en rectangle sur la mer / les pays voisins)."""
-    g = np.asarray(grid2d, np.float32).copy()
-    try:
-        mask = _france_mask(str(ref))
-        if mask.shape == g.shape:
-            g[~mask] = np.nan
-    except Exception:
-        pass
-    return g
 
 
-def _render_grid_overlay(grid2d, fname, cmap, vmin, vmax, base_alpha=0.82):
-    """Reprojette une grille continue alignée (NaN → transparent) et écrit un PNG
-    overlay (busté), clippé à la France. Renvoie {url, bounds} ou None."""
-    if grid2d is None:
-        return None
-    ref = _grid_ref()
-    if ref is None:
-        return None
-    arr, bounds = _reproject_to_3857(np.ascontiguousarray(_mask_to_france(grid2d, ref)), str(ref))
-    nan = np.isnan(arr)
-    span = (vmax - vmin) if vmax > vmin else 1.0
-    norm = np.clip((arr - vmin) / span, 0.0, 1.0)
-    norm = np.where(nan, 0.0, norm)
-    rgba = cmap(norm)
-    img = np.zeros((arr.shape[0], arr.shape[1], 4), np.uint8)
-    img[..., :3] = (rgba[..., :3] * 255).astype(np.uint8)
-    img[..., 3] = np.where(nan, 0, int(base_alpha * 255)).astype(np.uint8)
-    _save_png(img, fname)
-    return {"url": _bust(fname), "bounds": bounds}
 
 
 def render_soil_moisture_overlay(ref_date: str | None = None):
@@ -561,7 +333,6 @@ def render_radar_overlay(species_list, ref_date: str | None = None):
 # Une tuile = valeur (habitat×pousse) 1 km RÉÉCHANTILLONNÉE LISSE (bilinéaire) à la résolution
 # du zoom, CLIPPÉE au contour forêt via la tuile BD Forêt WMTS de mêmes z/x/y (pixel-alignée
 # → contours exacts, identiques au calque forêt). Rendu mis en cache disque.
-_WORLD_3857 = 20037508.342789244
 _FOREST_TILE_DIR = MASK_CACHE / "foresttiles"     # cache permanent (couche statique)
 _RADAR_TILE_DIR = MASK_CACHE / "radartiles"       # cache par jour/sélection
 # Contour forêt du radar : tuile BD Forêt WMTS pixel-exacte (bordures NETTES) à partir de
@@ -573,26 +344,10 @@ FOREST_CRISP_ZOOM = 0
 FOREST_MAX_Z = 13                                 # zoom natif max pré-stocké (cf. app.js maxNativeZoom)
 _radar_grid_cache: dict = {}
 _radar_grid_lock = threading.Lock()
-_blank_png_bytes = None
 
 
-def _tile_bbox_3857(z, x, y):
-    n = 2 ** z
-    size = 2.0 * _WORLD_3857 / n
-    west = -_WORLD_3857 + x * size
-    north = _WORLD_3857 - y * size
-    return west, north - size, west + size, north
 
 
-def _blank_tile() -> bytes:
-    global _blank_png_bytes
-    if _blank_png_bytes is None:
-        import io
-        from PIL import Image
-        buf = io.BytesIO()
-        Image.new("RGBA", (256, 256), (0, 0, 0, 0)).save(buf, format="PNG")
-        _blank_png_bytes = buf.getvalue()
-    return _blank_png_bytes
 
 
 def _forest_tile_alpha(z, x, y):
@@ -669,17 +424,8 @@ def _forest_alpha_from_mask(z, x, y):
     return (dst > 0.5).astype(np.uint8) * 255
 
 
-_grid_ref_geo_cache: dict = {}
 
 
-def _grid_ref_geo(ref_path):
-    """(crs, transform) du raster de référence, mis en cache (constants → on évite de
-    rouvrir le GeoTIFF à chaque tuile)."""
-    key = str(ref_path)
-    if key not in _grid_ref_geo_cache:
-        with rasterio.open(key) as src:
-            _grid_ref_geo_cache[key] = (src.crs or RioCRS.from_epsg(4326), src.transform)
-    return _grid_ref_geo_cache[key]
 
 
 def _radar_grid(species_list, ref_date=None):
@@ -831,9 +577,6 @@ SOIL_COLORS = {
 }
 
 
-def _hex_to_rgb(h: str):
-    h = h.lstrip("#")
-    return int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
 
 
 def render_soil_overlay():
