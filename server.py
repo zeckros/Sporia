@@ -381,8 +381,9 @@ def api_access_request(body: AccessRequestIn):
 
 
 @app.get("/api/access-requests")
-def api_list_access_requests(user=Depends(require_user)):
-    """Liste des demandes d'accès (réservé aux comptes connectés / admin)."""
+def api_list_access_requests(user=Depends(require_admin)):
+    """Liste des demandes d'accès — RÉSERVÉ ADMIN (contient des emails).
+    Nécessite `role: admin` sur le compte dans config.yaml."""
     return {"requests": access_requests.list_requests()}
 
 
