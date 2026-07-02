@@ -189,3 +189,10 @@ curl -s https://sporia.duckdns.org/api/me
 
 **Rôle admin** : pour voir `/api/access-requests`, ajouter `role: admin` sous le compte
 voulu dans `config.yaml` (sinon 403).
+
+**SESSION_SECRET (obligatoire en PROD)** : doit exister dans `.env`
+(`SESSION_SECRET=<clé ≥32 caractères>`) — chargé par systemd via `EnvironmentFile`. Sinon
+l'app **refuse de démarrer** en PROD (message clair dans `journalctl -u champimap`).
+`oracle_deploy.sh` le génère automatiquement s'il est absent ; sinon :
+`python -c "import secrets;print(secrets.token_urlsafe(48))"` puis l'ajouter à `.env`.
+Le secret n'est plus dans `config.yaml` (section `cookie:` supprimée).

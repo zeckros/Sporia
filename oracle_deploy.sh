@@ -95,6 +95,13 @@ else
     echo -e "${GREEN}✓ .env déjà présent${NC}"
 fi
 
+# SESSION_SECRET (obligatoire en PROD) — généré fort s'il est absent de .env.
+if ! sudo grep -q '^SESSION_SECRET=' "$APP_DIR/.env" 2>/dev/null; then
+    SESSION_SECRET_GEN=$(sudo -u "$APP_USER" "$PY" -c "import secrets;print(secrets.token_urlsafe(48))")
+    echo "SESSION_SECRET=$SESSION_SECRET_GEN" | sudo -u "$APP_USER" tee -a "$APP_DIR/.env" >/dev/null
+    echo -e "${GREEN}✓ SESSION_SECRET généré dans .env${NC}"
+fi
+
 # --- 7. Dossiers de sortie + services systemd ---
 echo -e "${YELLOW}[7/9] Dossiers + services systemd...${NC}"
 sudo -u "$APP_USER" mkdir -p "$APP_DIR/output/tiff" "$APP_DIR/data/cache" "$APP_DIR/web/overlays"

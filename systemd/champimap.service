@@ -6,9 +6,10 @@ After=network.target
 Type=simple
 User=app
 WorkingDirectory=/home/app/champi_pipeline_package
-# PROD=1 : cookie de session HTTPS-only + /docs masqué. Le secret de session est lu
-# depuis config.yaml (cookie.key forte) ou la variable d'env SESSION_SECRET.
+# PROD=1 : cookie de session HTTPS-only + /docs masqué. Le secret de session (SESSION_SECRET,
+# obligatoire en PROD) et les clés API sont lus depuis .env via EnvironmentFile ci-dessous.
 Environment=PROD=1
+EnvironmentFile=-/home/app/champi_pipeline_package/.env
 # Écoute uniquement en local : seul nginx (reverse proxy TLS) expose le service.
 ExecStart=/home/app/champi_pipeline_package/venv/bin/uvicorn sporia.web.app:app --host 127.0.0.1 --port 8000
 Restart=on-failure
