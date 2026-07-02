@@ -13,6 +13,8 @@ venv/
 # Auth / secrets (identifiants, ne jamais committer)
 config.yaml
 .streamlit/secrets.toml
+*.key
+*.pem
 
 # État utilisateur runtime (créé par l'app, propre à chaque déploiement)
 data/user_prefs.json
