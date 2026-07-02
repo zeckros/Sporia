@@ -9,6 +9,7 @@ description = "Sporia — prévision de cueillette de champignons en France"
 requires-python = ">=3.10"
 dependencies = [
     "fastapi",
+    "starlette>=1.3.1",   # CVE fix (via FastAPI)
     "uvicorn[standard]",
     "itsdangerous",
     "bcrypt",
@@ -28,12 +29,13 @@ dependencies = [
     "urllib3>=2.7.0",
     "idna>=3.15",
     "matplotlib",
+    "fonttools>=4.60.2",  # CVE fix (via matplotlib)
     "Pillow>=12.2.0",
     "scikit-learn>=1.7,<1.8",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "ruff>=0.6", "pre-commit>=3.5", "httpx"]
+dev = ["pytest>=8", "ruff>=0.6", "pre-commit>=3.5", "httpx", "pip-audit"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
