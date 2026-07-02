@@ -6,6 +6,7 @@ import pytest
 from starlette.testclient import TestClient
 
 import server
+from sporia.web.auth import verify
 
 
 @pytest.fixture
@@ -14,11 +15,11 @@ def client():
 
 
 def test_verify_unknown_user_returns_none():
-    assert server._verify("no-such-user", "whatever") is None
+    assert verify("no-such-user", "whatever") is None
 
 
 def test_verify_wrong_password_returns_none():
-    assert server._verify("dev", "wrong-password") is None
+    assert verify("dev", "wrong-password") is None
 
 
 def test_protected_route_requires_auth(client):

@@ -15,8 +15,6 @@ import os
 import re
 from pathlib import Path
 
-import bcrypt
-import yaml
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -27,6 +25,9 @@ import champi_core as core
 import user_prefs
 import user_spots
 import access_requests
+
+from sporia.web.auth import load_config, require_admin, require_user, verify
+from sporia.web.security import security_headers
 
 # Métadonnées (nom FR, couleur) par latin, pour habiller les listes d'espèces.
 _SPECIES_META = {m["latin"]: m for m in core.MUSHROOMS}
@@ -54,12 +55,7 @@ OVERLAY_DIR = WEB_DIR / "overlays"
 PROD = os.environ.get("PROD") == "1"
 
 
-def _load_config():
-    with open(CONFIG_PATH, "r", encoding="utf-8") as f:
-        return yaml.safe_load(f)
-
-
-_cfg = _load_config()
+_cfg = load_config()
 # Secret de signature de session : variable d'env prioritaire, sinon clé de config.yaml.
 _SESSION_SECRET = os.environ.get("SESSION_SECRET") or _cfg.get("cookie", {}).get("key", "")
 if not _SESSION_SECRET or "change" in _SESSION_SECRET.lower() or len(_SESSION_SECRET) < 32:
@@ -83,29 +79,7 @@ app.add_middleware(
 )
 
 
-# Content-Security-Policy : autorise uniquement les CDN réellement utilisés par
-# l'UI (Tailwind, Leaflet/unpkg, Google Fonts) + les tuiles carto/IGN en image.
-# 'unsafe-inline' est nécessaire (config Tailwind + styles inline dans index.html) ;
-# les données utilisateur rendues en HTML sont par ailleurs échappées (escapeHtml).
-_CSP = (
-    "default-src 'self'; "
-    "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com; "
-    "style-src 'self' 'unsafe-inline' https://unpkg.com https://fonts.googleapis.com; "
-    "font-src 'self' https://fonts.gstatic.com; "
-    "img-src 'self' data: https:; "          # overlays (self) + tuiles CARTO/IGN (https)
-    "connect-src 'self'; "
-    "frame-ancestors 'self'; base-uri 'self'; form-action 'self'"
-)
-
-
-@app.middleware("http")
-async def security_headers(request: Request, call_next):
-    resp = await call_next(request)
-    resp.headers.setdefault("X-Content-Type-Options", "nosniff")
-    resp.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
-    resp.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
-    resp.headers.setdefault("Content-Security-Policy", _CSP)
-    return resp
+app.middleware("http")(security_headers)
 
 
 # ===== Validation des entrées (anti path-traversal sur les noms de fichiers rasters) =====
@@ -133,31 +107,6 @@ def _valid_var(v: str) -> str:
     return v
 
 
-# ===== Auth =====
-# Hash bcrypt « leurre » : vérifié quand l'identifiant n'existe pas, pour que le
-# temps de réponse soit constant (anti-énumération d'identifiants par chronométrage).
-_DUMMY_HASH = bcrypt.hashpw(b"timing-equalizer", bcrypt.gensalt())
-
-
-def _verify(username: str, password: str):
-    users = _cfg.get("credentials", {}).get("usernames", {})
-    u = users.get(username)
-    try:
-        if u is None:
-            bcrypt.checkpw(password.encode("utf-8"), _DUMMY_HASH)   # temps constant
-            return None
-        if bcrypt.checkpw(password.encode("utf-8"), u["password"].encode("utf-8")):
-            return {"username": username, "name": u.get("name", username)}
-    except Exception:
-        return None
-    return None
-
-
-def require_user(request: Request):
-    user = request.session.get("user")
-    if not user:
-        raise HTTPException(status_code=401, detail="Non authentifié")
-    return user
 
 
 class Credentials(BaseModel):
@@ -167,7 +116,7 @@ class Credentials(BaseModel):
 
 @app.post("/api/login")
 def login(body: Credentials, request: Request):
-    user = _verify(body.username, body.password)
+    user = verify(body.username, body.password)
     if not user:
         raise HTTPException(status_code=401, detail="Identifiant ou mot de passe incorrect.")
     request.session["user"] = user
