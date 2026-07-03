@@ -23,8 +23,9 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from sporia import api as core
 from sporia.config import resolve_session_secret, settings
+from sporia.email import send_email
 from sporia.enrich import forest as mmap
-from sporia.users import access_requests
+from sporia.users import access_requests, accounts
 from sporia.users import prefs as user_prefs
 from sporia.users import spots as user_spots
 from sporia.web.auth import require_admin, require_user, verify
@@ -129,6 +130,86 @@ def logout(request: Request):
 def me(request: Request):
     user = request.session.get("user")
     return {"authenticated": bool(user), "name": user["name"] if user else None}
+
+
+# ===== Inscription / mot de passe (auto-inscription) =====
+class RegisterIn(BaseModel):
+    email: str
+    password: str
+    name: str | None = None
+
+
+class ForgotIn(BaseModel):
+    email: str
+
+
+class ResetIn(BaseModel):
+    token: str
+    password: str
+
+
+def _valid_email(e: str) -> str:
+    if not _EMAIL_RE.match(e or "") or len(e) > 120:
+        raise HTTPException(status_code=400, detail="Email invalide.")
+    return e.strip().lower()
+
+
+@app.post("/api/register")
+def register(body: RegisterIn, request: Request):
+    email = _valid_email(body.email)
+    if len(body.password or "") < 8:
+        raise HTTPException(status_code=400, detail="Mot de passe trop court (min 8).")
+    try:
+        accounts.create_user(email, body.password, name=(body.name or "").strip() or None)
+    except ValueError:
+        raise HTTPException(
+            status_code=409, detail="Un compte existe déjà pour cet email."
+        ) from None
+    tok = accounts.create_token(accounts.get_by_email(email)["id"], "verify", 7 * 24 * 3600)
+    base = str(request.base_url).rstrip("/")
+    send_email(
+        email,
+        "Bienvenue sur Sporia — vérifiez votre email",
+        f"<p>Bienvenue ! Confirmez votre email : "
+        f'<a href="{base}/api/verify-email?token={tok}">vérifier</a></p>',
+    )
+    user = verify(email, body.password)
+    request.session["user"] = user
+    return {"ok": True, "name": user["name"]}
+
+
+@app.post("/api/password/forgot")
+def password_forgot(body: ForgotIn, request: Request):
+    u = accounts.get_by_email((body.email or "").strip().lower())
+    if u:  # réponse toujours 200 neutre (anti-énumération)
+        tok = accounts.create_token(u["id"], "reset", 3600)
+        base = str(request.base_url).rstrip("/")
+        send_email(
+            u["email"],
+            "Sporia — réinitialisation du mot de passe",
+            f'<p>Réinitialisez : <a href="{base}/?reset={tok}">nouveau mot de passe</a> '
+            f"(valide 1h)</p>",
+        )
+    return {"ok": True}
+
+
+@app.post("/api/password/reset")
+def password_reset(body: ResetIn):
+    if len(body.password or "") < 8:
+        raise HTTPException(status_code=400, detail="Mot de passe trop court (min 8).")
+    uid = accounts.consume_token(body.token, "reset")
+    if uid is None:
+        raise HTTPException(status_code=400, detail="Lien invalide ou expiré.")
+    accounts.set_password(uid, body.password)
+    return {"ok": True}
+
+
+@app.get("/api/verify-email")
+def verify_email(token: str):
+    uid = accounts.consume_token(token, "verify")
+    if uid is not None:
+        accounts.set_verified(uid)
+    return FileResponse(str(settings.web_dir / "index.html"), headers={"Cache-Control": "no-cache"})
 
 
 # ===== API données (protégées) =====
