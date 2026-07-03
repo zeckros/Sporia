@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import secrets
 import sqlite3
 import time
 from pathlib import Path
@@ -80,3 +81,41 @@ def verify_password(email: str, password: str) -> dict | None:
     except Exception:
         return None
     return None
+
+
+def set_password(user_id: int, password: str) -> None:
+    h = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode()
+    with _connect() as c:
+        c.execute(
+            "UPDATE users SET password_hash=?, updated_at=? WHERE id=?",
+            (h, int(time.time()), user_id),
+        )
+
+
+def set_verified(user_id: int) -> None:
+    with _connect() as c:
+        c.execute(
+            "UPDATE users SET email_verified=1, updated_at=? WHERE id=?",
+            (int(time.time()), user_id),
+        )
+
+
+def create_token(user_id: int, kind: str, ttl_s: int = 3600) -> str:
+    tok = secrets.token_urlsafe(32)
+    with _connect() as c:
+        c.execute(
+            "INSERT INTO tokens(token,user_id,kind,expires_at) VALUES(?,?,?,?)",
+            (tok, user_id, kind, int(time.time()) + ttl_s),
+        )
+    return tok
+
+
+def consume_token(token: str, kind: str) -> int | None:
+    with _connect() as c:
+        r = c.execute(
+            "SELECT user_id, expires_at FROM tokens WHERE token=? AND kind=?", (token, kind)
+        ).fetchone()
+        if r is None:
+            return None
+        c.execute("DELETE FROM tokens WHERE token=?", (token,))  # usage unique
+    return r["user_id"] if r["expires_at"] >= int(time.time()) else None
