@@ -160,6 +160,51 @@ document.getElementById("access-form").addEventListener("submit", async (ev) => 
   }
 });
 
+// Inscription (landing) → POST /api/register → connecté directement
+document.getElementById("register-form")?.addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const msg = document.getElementById("reg-msg");
+  const btn = ev.target.querySelector("button[type=submit]");
+  msg.classList.add("hidden");
+  btn.disabled = true;
+  try {
+    const res = await API.post("/api/register", {
+      email: document.getElementById("reg-email").value.trim(),
+      password: document.getElementById("reg-pass").value,
+      name: document.getElementById("reg-name").value.trim(),
+    });
+    state.name = res.name;
+    startApp();
+  } catch (e) {
+    msg.textContent = e.message || "Inscription impossible.";
+    msg.className = "text-sm font-semibold text-red-600";
+    msg.classList.remove("hidden");
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// Mot de passe oublié → POST /api/password/forgot (réponse neutre)
+document.getElementById("forgot-link")?.addEventListener("click", async () => {
+  const email = prompt("Votre email pour réinitialiser le mot de passe :");
+  if (!email) return;
+  try { await API.post("/api/password/forgot", { email: email.trim() }); } catch (e) {}
+  alert("Si un compte existe, un email de réinitialisation a été envoyé.");
+});
+
+// Lien de reset (?reset=TOKEN dans l'URL) → nouveau mot de passe
+(async () => {
+  const tok = new URLSearchParams(location.search).get("reset");
+  if (!tok) return;
+  const pw = prompt("Nouveau mot de passe (min 8) :");
+  if (!pw) return;
+  try {
+    await API.post("/api/password/reset", { token: tok, password: pw });
+    alert("Mot de passe modifié. Connectez-vous.");
+    location.href = "/";
+  } catch (e) { alert("Lien invalide ou expiré."); }
+})();
+
 /* ---------- App ---------- */
 async function startApp() {
   document.getElementById("landing-screen").classList.add("hidden");
