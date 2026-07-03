@@ -112,3 +112,117 @@ def test_create_portal_session_without_customer_raises(env):
     acc.create_user("a@b.fr", "password123")  # pas de customer
     with pytest.raises(ValueError):
         billing.create_portal_session(acc.get_by_email("a@b.fr"))
+
+
+def _event(etype, obj):
+    return {"type": etype, "data": {"object": obj}}
+
+
+def test_process_event_checkout_completed_activates(env, monkeypatch):
+    billing, acc = env
+    u = acc.create_user("a@b.fr", "password123")
+    acc.set_stripe_customer(u["id"], "cus_1")
+    monkeypatch.setattr(
+        billing.stripe.Webhook,
+        "construct_event",
+        lambda payload, sig, secret: _event(
+            "checkout.session.completed", {"customer": "cus_1", "subscription": "sub_1"}
+        ),
+    )
+
+    billing.process_event(b"{}", "sig")
+
+    assert acc.get_by_email("a@b.fr")["subscription_status"] == "active"
+
+
+def test_process_event_subscription_updated_past_due(env, monkeypatch):
+    billing, acc = env
+    u = acc.create_user("a@b.fr", "password123")
+    acc.set_stripe_customer(u["id"], "cus_1")
+    monkeypatch.setattr(
+        billing.stripe.Webhook,
+        "construct_event",
+        lambda payload, sig, secret: _event(
+            "customer.subscription.updated",
+            {"customer": "cus_1", "status": "past_due", "current_period_end": 1893456000},
+        ),
+    )
+
+    billing.process_event(b"{}", "sig")
+
+    row = acc.get_by_email("a@b.fr")
+    assert row["subscription_status"] == "past_due"
+    assert row["current_period_end"] == 1893456000
+
+
+def test_process_event_subscription_deleted_cancels(env, monkeypatch):
+    billing, acc = env
+    u = acc.create_user("a@b.fr", "password123")
+    acc.set_stripe_customer(u["id"], "cus_1")
+    monkeypatch.setattr(
+        billing.stripe.Webhook,
+        "construct_event",
+        lambda payload, sig, secret: _event(
+            "customer.subscription.deleted",
+            {"customer": "cus_1", "current_period_end": 1893456000},
+        ),
+    )
+
+    billing.process_event(b"{}", "sig")
+
+    assert acc.get_by_email("a@b.fr")["subscription_status"] == "canceled"
+
+
+def test_process_event_invoice_payment_failed(env, monkeypatch):
+    billing, acc = env
+    u = acc.create_user("a@b.fr", "password123")
+    acc.set_stripe_customer(u["id"], "cus_1")
+    monkeypatch.setattr(
+        billing.stripe.Webhook,
+        "construct_event",
+        lambda payload, sig, secret: _event("invoice.payment_failed", {"customer": "cus_1"}),
+    )
+
+    billing.process_event(b"{}", "sig")
+
+    assert acc.get_by_email("a@b.fr")["subscription_status"] == "past_due"
+
+
+def test_process_event_unknown_customer_noop(env, monkeypatch):
+    billing, acc = env
+    monkeypatch.setattr(
+        billing.stripe.Webhook,
+        "construct_event",
+        lambda payload, sig, secret: _event(
+            "checkout.session.completed", {"customer": "cus_ghost"}
+        ),
+    )
+    # ne doit pas lever
+    billing.process_event(b"{}", "sig")
+
+
+def test_process_event_ignored_type_noop(env, monkeypatch):
+    billing, acc = env
+    u = acc.create_user("a@b.fr", "password123")
+    acc.set_stripe_customer(u["id"], "cus_1")
+    monkeypatch.setattr(
+        billing.stripe.Webhook,
+        "construct_event",
+        lambda payload, sig, secret: _event("customer.created", {"customer": "cus_1"}),
+    )
+
+    billing.process_event(b"{}", "sig")
+
+    assert acc.get_by_email("a@b.fr")["subscription_status"] == "none"  # inchangé
+
+
+def test_process_event_bad_signature_raises(env, monkeypatch):
+    billing, _ = env
+
+    def boom(payload, sig, secret):
+        raise ValueError("bad signature")
+
+    monkeypatch.setattr(billing.stripe.Webhook, "construct_event", boom)
+
+    with pytest.raises(billing.WebhookError):
+        billing.process_event(b"{}", "bad")

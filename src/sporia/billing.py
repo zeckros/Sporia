@@ -79,3 +79,39 @@ def create_portal_session(account: dict) -> str:
     _configure()
     session = stripe.billing_portal.Session.create(customer=cid, return_url=f"{_base_url()}/")
     return session["url"]
+
+
+def process_event(payload: bytes, sig_header: str) -> None:
+    """Vérifie la signature Stripe puis applique l'événement (idempotent).
+
+    Lève WebhookError si la signature ou le payload est invalide."""
+    secret = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
+    try:
+        event = stripe.Webhook.construct_event(payload, sig_header, secret)
+    except (stripe.error.SignatureVerificationError, ValueError) as e:
+        raise WebhookError(str(e)) from e
+
+    etype = event["type"]
+    obj = event["data"]["object"]
+    customer_id = obj.get("customer")
+
+    if etype == "checkout.session.completed":
+        _update(customer_id, "active", None)
+    elif etype == "customer.subscription.updated":
+        status = _STATUS_MAP.get(obj.get("status"), "active")
+        _update(customer_id, status, obj.get("current_period_end"))
+    elif etype == "customer.subscription.deleted":
+        _update(customer_id, "canceled", obj.get("current_period_end"))
+    elif etype == "invoice.payment_failed":
+        _update(customer_id, "past_due", None)
+    # autres types → ignorés (no-op)
+
+
+def _update(customer_id: str | None, status: str, period_end: int | None) -> None:
+    if not customer_id:
+        return
+    acc = accounts.get_by_stripe_customer(customer_id)
+    if acc is None:
+        print(f"[billing] webhook pour customer inconnu {customer_id} — ignoré")
+        return
+    accounts.set_subscription(acc["id"], status, period_end)
