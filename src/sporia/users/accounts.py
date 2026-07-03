@@ -125,3 +125,36 @@ def consume_token(token: str, kind: str) -> int | None:
             return None
         c.execute("DELETE FROM tokens WHERE token=?", (token,))  # usage unique
     return r["user_id"] if r["expires_at"] >= int(time.time()) else None
+
+
+def set_stripe_customer(user_id: int, stripe_customer_id: str) -> None:
+    with _connect() as c:
+        c.execute(
+            "UPDATE users SET stripe_customer_id=?, updated_at=? WHERE id=?",
+            (stripe_customer_id, int(time.time()), user_id),
+        )
+
+
+def get_by_stripe_customer(stripe_customer_id: str) -> dict | None:
+    init_db()
+    with _connect() as c:
+        r = c.execute(
+            "SELECT * FROM users WHERE stripe_customer_id=?", (stripe_customer_id,)
+        ).fetchone()
+    return dict(r) if r else None
+
+
+def set_subscription(user_id: int, status: str, current_period_end: int | None = None) -> None:
+    now = int(time.time())
+    with _connect() as c:
+        if current_period_end is None:
+            c.execute(
+                "UPDATE users SET subscription_status=?, updated_at=? WHERE id=?",
+                (status, now, user_id),
+            )
+        else:
+            c.execute(
+                "UPDATE users SET subscription_status=?, current_period_end=?, updated_at=?"
+                " WHERE id=?",
+                (status, current_period_end, now, user_id),
+            )
