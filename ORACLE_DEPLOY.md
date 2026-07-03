@@ -196,3 +196,14 @@ l'app **refuse de démarrer** en PROD (message clair dans `journalctl -u champim
 `oracle_deploy.sh` le génère automatiquement s'il est absent ; sinon :
 `python -c "import secrets;print(secrets.token_urlsafe(48))"` puis l'ajouter à `.env`.
 Le secret n'est plus dans `config.yaml` (section `cookie:` supprimée).
+
+## Migration des comptes vers SQLite (chantier 4.1, au moment de la mise en vente)
+
+Une seule fois, quand on active l'auto-inscription/abonnement :
+```bash
+sudo -u app ./venv/bin/python scripts/migrate_accounts.py
+```
+Idempotent : bascule les comptes de `config.yaml` vers `data/sporia.db` (SQLite) et remappe
+`user_prefs.json`/`user_spots.json` (username → email). Après ça, **connexion par email**.
+Sauvegarder `data/sporia.db` au même titre que `config.yaml`. Envoi d'email : renseigner
+`BREVO_API_KEY` et `MAIL_FROM` dans `.env` (sinon reset de mot de passe non fonctionnel).

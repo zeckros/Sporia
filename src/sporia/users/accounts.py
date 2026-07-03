@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import secrets
 import sqlite3
 import time
@@ -16,7 +17,12 @@ _DUMMY_HASH = bcrypt.hashpw(b"timing-equalizer", bcrypt.gensalt())
 
 
 def _db_path() -> Path:
-    return settings.data_dir / "sporia.db"
+    # SPORIA_DB (env) permet de pointer une base alternative (tests, migration, ops).
+    return (
+        Path(os.environ["SPORIA_DB"])
+        if os.environ.get("SPORIA_DB")
+        else settings.data_dir / "sporia.db"
+    )
 
 
 def _connect() -> sqlite3.Connection:
