@@ -12,13 +12,11 @@ DATA_DIR = settings.output_tiff_dir
 OVERLAY_DIR = settings.overlay_dir
 MASK_CACHE = settings.data_cache_dir
 
-EXCLUDED_FROM_MODELING = {"Morchella esculenta"}
-
 
 def fruiting_models():
-    """Espèces disposant d'un modèle de fructification (point #4), hors espèces
-    exclues de la modélisation."""
-    return [s for s in fruiting_live.available_models() if s not in EXCLUDED_FROM_MODELING]
+    """Espèces disposant d'un modèle de fructification (point #4). La fiabilité de
+    l'habitat (Boyce >= seuil) est déjà appliquée par fruiting_live.available_models."""
+    return fruiting_live.available_models()
 
 
 def render_fruiting_overlay(species: str, ref_date: str | None = None):

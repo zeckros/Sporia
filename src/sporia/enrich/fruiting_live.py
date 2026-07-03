@@ -25,6 +25,7 @@ from pathlib import Path
 import numpy as np
 import requests
 
+from sporia.domain.metrics import is_reliable_habitat
 from sporia.enrich import forest as mmap
 from sporia.enrich import soil_static as soil_data
 from sporia.enrich import terrain as terrain_data
@@ -42,27 +43,14 @@ STATIC = ["forest_density", "ph", "clay", "sand", "silt", "altitude", "slope", "
 TEMPORAL = wx_features.TEMPORAL  # ordre canonique partagé entraînement/live
 
 
-# Espèces NON servies dans le calque « pousse en ce moment » : modèle d'HABITAT
-# trop faible/inversé (Boyce < 0.2) pour une carte spatiale fiable — le « où »
-# serait ≤ hasard, même si le « quand » (météo) est bon. Gardées au catalogue/
-# guide + SDM. (Décision : ne servir que solide+modeste, 2026-06-01.)
-_HIDDEN_FRUITING = {
-    # Seule la morille reste non servie : habitat Boyce -0.40 (inversé/trompeur),
-    # non modélisable même après filtre anti-urbain et distance-eau.
-    # Depuis l'ajout de l'arbre-hôte (host_*, par guilde), TOUTES les autres espèces
-    # ont un Boyce habitat >= 0.2 — dont trompette de la mort 0.30, Lepista 0.67,
-    # Lactarius 0.36 (jadis masquées) → désormais servies.
-    "Morchella esculenta",
-}
-
-
 def available_models() -> list[str]:
     """Espèces (nom latin) avec un modèle de fructification baké ET dont l'habitat
-    est assez fiable pour servir une carte spatiale (cf. _HIDDEN_FRUITING)."""
+    est assez fiable pour servir une carte spatiale (Boyce >= seuil, cf.
+    sporia.domain.metrics.is_reliable_habitat)."""
     out = []
     for p in sorted(CACHE.glob("fruiting_*.pkl")):
         sp = p.stem[len("fruiting_") :].replace("_", " ")
-        if sp not in _HIDDEN_FRUITING:
+        if is_reliable_habitat(sp):
             out.append(sp)
     return out
 
@@ -369,7 +357,7 @@ def radar(species_list, date_str: str | None = None, params: dict | None = None)
     grids, used, date = [], [], (date_str or dt.date.today().isoformat())
     params = params or {}
     for sp in species_list or []:
-        if sp in _HIDDEN_FRUITING:
+        if not is_reliable_habitat(sp):
             continue
         g, date = blended_species(sp, date_str, params.get(sp))
         if g is not None:
