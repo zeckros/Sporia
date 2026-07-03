@@ -5,8 +5,15 @@ from __future__ import annotations
 import pytest
 from starlette.testclient import TestClient
 
+from sporia.users import accounts
 from sporia.web import app as server
 from sporia.web.auth import verify
+
+
+@pytest.fixture(autouse=True)
+def _seed(tmp_path, monkeypatch):
+    monkeypatch.setattr(accounts, "_db_path", lambda: tmp_path / "t.db")
+    accounts.create_user("dev@ex.com", "devpass123", name="Dev", role="user")
 
 
 @pytest.fixture
@@ -15,11 +22,11 @@ def client():
 
 
 def test_verify_unknown_user_returns_none():
-    assert verify("no-such-user", "whatever") is None
+    assert verify("no-such@ex.com", "whatever") is None
 
 
 def test_verify_wrong_password_returns_none():
-    assert verify("dev", "wrong-password") is None
+    assert verify("dev@ex.com", "wrong-password") is None
 
 
 def test_protected_route_requires_auth(client):
