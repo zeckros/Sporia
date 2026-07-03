@@ -73,8 +73,30 @@ def combine(hab, fru):
     return out
 
 
+def emit_yaml(hab: dict) -> Path:
+    """Écrit src/sporia/data/species_metrics.yaml depuis les métriques habitat parsées."""
+    dest = Path(__file__).resolve().parent.parent / "src" / "sporia" / "data" / "species_metrics.yaml"
+    lines = [
+        "# Métriques habitat (SDM) par espèce — Boyce/AUC (CV spatiale).",
+        "# Généré par : python scripts/report_metrics.py --emit-yaml",
+        "# Boyce ~0=hasard, 1=parfait. Sert à décider quelles espèces sont servies (seuil 0.10).",
+    ]
+    for sp in sorted(hab, key=lambda s: -hab[s][1]):
+        auc, boyce = hab[sp]
+        lines.append(f"{sp}: {{boyce: {boyce:.3f}, auc: {auc:.3f}}}")
+    dest.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return dest
+
+
 def main():
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
     hab, fru = parse_habitat(), parse_fruiting()
+    if "--emit-yaml" in sys.argv:
+        p = emit_yaml(hab)
+        print(f"[emit] {p} ({len(hab)} espèces)")
     rad = combine(hab, fru)
     excl = getattr(core, "EXCLUDED_FROM_MODELING", set())
     species = [m["latin"] for m in core.MUSHROOMS if m["latin"] not in excl]

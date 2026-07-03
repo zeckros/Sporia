@@ -1,0 +1,16 @@
+# Métriques habitat (SDM) par espèce — Boyce/AUC (CV spatiale).
+# Généré par : python scripts/report_metrics.py --emit-yaml
+# Boyce ~0=hasard, 1=parfait. Sert à décider quelles espèces sont servies (seuil 0.10).
+Imleria badia: {boyce: 0.727, auc: 0.733}
+Lepista nuda: {boyce: 0.720, auc: 0.678}
+Boletus aereus: {boyce: 0.585, auc: 0.713}
+Cantharellus cibarius: {boyce: 0.546, auc: 0.683}
+Hydnum repandum: {boyce: 0.537, auc: 0.708}
+Lactarius deliciosus: {boyce: 0.506, auc: 0.663}
+Pleurotus ostreatus: {boyce: 0.503, auc: 0.694}
+Craterellus tubaeformis: {boyce: 0.450, auc: 0.726}
+Craterellus cornucopioides: {boyce: 0.430, auc: 0.741}
+Macrolepiota procera: {boyce: 0.403, auc: 0.618}
+Boletus edulis: {boyce: 0.389, auc: 0.685}
+Agaricus campestris: {boyce: 0.320, auc: 0.667}
+Calocybe gambosa: {boyce: -0.188, auc: 0.659}
