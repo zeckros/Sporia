@@ -28,3 +28,16 @@ def require_admin(request: Request) -> dict:
     if user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Réservé à l'administrateur.")
     return user
+
+
+def require_subscription(request: Request) -> dict:
+    """Comme require_user, mais exige un accès abonnement actif (402 sinon).
+
+    Renvoie le `user` de session inchangé (même forme que require_user)."""
+    from sporia import billing
+
+    user = require_user(request)
+    account = accounts.get_by_email(user["username"])
+    if not billing.has_access(account):
+        raise HTTPException(status_code=402, detail="Abonnement requis.")
+    return user

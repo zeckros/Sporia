@@ -29,7 +29,7 @@ from sporia.enrich import forest as mmap
 from sporia.users import access_requests, accounts
 from sporia.users import prefs as user_prefs
 from sporia.users import spots as user_spots
-from sporia.web.auth import require_admin, require_user, verify
+from sporia.web.auth import require_admin, require_subscription, require_user, verify
 from sporia.web.security import security_headers
 
 # Métadonnées (nom FR, couleur) par latin, pour habiller les listes d'espèces.
@@ -130,7 +130,14 @@ def logout(request: Request):
 @app.get("/api/me")
 def me(request: Request):
     user = request.session.get("user")
-    return {"authenticated": bool(user), "name": user["name"] if user else None}
+    account = accounts.get_by_email(user["username"]) if user else None
+    return {
+        "authenticated": bool(user),
+        "name": user["name"] if user else None,
+        "subscribed": billing.has_access(account),
+        "role": (user or {}).get("role"),
+        "price_label": os.environ.get("SPORIA_PRICE_LABEL", "15 €/an"),
+    }
 
 
 # ===== Inscription / mot de passe (auto-inscription) =====
@@ -247,22 +254,22 @@ async def stripe_webhook(request: Request):
 
 # ===== API données (protégées) =====
 @app.get("/api/dates")
-def api_dates(user=Depends(require_user)):
+def api_dates(user=Depends(require_subscription)):
     return {"dates": [d.strftime("%Y%m%d") for d in core.available_dates()]}
 
 
 @app.get("/api/cities")
-def api_cities(q: str = "", user=Depends(require_user)):
+def api_cities(q: str = "", user=Depends(require_subscription)):
     return {"results": core.search_cities(q)}
 
 
 @app.get("/api/outline")
-def api_outline(user=Depends(require_user)):
+def api_outline(user=Depends(require_subscription)):
     return core.france_outline_geojson() or {}
 
 
 @app.get("/api/overlay")
-def api_overlay(var: str, dates: str, user=Depends(require_user)):
+def api_overlay(var: str, dates: str, user=Depends(require_subscription)):
     var = _valid_var(var)
     ds = _valid_dates(dates)
     res = core.render_weather_overlay(var, ds)
@@ -282,7 +289,7 @@ class SpeciesPrefs(BaseModel):
 
 
 @app.get("/api/preferences")
-def api_get_preferences(user=Depends(require_user)):
+def api_get_preferences(user=Depends(require_subscription)):
     catalog = _catalog()
     latins = {s["latin"] for s in catalog}
     sel = user_prefs.get_species(user["username"])
@@ -294,7 +301,7 @@ def api_get_preferences(user=Depends(require_user)):
 
 
 @app.post("/api/preferences")
-def api_set_preferences(body: SpeciesPrefs, user=Depends(require_user)):
+def api_set_preferences(body: SpeciesPrefs, user=Depends(require_subscription)):
     valid_set = _valid_latins()
     valid = [s for s in body.species if s in valid_set]
     if not valid:
@@ -304,7 +311,7 @@ def api_set_preferences(body: SpeciesPrefs, user=Depends(require_user)):
 
 
 @app.get("/api/favorability")
-def api_favorability(date: str, species: str | None = None, user=Depends(require_user)):
+def api_favorability(date: str, species: str | None = None, user=Depends(require_subscription)):
     # `species` explicite (CSV) sinon préférences enregistrées du compte (sinon toutes).
     sp = (
         _parse_species(species) if species is not None else user_prefs.get_species(user["username"])
@@ -316,7 +323,7 @@ def api_favorability(date: str, species: str | None = None, user=Depends(require
 
 
 @app.get("/api/soil")
-def api_soil(user=Depends(require_user)):
+def api_soil(user=Depends(require_subscription)):
     res = core.render_soil_overlay()
     if res is None:
         raise HTTPException(status_code=404, detail="Couche type de sol indisponible.")
@@ -324,7 +331,7 @@ def api_soil(user=Depends(require_user)):
 
 
 @app.get("/api/soil-moisture")
-def api_soil_moisture(date: str | None = None, user=Depends(require_user)):
+def api_soil_moisture(date: str | None = None, user=Depends(require_subscription)):
     res = core.render_soil_moisture_overlay(_valid_date(date) if date else None)
     if res is None:
         raise HTTPException(status_code=404, detail="Couche humidité du sol indisponible.")
@@ -332,7 +339,7 @@ def api_soil_moisture(date: str | None = None, user=Depends(require_user)):
 
 
 @app.get("/api/altitude")
-def api_altitude(user=Depends(require_user)):
+def api_altitude(user=Depends(require_subscription)):
     res = core.render_altitude_overlay()
     if res is None:
         raise HTTPException(status_code=404, detail="Couche altitude indisponible.")
@@ -340,7 +347,7 @@ def api_altitude(user=Depends(require_user)):
 
 
 @app.get("/api/aspect")
-def api_aspect(user=Depends(require_user)):
+def api_aspect(user=Depends(require_subscription)):
     res = core.render_aspect_overlay()
     if res is None:
         raise HTTPException(status_code=404, detail="Couche exposition indisponible.")
@@ -348,7 +355,9 @@ def api_aspect(user=Depends(require_user)):
 
 
 @app.get("/api/radar")
-def api_radar(date: str | None = None, species: str | None = None, user=Depends(require_user)):
+def api_radar(
+    date: str | None = None, species: str | None = None, user=Depends(require_subscription)
+):
     """« Radar à champignons » : carte habitat×moment agrégée sur la sélection du compte
     (ou `species` CSV), restreinte aux espèces ayant un modèle servi."""
     sel = (
@@ -371,14 +380,19 @@ def _radar_selection(species: str | None, username: str) -> list[str]:
 
 
 @app.get("/api/radar/meta")
-def api_radar_meta(species: str | None = None, user=Depends(require_user)):
+def api_radar_meta(species: str | None = None, user=Depends(require_subscription)):
     """Espèces (noms FR) réellement affichées sur le radar (en saison) — pour la légende."""
     return {"species": core.radar_tile_species(_radar_selection(species, user["username"]))}
 
 
 @app.get("/api/radar/tiles/{z}/{x}/{y}.png")
 def api_radar_tile(
-    z: int, x: int, y: int, sp: str | None = None, d: str | None = None, user=Depends(require_user)
+    z: int,
+    x: int,
+    y: int,
+    sp: str | None = None,
+    d: str | None = None,
+    user=Depends(require_subscription),
 ):
     """Tuile PNG du « Radar à champignons » (valeur lissée × contour forêt exact). `d`
     ne sert qu'au cache navigateur (invalidation quotidienne)."""
@@ -389,7 +403,7 @@ def api_radar_tile(
 
 
 @app.get("/api/fruiting-models")
-def api_fruiting_models(user=Depends(require_user)):
+def api_fruiting_models(user=Depends(require_subscription)):
     """Espèces disposant d'un modèle « pousse en ce moment » (point #4)."""
     latins = core.fruiting_models()
     by_latin = {m["latin"]: m for m in core.MUSHROOMS}
@@ -397,7 +411,7 @@ def api_fruiting_models(user=Depends(require_user)):
 
 
 @app.get("/api/fruiting")
-def api_fruiting(species: str, date: str | None = None, user=Depends(require_user)):
+def api_fruiting(species: str, date: str | None = None, user=Depends(require_subscription)):
     """Carte de probabilité de fructification du jour pour une espèce (modèle
     météo-dépendant appliqué aux ~21 derniers jours via Open-Meteo)."""
     if species not in core.fruiting_models():
@@ -411,7 +425,7 @@ def api_fruiting(species: str, date: str | None = None, user=Depends(require_use
 
 
 @app.get("/api/point")
-def api_point(lat: float, lon: float, date: str, user=Depends(require_user)):
+def api_point(lat: float, lon: float, date: str, user=Depends(require_subscription)):
     if not (-90 <= lat <= 90 and -180 <= lon <= 180):
         raise HTTPException(status_code=400, detail="Coordonnées invalides.")
     sel = user_prefs.get_species(user["username"])
@@ -419,7 +433,7 @@ def api_point(lat: float, lon: float, date: str, user=Depends(require_user)):
 
 
 @app.get("/api/forest")
-def api_forest(lat: float, lon: float, user=Depends(require_user)):
+def api_forest(lat: float, lon: float, user=Depends(require_subscription)):
     """Essence précise au point (BD Forêt WMS) — appelée en différé par l'UI, hors
     du chemin critique du clic (qui n'utilise que la famille bakée). Best-effort."""
     if not (-90 <= lat <= 90 and -180 <= lon <= 180):
@@ -439,7 +453,7 @@ class SpotPatch(BaseModel):
 
 
 @app.get("/api/spots")
-def api_list_spots(user=Depends(require_user)):
+def api_list_spots(user=Depends(require_subscription)):
     """Spots du compte enrichis du statut « propice » courant (échantillonné sur
     le radar habitat × pousse du jour, selon la sélection d'espèces du compte)."""
     spots = user_spots.list_spots(user["username"])
@@ -448,7 +462,7 @@ def api_list_spots(user=Depends(require_user)):
 
 
 @app.post("/api/spots")
-def api_add_spot(body: SpotIn, user=Depends(require_user)):
+def api_add_spot(body: SpotIn, user=Depends(require_subscription)):
     if not (-90 <= body.lat <= 90 and -180 <= body.lon <= 180):
         raise HTTPException(status_code=400, detail="Coordonnées invalides.")
     spot = user_spots.add_spot(user["username"], body.lat, body.lon, body.name or "")
@@ -456,7 +470,7 @@ def api_add_spot(body: SpotIn, user=Depends(require_user)):
 
 
 @app.patch("/api/spots/{spot_id}")
-def api_rename_spot(spot_id: str, body: SpotPatch, user=Depends(require_user)):
+def api_rename_spot(spot_id: str, body: SpotPatch, user=Depends(require_subscription)):
     if not (body.name or "").strip():
         raise HTTPException(status_code=400, detail="Nom vide.")
     if not user_spots.rename_spot(user["username"], spot_id, body.name):
@@ -465,7 +479,7 @@ def api_rename_spot(spot_id: str, body: SpotPatch, user=Depends(require_user)):
 
 
 @app.delete("/api/spots/{spot_id}")
-def api_delete_spot(spot_id: str, user=Depends(require_user)):
+def api_delete_spot(spot_id: str, user=Depends(require_subscription)):
     if not user_spots.delete_spot(user["username"], spot_id):
         raise HTTPException(status_code=404, detail="Spot introuvable.")
     return {"ok": True}

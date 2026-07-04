@@ -42,7 +42,10 @@ def test_login_bad_credentials_401(client):
 def test_me_unauthenticated(client):
     r = client.get("/api/me")
     assert r.status_code == 200
-    assert r.json() == {"authenticated": False, "name": None}
+    body = r.json()
+    assert body["authenticated"] is False
+    assert body["name"] is None
+    assert body["subscribed"] is False
 
 
 def test_logout_always_ok(client):
