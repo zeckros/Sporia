@@ -252,6 +252,20 @@ async def stripe_webhook(request: Request):
     return {"received": True}
 
 
+@app.delete("/api/account")
+def delete_account(request: Request, user=Depends(require_user)):
+    """Effacement RGPD : résilie l'abonnement, purge les données, ferme la session."""
+    account = accounts.get_by_email(user["username"])
+    if account is None:
+        raise HTTPException(status_code=404, detail="Compte introuvable.")
+    billing.cancel_subscription(account)
+    user_prefs.delete_user(account["email"])
+    user_spots.delete_user(account["email"])
+    accounts.delete_user(account["id"])
+    request.session.clear()
+    return {"ok": True}
+
+
 # ===== API données (protégées) =====
 @app.get("/api/dates")
 def api_dates(user=Depends(require_subscription)):
