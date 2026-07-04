@@ -207,3 +207,35 @@ Idempotent : bascule les comptes de `config.yaml` vers `data/sporia.db` (SQLite)
 `user_prefs.json`/`user_spots.json` (username → email). Après ça, **connexion par email**.
 Sauvegarder `data/sporia.db` au même titre que `config.yaml`. Envoi d'email : renseigner
 `BREVO_API_KEY` et `MAIL_FROM` dans `.env` (sinon reset de mot de passe non fonctionnel).
+
+## Abonnement Stripe (chantier 4.2)
+
+Dans le dashboard Stripe (mode **test** d'abord, **live** au go-live) :
+
+1. **Produit + Prix** : créer un produit « Sporia » avec un **prix récurrent annuel**
+   (montant ~10-20 €/an). Copier l'identifiant du prix (`price_...`).
+2. **Webhook** : créer un endpoint `https://sporia.duckdns.org/api/stripe/webhook`, abonné aux
+   événements `checkout.session.completed`, `customer.subscription.updated`,
+   `customer.subscription.deleted`, `invoice.payment_failed`. Copier le secret de signature
+   (`whsec_...`).
+3. **Clé API** : récupérer la clé secrète (`sk_live_...` / `sk_test_...`).
+
+Ajouter au `.env` du serveur (chargé par systemd `EnvironmentFile`) :
+
+```
+STRIPE_SECRET_KEY=sk_live_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_PRICE_ID=price_...
+PUBLIC_BASE_URL=https://sporia.duckdns.org
+```
+
+Sans ces variables, l'app démarre normalement mais les routes de paiement renvoient **503**
+(fonctionnalité désactivée). Le passage en clés **live** nécessite la vérification d'identité du
+compte Stripe.
+
+> nginx : `/api/stripe/webhook` passe par le proxy `/api/` sans authentification (appelé par
+> Stripe, pas par le navigateur). Vérifier que le rate-limiting `/api/` ne bloque pas les rafales
+> de webhooks.
+
+> ⚠️ **Ne pas déployer 4.2 seul** : le paiement n'a de sens qu'avec le gating (chantier 4.3).
+> Déployer 4.1 + 4.2 + 4.3 ensemble.
