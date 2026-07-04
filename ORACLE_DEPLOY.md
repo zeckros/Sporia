@@ -227,7 +227,16 @@ STRIPE_SECRET_KEY=sk_live_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 STRIPE_PRICE_ID=price_...
 PUBLIC_BASE_URL=https://sporia.duckdns.org
+SPORIA_PRICE_LABEL=15 €/an
 ```
+
+`SPORIA_PRICE_LABEL` est **purement affiché** (landing + paywall) ; il doit être **aligné
+manuellement** sur le prix réel du Produit Stripe. Le montant débité vient toujours de Stripe,
+jamais de cette variable.
+
+> Après migration (chantier 4.1), les comptes non-admin sont **non abonnés** → écran paywall.
+> Pour offrir un accès : les faire s'abonner via Stripe, ou passer en base
+> `subscription_status=active` (ou `role=admin`) sur le compte voulu.
 
 Sans ces variables, l'app démarre normalement mais les routes de paiement renvoient **503**
 (fonctionnalité désactivée). Le passage en clés **live** nécessite la vérification d'identité du
