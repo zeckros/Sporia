@@ -158,3 +158,10 @@ def set_subscription(user_id: int, status: str, current_period_end: int | None =
                 " WHERE id=?",
                 (status, current_period_end, now, user_id),
             )
+
+
+def delete_user(user_id: int) -> None:
+    """Effacement RGPD : supprime le compte et ses tokens (idempotent)."""
+    with _connect() as c:
+        c.execute("DELETE FROM tokens WHERE user_id=?", (user_id,))
+        c.execute("DELETE FROM users WHERE id=?", (user_id,))

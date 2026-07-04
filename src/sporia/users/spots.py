@@ -96,3 +96,12 @@ def delete_spot(username: str, spot_id: str) -> bool:
         allp[username]["spots"] = kept
         _save_all(allp)
     return True
+
+
+def delete_user(username: str) -> None:
+    """Effacement RGPD : retire tous les spots du compte (no-op si absents)."""
+    with _LOCK:
+        allp = _load_all()
+        if username in allp:
+            del allp[username]
+            _save_all(allp)

@@ -47,3 +47,16 @@ def set_species(username: str, species: list[str]) -> list[str]:
         tmp.write_text(json.dumps(allp, ensure_ascii=False, indent=2), encoding="utf-8")
         tmp.replace(p)  # écriture atomique
     return species
+
+
+def delete_user(username: str) -> None:
+    """Effacement RGPD : retire les préférences du compte (no-op si absentes)."""
+    with _LOCK:
+        allp = _load_all()
+        if username in allp:
+            del allp[username]
+            p = _path()
+            p.parent.mkdir(parents=True, exist_ok=True)
+            tmp = p.with_suffix(".json.tmp")
+            tmp.write_text(json.dumps(allp, ensure_ascii=False, indent=2), encoding="utf-8")
+            tmp.replace(p)
