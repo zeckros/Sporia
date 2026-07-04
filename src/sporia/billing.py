@@ -8,6 +8,7 @@ mais les routes billing renvoient 503."""
 from __future__ import annotations
 
 import os
+import time
 
 import stripe
 
@@ -30,6 +31,18 @@ class WebhookError(Exception):
 
 def stripe_enabled() -> bool:
     return bool(os.environ.get("STRIPE_SECRET_KEY") and os.environ.get("STRIPE_PRICE_ID"))
+
+
+def has_access(account: dict | None) -> bool:
+    """True si le compte a droit à l'app : admin, abonnement actif, ou période payée en cours."""
+    if account is None:
+        return False
+    if account.get("role") == "admin":
+        return True
+    if account.get("subscription_status") == "active":
+        return True
+    cpe = account.get("current_period_end")
+    return bool(cpe) and cpe > int(time.time())
 
 
 def _base_url() -> str:
