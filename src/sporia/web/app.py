@@ -22,6 +22,7 @@ from pydantic import BaseModel
 from starlette.middleware.sessions import SessionMiddleware
 
 from sporia import api as core
+from sporia import billing
 from sporia.config import resolve_session_secret, settings
 from sporia.email import send_email
 from sporia.enrich import forest as mmap
@@ -210,6 +211,38 @@ def verify_email(token: str):
     if uid is not None:
         accounts.set_verified(uid)
     return FileResponse(str(settings.web_dir / "index.html"), headers={"Cache-Control": "no-cache"})
+
+
+# ===== Paiement / abonnement (Stripe) =====
+@app.post("/api/billing/checkout")
+def billing_checkout(user=Depends(require_user)):
+    if not billing.stripe_enabled():
+        raise HTTPException(status_code=503, detail="Paiement indisponible.")
+    account = accounts.get_by_email(user["username"])
+    return {"url": billing.create_checkout_session(account)}
+
+
+@app.post("/api/billing/portal")
+def billing_portal(user=Depends(require_user)):
+    if not billing.stripe_enabled():
+        raise HTTPException(status_code=503, detail="Paiement indisponible.")
+    account = accounts.get_by_email(user["username"])
+    try:
+        url = billing.create_portal_session(account)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Aucun abonnement à gérer.") from None
+    return {"url": url}
+
+
+@app.post("/api/stripe/webhook")
+async def stripe_webhook(request: Request):
+    payload = await request.body()
+    sig = request.headers.get("stripe-signature", "")
+    try:
+        billing.process_event(payload, sig)
+    except billing.WebhookError:
+        raise HTTPException(status_code=400, detail="Webhook invalide.") from None
+    return {"received": True}
 
 
 # ===== API données (protégées) =====
