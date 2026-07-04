@@ -94,6 +94,20 @@ def create_portal_session(account: dict) -> str:
     return session["url"]
 
 
+def cancel_subscription(account: dict) -> None:
+    """Résilie les abonnements Stripe du compte (best-effort, ne lève jamais)."""
+    cid = account.get("stripe_customer_id")
+    if not cid or not stripe_enabled():
+        return
+    try:
+        _configure()
+        subs = stripe.Subscription.list(customer=cid)
+        for sub in subs["data"]:
+            stripe.Subscription.delete(sub["id"])
+    except Exception as e:  # jamais bloquer la suppression de compte
+        print(f"[billing] annulation Stripe échouée pour {cid} : {e}")
+
+
 def process_event(payload: bytes, sig_header: str) -> None:
     """Vérifie la signature Stripe puis applique l'événement (idempotent).
 
