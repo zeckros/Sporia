@@ -66,11 +66,69 @@ async function boot() {
   document.querySelectorAll(".open-login").forEach((b) => b.addEventListener("click", showLoginPage));
   document.querySelectorAll(".back-landing").forEach((b) => b.addEventListener("click", showLanding));
   setupLandingNav();
+  // Retour depuis Stripe Checkout
+  const params = new URLSearchParams(location.search);
+  const justPaid = params.get("checkout") === "success";
+  if (params.has("checkout")) history.replaceState({}, "", location.pathname);
   try {
     const me = await API.get("/api/me");
-    if (me.authenticated) { state.name = me.name; startApp(); return; }
+    applyPriceLabel(me.price_label);
+    if (me.authenticated) {
+      state.name = me.name;
+      if (me.subscribed) { startApp(); return; }
+      showPaywall(justPaid);
+      return;
+    }
   } catch (e) { /* ignore */ }
   showLanding();
+}
+
+function applyPriceLabel(label) {
+  if (!label) return;
+  state.priceLabel = label;
+  document.querySelectorAll("[data-price-label]").forEach((el) => { el.textContent = label; });
+}
+
+function showPaywall(justPaid) {
+  document.getElementById("landing-screen").classList.add("hidden");
+  document.getElementById("login-screen").classList.add("hidden");
+  document.getElementById("app-screen").classList.add("hidden");
+  document.getElementById("paywall-screen").classList.remove("hidden");
+  if (justPaid) {
+    const note = document.getElementById("paywall-note");
+    note.textContent = "Paiement reçu — activation en cours, actualisez dans un instant.";
+    note.classList.remove("hidden");
+  }
+}
+
+async function routeAfterAuth() {
+  try {
+    const me = await API.get("/api/me");
+    applyPriceLabel(me.price_label);
+    if (me.subscribed) { startApp(); return; }
+  } catch (e) { /* ignore */ }
+  showPaywall(false);
+}
+
+async function subscribe(btn) {
+  if (btn) btn.disabled = true;
+  try {
+    const r = await API.post("/api/billing/checkout");
+    location.href = r.url;
+  } catch (e) {
+    if (e && e.unauth) { showLoginPage(); return; }
+    alert(e.message || "Abonnement indisponible pour le moment.");
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function openPortal() {
+  try {
+    const r = await API.post("/api/billing/portal");
+    location.href = r.url;
+  } catch (e) {
+    alert(e.message || "Portail indisponible.");
+  }
 }
 
 function showLanding() {
@@ -122,7 +180,7 @@ document.getElementById("login-form").addEventListener("submit", async (ev) => {
       password: document.getElementById("login-pass").value,
     });
     state.name = res.name;
-    startApp();
+    await routeAfterAuth();
   } catch (e) {
     err.textContent = e.message || "Échec de connexion.";
     err.classList.remove("hidden");
@@ -133,6 +191,16 @@ document.getElementById("logout-btn").addEventListener("click", async () => {
   try { await API.post("/api/logout"); } catch (e) {}
   location.reload();
 });
+
+// Abonnement : paywall + portail
+document.getElementById("subscribe-btn")?.addEventListener("click", (ev) => subscribe(ev.currentTarget));
+document.getElementById("paywall-logout")?.addEventListener("click", async () => {
+  try { await API.post("/api/logout"); } catch (e) {}
+  location.reload();
+});
+document.getElementById("manage-sub")?.addEventListener("click", openPortal);
+document.querySelectorAll(".subscribe-cta").forEach((b) =>
+  b.addEventListener("click", (ev) => subscribe(ev.currentTarget)));
 
 // Demande d'accès (landing, public) → POST /api/access-request
 document.getElementById("access-form").addEventListener("submit", async (ev) => {
@@ -174,7 +242,7 @@ document.getElementById("register-form")?.addEventListener("submit", async (ev) 
       name: document.getElementById("reg-name").value.trim(),
     });
     state.name = res.name;
-    startApp();
+    await routeAfterAuth();
   } catch (e) {
     msg.textContent = e.message || "Inscription impossible.";
     msg.className = "text-sm font-semibold text-red-600";
@@ -210,7 +278,9 @@ async function startApp() {
   document.getElementById("landing-screen").classList.add("hidden");
   document.getElementById("login-screen").classList.add("hidden");
   document.getElementById("app-screen").classList.remove("hidden");
+  document.getElementById("paywall-screen")?.classList.add("hidden");
   document.getElementById("nav-user").textContent = state.name || "";
+  document.getElementById("manage-sub")?.classList.remove("hidden");
 
   const d = await API.get("/api/dates");
   state.dates = d.dates;

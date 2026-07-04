@@ -409,6 +409,10 @@
         <p class="mt-3 text-slate-500 leading-relaxed">
           Inscrivez-vous en quelques secondes pour accéder à la carte.
         </p>
+        <p class="mt-2 text-sm text-slate-500">
+          Accès complet à la carte et aux prévisions quotidiennes —
+          <span class="font-bold text-brand-600" data-price-label>15 €/an</span>.
+        </p>
 
         <form id="register-form" class="mt-6 bg-white rounded-2xl shadow-card border border-slate-200 p-5 sm:p-6 space-y-4">
           <div>
@@ -477,6 +481,28 @@
         </div>
       </footer>
     </section>
+  </div>
+
+  <!-- ============ PAYWALL (connecté, non abonné) ============ -->
+  <div id="paywall-screen" class="hidden fixed inset-0 z-50 overflow-auto bg-slate-50">
+    <div class="min-h-screen flex items-center justify-center px-5">
+      <div class="max-w-md w-full bg-white rounded-2xl shadow-card border border-slate-200 p-7 text-center">
+        <div class="font-black text-brand-600 text-2xl mb-2">Sporia</div>
+        <h1 class="text-2xl font-black tracking-tight text-slate-900">Abonnez-vous pour accéder à la carte</h1>
+        <p class="mt-3 text-slate-500">
+          Accès complet aux prévisions de cueillette, mises à jour chaque jour.
+        </p>
+        <p class="mt-4 text-3xl font-black text-slate-900"><span data-price-label>15 €/an</span></p>
+        <button id="subscribe-btn"
+                class="mt-6 w-full py-3 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold shadow-card transition">
+          S'abonner
+        </button>
+        <p id="paywall-note" class="hidden mt-3 text-sm font-semibold text-green-600"></p>
+        <button id="paywall-logout" class="mt-5 text-sm text-slate-400 hover:text-brand-600 font-semibold transition">
+          Se déconnecter
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- ============ PAGE DE CONNEXION ============ -->
@@ -647,6 +673,10 @@
              Mes champignons
           </button>
           <span id="nav-user" class="text-sm text-slate-500 px-1"></span>
+          <button id="manage-sub"
+                  class="hidden px-3 py-2 md:py-1.5 rounded-lg text-sm font-semibold text-brand-700 border border-brand-200 bg-brand-50 hover:bg-brand-100 transition text-left md:text-center">
+            Mon abonnement
+          </button>
           <button id="logout-btn"
                   class="px-3 py-2 md:py-1.5 rounded-lg text-sm font-semibold text-slate-500 border border-slate-200 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition text-left md:text-center">
             Déconnexion
