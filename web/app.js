@@ -131,6 +131,15 @@ async function openPortal() {
   }
 }
 
+async function deleteAccount() {
+  if (!confirm("Supprimer définitivement votre compte, vos préférences et vos spots ? " +
+               "Votre abonnement sera résilié. Cette action est irréversible.")) return;
+  try {
+    await API.del("/api/account");
+  } catch (e) { /* on recharge quand même */ }
+  location.reload();
+}
+
 function showLanding() {
   document.getElementById("landing-screen").classList.remove("hidden");
   document.getElementById("login-screen").classList.add("hidden");
@@ -201,6 +210,11 @@ document.getElementById("paywall-logout")?.addEventListener("click", async () =>
 document.getElementById("manage-sub")?.addEventListener("click", openPortal);
 document.querySelectorAll(".subscribe-cta").forEach((b) =>
   b.addEventListener("click", (ev) => subscribe(ev.currentTarget)));
+document.getElementById("delete-account")?.addEventListener("click", deleteAccount);
+document.getElementById("retract-consent")?.addEventListener("change", (ev) => {
+  const btn = document.getElementById("subscribe-btn");
+  if (btn) btn.disabled = !ev.currentTarget.checked;
+});
 
 // Demande d'accès (landing, public) → POST /api/access-request
 document.getElementById("access-form").addEventListener("submit", async (ev) => {

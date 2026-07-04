@@ -475,7 +475,7 @@
         <div class="max-w-6xl mx-auto px-5 sm:px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-slate-400">
           <span class="flex items-center gap-2"><span class="font-black text-brand-600">Sporia</span> © 2026 — Trouvez les champignons avant tout le monde.</span>
           <div class="flex items-center gap-4">
-            <button class="open-cgu hover:text-brand-600 transition font-semibold">CGU</button>
+            <button class="open-cgu hover:text-brand-600 transition font-semibold">CGU · Mentions · Confidentialité</button>
             <span class="hidden sm:inline text-slate-300">Données : IGN · Météo-France · SoilGrids · GBIF</span>
           </div>
         </div>
@@ -493,8 +493,13 @@
           Accès complet aux prévisions de cueillette, mises à jour chaque jour.
         </p>
         <p class="mt-4 text-3xl font-black text-slate-900"><span data-price-label>15 €/an</span></p>
-        <button id="subscribe-btn"
-                class="mt-6 w-full py-3 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold shadow-card transition">
+        <label class="mt-5 flex items-start gap-2 text-left text-xs text-slate-500">
+          <input id="retract-consent" type="checkbox" class="mt-0.5 shrink-0" />
+          <span>J'accepte les CGV et je demande l'accès immédiat au service, renonçant expressément à mon
+          droit de rétractation de 14 jours. <button type="button" class="open-cgu text-brand-600 font-semibold underline">Lire les CGV</button></span>
+        </label>
+        <button id="subscribe-btn" disabled
+                class="mt-4 w-full py-3 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold shadow-card transition disabled:opacity-50 disabled:cursor-not-allowed">
           S'abonner
         </button>
         <p id="paywall-note" class="hidden mt-3 text-sm font-semibold text-green-600"></p>
@@ -681,6 +686,10 @@
                   class="px-3 py-2 md:py-1.5 rounded-lg text-sm font-semibold text-slate-500 border border-slate-200 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition text-left md:text-center">
             Déconnexion
           </button>
+          <button id="delete-account"
+                  class="px-3 py-2 md:py-1.5 rounded-lg text-sm font-semibold text-slate-400 border border-slate-200 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition text-left md:text-center">
+            Supprimer mon compte
+          </button>
         </div>
       </div>
     </header>
@@ -840,41 +849,47 @@
       </div>
       <div class="flex-1 overflow-y-auto nice-scroll p-6 text-sm text-slate-600 leading-relaxed space-y-4">
         <div>
-          <div class="font-bold text-slate-800 mb-1">1. Objet</div>
-          Sporia est un service d'aide à la prospection de champignons. Il croise des données
-          météorologiques, forestières, pédologiques et d'occurrences d'espèces pour estimer, à titre
-          purement <strong>indicatif</strong>, les zones et moments favorables à la pousse.
+          <div class="font-black text-slate-900 text-base mb-2">Conditions d'utilisation &amp; de vente (CGU/CGV)</div>
+          <p class="mb-2"><strong>Objet.</strong> Sporia est un service d'aide à la prospection de champignons : il croise
+          des données météo, forestières, pédologiques et d'occurrences d'espèces pour estimer, à titre
+          <strong>purement indicatif</strong>, les zones et moments favorables à la pousse.</p>
+          <p class="mb-2"><strong>Accès &amp; abonnement.</strong> L'accès complet requiert un <strong>abonnement annuel</strong>
+          payant, souscrit et géré via notre prestataire de paiement (Stripe). Le tarif en vigueur est affiché avant
+          paiement. L'abonnement se reconduit annuellement ; vous pouvez le résilier à tout moment depuis « Mon abonnement »
+          (l'accès reste ouvert jusqu'à la fin de la période payée).</p>
+          <p class="mb-2"><strong>Droit de rétractation.</strong> Le service numérique étant fourni immédiatement, vous
+          demandez expressément son exécution dès la souscription et <strong>renoncez à votre droit de rétractation</strong>
+          de 14 jours (art. L221-28 3° du Code de la consommation), consentement recueilli par case à cocher au paiement.</p>
+          <p class="mb-2"><strong>Sécurité — avertissement essentiel.</strong> Les estimations ne constituent <strong>en aucun
+          cas</strong> une garantie de présence ni une identification d'espèce. <strong>Ne consommez jamais</strong> un
+          champignon sans identification formelle par une personne compétente (pharmacien, société mycologique) — certaines
+          espèces sont mortelles. Respectez la réglementation de cueillette, la propriété privée et les espaces protégés.
+          L'éditeur décline toute responsabilité en cas d'intoxication, d'accident ou d'infraction.</p>
+          <p class="mb-2"><strong>Responsabilité.</strong> Service fourni « en l'état », sans garantie de disponibilité ni
+          d'exactitude. Ces conditions peuvent évoluer ; la version en vigueur est celle présentée ici.</p>
+          <p><strong>Sources de données.</strong> IGN (BD&nbsp;Forêt®, RGE&nbsp;ALTI®), Météo-France, SoilGrids® (ISRIC),
+          GBIF. Les marques et droits associés restent la propriété de leurs détenteurs respectifs.</p>
         </div>
         <div>
-          <div class="font-bold text-slate-800 mb-1">2. Accès au service</div>
-          L'accès se fait sur invitation, via un compte nominatif. Vous êtes responsable de la
-          confidentialité de vos identifiants et des activités réalisées depuis votre compte.
+          <div class="font-black text-slate-900 text-base mb-2">Mentions légales</div>
+          <p class="mb-1"><strong>Éditeur :</strong> [À COMPLÉTER : nom / statut juridique / SIRET / adresse / email de contact].</p>
+          <p class="mb-1"><strong>Directeur de la publication :</strong> [À COMPLÉTER].</p>
+          <p><strong>Hébergeur :</strong> [À COMPLÉTER : Oracle Cloud (Oracle Corporation) / adresse].</p>
         </div>
         <div>
-          <div class="font-bold text-slate-800 mb-1">3. Sécurité &amp; usage — avertissement important</div>
-          Les estimations de Sporia ne constituent <strong>en aucun cas</strong> une garantie de présence
-          ni une identification d'espèce. <strong>Ne consommez jamais</strong> un champignon sans
-          identification formelle par une personne compétente (pharmacien, société mycologique). Certaines
-          espèces sont mortelles. Respectez la réglementation locale de cueillette, la propriété privée et
-          les espaces protégés. L'éditeur décline toute responsabilité en cas d'intoxication, d'accident ou
-          d'infraction.
-        </div>
-        <div>
-          <div class="font-bold text-slate-800 mb-1">4. Données personnelles</div>
-          Les données saisies (compte, préférences, spots enregistrés, demandes d'accès) servent uniquement
-          au fonctionnement du service et ne sont pas cédées à des tiers. Vous pouvez demander leur
-          rectification ou leur suppression en nous contactant.
-        </div>
-        <div>
-          <div class="font-bold text-slate-800 mb-1">5. Sources de données</div>
-          Données issues notamment de l'IGN (BD&nbsp;Forêt®, RGE&nbsp;ALTI®), de Météo-France, de SoilGrids®
-          (ISRIC) et de GBIF. Les marques et droits associés restent la propriété de leurs détenteurs
-          respectifs.
-        </div>
-        <div>
-          <div class="font-bold text-slate-800 mb-1">6. Responsabilité &amp; évolutions</div>
-          Le service est fourni « en l'état », sans garantie de disponibilité ni d'exactitude. Ces
-          conditions peuvent évoluer ; la version en vigueur est celle présentée ici.
+          <div class="font-black text-slate-900 text-base mb-2">Politique de confidentialité (RGPD)</div>
+          <p class="mb-2"><strong>Responsable de traitement :</strong> [À COMPLÉTER]. <strong>Données collectées :</strong>
+          email, nom, mot de passe (haché), préférences d'espèces, spots enregistrés, statut d'abonnement et identifiant
+          client Stripe.</p>
+          <p class="mb-2"><strong>Finalités &amp; base légale :</strong> fourniture du service et facturation — exécution du
+          contrat d'abonnement. <strong>Sous-traitants :</strong> Stripe (paiement), Brevo (emails transactionnels), Oracle
+          Cloud (hébergement). Aucune donnée n'est cédée ni revendue à des tiers à des fins commerciales.</p>
+          <p class="mb-2"><strong>Conservation :</strong> le temps de la relation contractuelle, puis suppression.
+          <strong>Vos droits :</strong> accès, rectification, effacement, portabilité, opposition — exerçables en nous
+          contactant [À COMPLÉTER : email] ou, pour l'effacement, directement via <strong>« Supprimer mon compte »</strong>
+          dans l'application.</p>
+          <p><strong>Cookies :</strong> seul un cookie de session strictement nécessaire à l'authentification est utilisé
+          (aucun traceur publicitaire).</p>
         </div>
       </div>
       <div class="p-4 border-t border-slate-100 flex justify-end">
