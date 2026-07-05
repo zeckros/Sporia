@@ -32,6 +32,7 @@ import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from sporia import api as core          # noqa: E402
+from sporia.domain.species import habitat_feature_subset  # noqa: E402
 from sporia.enrich import forest as mmap         # noqa: E402
 from sporia.enrich import soil_static as soil_data                    # noqa: E402
 from sporia.enrich import terrain as terrain_data                 # noqa: E402
@@ -59,22 +60,11 @@ EXTRA_STATIC = ["twi", "tpi", "dist_water", "slope_dem", "soc", "cec", "edge_den
 # (sinon lat/lon dominent et provoquent un sur-apprentissage spatial — cf. #3).
 GEO_PROXY = ["lat", "lon"]
 
-# Variables PAR GUILDE : l'arbre-hôte (host_*) ne sert qu'aux ectomycorhiziennes
-# forestières. Pour les saprophytes (bois mort) et les espèces de prairie, l'essence
-# forestière est hors-sujet et n'ajoute que du bruit (Pleurotus 0.43→0.13,
-# Calocybe 0.22→−0.14 quand on la leur impose) → on la leur retire.
-NO_HOST = {
-    "Pleurotus ostreatus",     # saprophyte sur bois mort
-    "Calocybe gambosa",        # prairie / lisière (mousseron de la Saint-Georges)
-    "Agaricus campestris",     # prairie (rosé des prés)
-    "Macrolepiota procera",    # prairie / lisière (coulemelle)
-}
-
 
 def species_feats(feats, species):
-    """Sous-ensemble de variables propre à l'espèce (retire host_* si hors-guilde)."""
-    drop_host = species in NO_HOST
-    return [f for f in feats if not (drop_host and f.startswith("host_"))]
+    """Sous-ensemble de variables propre à la guilde de l'espèce (cf. domain.species —
+    'open' reçoit un jeu restreint « milieu ouvert », 'sapro'/'open' perdent host_*)."""
+    return habitat_feature_subset(feats, species)
 
 
 def load_layers():
