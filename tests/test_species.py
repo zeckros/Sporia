@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from sporia.domain.species import MUSHROOMS, guild_of
+from sporia.domain.species import MUSHROOMS, guild_of, habitat_feature_subset
 
 
 def test_species_count():
@@ -40,3 +40,72 @@ def test_guild_default_unknown():
 def test_every_species_has_guild():
     for m in MUSHROOMS:
         assert m.get("guild") in {"ecto", "open", "sapro"}, m["latin"]
+
+
+_FEATS = [
+    "forest_density",
+    "ph",
+    "clay",
+    "sand",
+    "silt",
+    "altitude",
+    "slope",
+    "northness",
+    "twi",
+    "tpi",
+    "dist_water",
+    "slope_dem",
+    "soc",
+    "cec",
+    "edge_density",
+    "clim_bio1",
+    "lc_grass",
+    "lc_tree",
+    "host_chene",
+    "host_hetre",
+]
+
+
+def test_ecto_keeps_everything():
+    assert habitat_feature_subset(_FEATS, "Boletus edulis") == _FEATS
+
+
+def test_sapro_drops_host_only():
+    out = habitat_feature_subset(_FEATS, "Pleurotus ostreatus")
+    assert "forest_density" in out  # structure forestière conservée
+    assert not any(f.startswith("host_") for f in out)  # host_* retiré
+
+
+def test_open_lean_set():
+    out = habitat_feature_subset(_FEATS, "Calocybe gambosa")
+    for f in [
+        "forest_density",
+        "twi",
+        "tpi",
+        "slope_dem",
+        "edge_density",
+        "host_chene",
+        "host_hetre",
+    ]:
+        assert f not in out, f
+    for f in [
+        "ph",
+        "clay",
+        "sand",
+        "silt",
+        "soc",
+        "cec",
+        "dist_water",
+        "altitude",
+        "slope",
+        "northness",
+        "clim_bio1",
+        "lc_grass",
+        "lc_tree",
+    ]:
+        assert f in out, f
+
+
+def test_open_preserves_order():
+    out = habitat_feature_subset(_FEATS, "Agaricus campestris")
+    assert out == [f for f in _FEATS if f in out]

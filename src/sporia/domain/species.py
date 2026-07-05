@@ -37,3 +37,39 @@ def guild_of(latin: str) -> str:
         if m["latin"] == latin:
             return m.get("guild", _GUILD_DEFAULT)
     return _GUILD_DEFAULT
+
+
+# Variables conservées pour la guilde « open » (en plus de tout `lc_*` et `clim_*`).
+# Retire implicitement forest_density, host_*, edge_density, twi, tpi, slope_dem, lat/lon :
+# structure et hydrologie forestières = bruit + sur-apprentissage pour une prairie.
+_OPEN_HABITAT_KEEP = frozenset(
+    {
+        "ph",
+        "clay",
+        "sand",
+        "silt",  # texture du sol
+        "soc",
+        "cec",  # fertilité
+        "dist_water",  # humidité (proximité de l'eau)
+        "altitude",
+        "slope",
+        "northness",  # relief
+    }
+)
+
+
+def _keep_open(feat: str) -> bool:
+    return feat in _OPEN_HABITAT_KEEP or feat.startswith("lc_") or feat.startswith("clim_")
+
+
+def habitat_feature_subset(feats: list[str], latin: str) -> list[str]:
+    """Sous-ensemble de variables d'habitat propre à la guilde (ordre de `feats` préservé).
+    'ecto' → jeu complet. 'sapro'/'open' → host_* retiré. 'open' → en plus, restreint au
+    jeu « milieu ouvert » (_keep_open)."""
+    g = guild_of(latin)
+    if g == "ecto":
+        return list(feats)
+    out = [f for f in feats if not f.startswith("host_")]
+    if g == "open":
+        out = [f for f in out if _keep_open(f)]
+    return out
