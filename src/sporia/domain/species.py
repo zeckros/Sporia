@@ -26,3 +26,14 @@ def _load() -> list[dict]:
 
 
 MUSHROOMS: list[dict] = _load()
+
+_GUILD_DEFAULT = "ecto"
+
+
+def guild_of(latin: str) -> str:
+    """Guilde de l'espèce ('ecto' | 'open' | 'sapro'), 'ecto' par défaut si absente
+    (rétrocompatibilité : une espèce sans champ `guild` garde le comportement complet)."""
+    for m in MUSHROOMS:
+        if m["latin"] == latin:
+            return m.get("guild", _GUILD_DEFAULT)
+    return _GUILD_DEFAULT
