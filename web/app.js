@@ -747,13 +747,25 @@ async function loadPreferences() {
   } catch (e) { state.allSpecies = []; state.species = null; }
 }
 
+const CONF_BADGE = {
+  "élevée": "bg-green-100 text-green-700",
+  "bonne": "bg-amber-100 text-amber-700",
+  "modérée": "bg-slate-100 text-slate-500",
+};
+function confidenceBadge(conf) {
+  const cls = CONF_BADGE[conf] || CONF_BADGE["modérée"];
+  return `<span class="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${cls}" title="Fiabilité de la carte d'habitat">${conf || "modérée"}</span>`;
+}
+
 function openSpeciesModal() {
   const sel = new Set(state.species || state.allSpecies.map((s) => s.latin));
-  document.getElementById("species-list").innerHTML = state.allSpecies.map((s) =>
+  const legend = `<p class="text-[11px] text-slate-400 mb-1 px-1">Badge = fiabilité de la carte d'habitat (<span class="text-green-700 font-semibold">élevée</span> · <span class="text-amber-700 font-semibold">bonne</span> · <span class="text-slate-500 font-semibold">modérée</span>).</p>`;
+  document.getElementById("species-list").innerHTML = legend + state.allSpecies.map((s) =>
     `<label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
        <input type="checkbox" class="sp-check accent-brand-500" value="${s.latin}" ${sel.has(s.latin) ? "checked" : ""}>
        <span class="inline-block w-3 h-3 rounded-full shrink-0" style="background:${s.color}"></span>
-       <span class="text-sm truncate">${s.nom}</span>
+       <span class="text-sm truncate flex-1">${s.nom}</span>
+       ${confidenceBadge(s.confidence)}
      </label>`).join("");
   document.querySelectorAll("#species-list .sp-check").forEach((c) =>
     c.addEventListener("change", updateSpeciesCount));
