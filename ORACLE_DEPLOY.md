@@ -197,6 +197,14 @@ l'app **refuse de démarrer** en PROD (message clair dans `journalctl -u champim
 `python -c "import secrets;print(secrets.token_urlsafe(48))"` puis l'ajouter à `.env`.
 Le secret n'est plus dans `config.yaml` (section `cookie:` supprimée).
 
+**CSP `unsafe-inline` (dette connue, reporté — chantier 4.5)** : la Content-Security-Policy garde
+`'unsafe-inline'` sur `script-src`/`style-src` car l'UI charge Tailwind via **CDN** (config en page)
+et utilise des styles/scripts inline. Le durcir proprement (retirer `unsafe-inline`) suppose de
+passer à un **build Tailwind** vers un CSS statique + nonces — un chantier frontend-build distinct,
+volontairement reporté. En l'état, la protection contre l'injection repose sur l'échappement des
+données utilisateur + les en-têtes (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`,
+`Permissions-Policy`). Voir `src/sporia/web/security.py`.
+
 ## Migration des comptes vers SQLite (chantier 4.1, au moment de la mise en vente)
 
 Une seule fois, quand on active l'auto-inscription/abonnement :
