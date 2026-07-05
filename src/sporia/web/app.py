@@ -24,6 +24,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from sporia import api as core
 from sporia import billing
 from sporia.config import resolve_session_secret, settings
+from sporia.domain import metrics
 from sporia.email import send_email
 from sporia.enrich import forest as mmap
 from sporia.users import access_requests, accounts
@@ -43,7 +44,12 @@ def _catalog() -> list[dict]:
     modélisable. Ordre conservé = celui (saisonnier) de core.MUSHROOMS."""
     served = set(core.fruiting_models())
     return [
-        {"latin": m["latin"], "nom": m["nom"], "color": m["color"]}
+        {
+            "latin": m["latin"],
+            "nom": m["nom"],
+            "color": m["color"],
+            "confidence": metrics.confidence_tier(m["latin"]),
+        }
         for m in core.MUSHROOMS
         if m["latin"] in served
     ]

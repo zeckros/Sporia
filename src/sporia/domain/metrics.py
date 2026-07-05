@@ -25,3 +25,14 @@ def is_reliable_habitat(latin: str, threshold: float = DEFAULT_THRESHOLD) -> boo
     Absent (pas de modèle) ou Boyce < seuil → False (espèce non servie)."""
     b = habitat_boyce().get(latin)
     return b is not None and b >= threshold
+
+
+def confidence_tier(latin: str) -> str:
+    """Palier de confiance de la carte d'habitat : « élevée » (Boyce >= 0.50),
+    « bonne » (>= 0.35), sinon « modérée » (y compris Boyce absent)."""
+    b = habitat_boyce().get(latin)
+    if b is not None and b >= 0.50:
+        return "élevée"
+    if b is not None and b >= 0.35:
+        return "bonne"
+    return "modérée"
