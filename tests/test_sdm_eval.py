@@ -25,6 +25,13 @@ def test_continuous_boyce_empty_returns_nan():
     assert np.isnan(boyce_index_continuous(np.array([]), np.array([0.5])))
 
 
+def test_continuous_boyce_too_few_windows_returns_nan():
+    # res=2 → au plus 2 fenêtres, et le fond ne peuple qu'une seule (< 3) → branche nan.
+    pres = np.array([0.03, 0.05, 0.07])
+    bg = np.array([0.03, 0.05, 0.07])
+    assert np.isnan(boyce_index_continuous(pres, bg, res=2))
+
+
 def _separable_dataset(n_groups=40, per_group=20, seed=0):
     rng = np.random.default_rng(seed)
     X, y, g = [], [], []

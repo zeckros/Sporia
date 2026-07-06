@@ -4,15 +4,19 @@ from sporia.domain import metrics
 
 
 def test_tier_high():
-    assert metrics.confidence_tier("Imleria badia") == "élevée"  # Boyce 0.727
+    assert metrics.confidence_tier("Imleria badia") == "élevée"  # borne 0.645-0.034=0.611 >= 0.50
 
 
 def test_tier_good():
-    assert metrics.confidence_tier("Boletus edulis") == "bonne"  # Boyce 0.389
+    assert (
+        metrics.confidence_tier("Boletus aereus") == "bonne"
+    )  # borne 0.417-0.025=0.392 in [0.35,0.50)
 
 
 def test_tier_moderate():
-    assert metrics.confidence_tier("Agaricus campestris") == "modérée"  # Boyce 0.320
+    assert (
+        metrics.confidence_tier("Agaricus campestris") == "modérée"
+    )  # borne 0.262-0.036=0.226 < 0.35
 
 
 def test_tier_unknown_fallback_moderate():

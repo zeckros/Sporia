@@ -26,8 +26,8 @@ def habitat_boyce() -> dict[str, float]:
 
 
 def _conservative(boyce: float, boyce_se: float) -> float:
-    """Borne prudente = boyce − erreur-type (arrondi pour éviter le bruit float64)."""
-    return round(float(boyce) - float(boyce_se), 6)
+    """Borne prudente = boyce − erreur-type."""
+    return float(boyce) - float(boyce_se)
 
 
 def _tier(lower: float) -> str:
