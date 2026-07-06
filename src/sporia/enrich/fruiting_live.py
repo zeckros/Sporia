@@ -18,6 +18,7 @@ sont faits par champi_core via _render_grid_overlay.
 from __future__ import annotations
 
 import datetime as dt
+import os
 import pickle
 import time
 from pathlib import Path
@@ -171,18 +172,30 @@ def recent_temporal_grid(date_str: str | None = None, step=0.3, allow_fetch=Fals
     today = date_str or dt.date.today().isoformat()
     if today in _wx_mem_cache:
         return _wx_mem_cache[today]
+
+    def _store(grids):
+        """Point de sortie unique : injecte (option levier 3) les features RR/T natives
+        ~1 km depuis les tuiles du pipeline, puis mémorise. Le cache disque reste
+        Open-Meteo pur — le natif est ré-appliqué à chaque (première) lecture du jour."""
+        if grids is not None and USE_NATIVE_RECENT:
+            nat = native_recent_features(today)
+            if nat:
+                grids = {**grids, **{k: nat[k] for k in _NATIVE_FEATS if k in nat}}
+                print(f"[radar] features RR/T natives (~1 km) injectées pour {today}", flush=True)
+        if grids is not None:
+            _wx_mem_cache[today] = grids
+        return grids
+
     cache = CACHE / f"wx_recent_{today.replace('-', '')}.npz"
     if cache.exists():
         z = np.load(cache)
         if all(k in z for k in TEMPORAL):  # sinon : cache d'un ancien jeu → on régénère
-            grids = {k: z[k] for k in TEMPORAL}
-            _wx_mem_cache[today] = grids
-            return grids
+            return _store({k: z[k] for k in TEMPORAL})
     if not allow_fetch:
-        return _latest_wx_fallback(today)
+        return _store(_latest_wx_fallback(today))
     P, V = _fetch_recent_points(step=step)
     if len(P) < 10:
-        return _latest_wx_fallback(today)
+        return _store(_latest_wx_fallback(today))
     lonv = LON0 + np.arange(GRID_W) * RES
     latv = LAT0 - np.arange(GRID_H) * RES
     LON, LAT = np.meshgrid(lonv, latv)
@@ -192,8 +205,107 @@ def recent_temporal_grid(date_str: str | None = None, step=0.3, allow_fetch=Fals
         g = idw(P, V[:, j], xi, power=2.0, k=8).reshape(GRID_H, GRID_W).astype(np.float32)
         grids[name] = g
     np.savez_compressed(cache, **grids)
-    _wx_mem_cache[today] = grids
-    return grids
+    return _store(grids)
+
+
+# === Levier 3 : features de pluie/température depuis les GeoTIFF NATIFs (~1 km) ===
+# Le pipeline (interpret_day) produit output/tiff/RR_*.tif et T_*.tif par fusion
+# AROME + radar Météo-France + stations, sur la MÊME grille 0.01° (1051×1601) que le
+# modèle. Ces champs de pluie (radar) sont bien plus nets que le pull Open-Meteo 0.3°
+# lissé utilisé par recent_temporal_grid — or la pluie récente est LE déclencheur n°1.
+# On peut donc recalculer nativement le sous-ensemble « précipitation + T moyenne » des
+# features. ET0, humidité du sol et amplitude diurne (T native = moyenne seule) restent
+# Open-Meteo.
+#
+# ⚠ Défaut OFF (SPORIA_NATIVE_RECENT=1 pour activer) : le modèle de fructification est
+# entraîné sur l'archive ERA5 (pluie lissée) ; injecter la pluie radar plus piquée au
+# service décale la distribution des features RR. À n'activer qu'après réentraînement sur
+# des features cohérentes OU un contrôle de biais RR(natif) vs RR(ERA5). cf. eval_radar.
+NATIVE_TIF = Path("output/tiff")
+USE_NATIVE_RECENT = os.environ.get("SPORIA_NATIVE_RECENT") == "1"
+_NATIVE_MIN_DAYS = 14  # jours de tuiles RR minimum pour servir des features natives
+# Features recalculables depuis RR (pluie) + T (moyenne) seuls :
+_NATIVE_FEATS = (
+    "rain7",
+    "rain14",
+    "rain21",
+    "rain30",
+    "rain60",
+    "tmean14",
+    "tdrop",
+    "days_since_rain",
+)
+
+
+def _load_tif(fp: Path):
+    import rasterio
+
+    with rasterio.open(fp) as src:
+        a = src.read(1).astype(np.float32)
+        nod = src.nodata
+    if nod is not None:
+        a = np.where(a == nod, np.nan, a)
+    return a
+
+
+def _native_features_from_stacks(rr: np.ndarray, tt: np.ndarray, win: int = WIN) -> dict:
+    """Calcul PUR (testable, sans I/O) des features RR/T depuis deux piles (D, H, W)
+    ordonnées ancien→récent (index -1 = jour le plus récent). Même sémantique que
+    sporia.pipeline.wx_features (rain = cumul, tdrop = refroidissement récent,
+    days_since_rain via seuil RAIN_EVENT)."""
+    D = rr.shape[0]
+
+    def rain(n):
+        return np.nansum(rr[-n:], axis=0).astype(np.float32)
+
+    def tmean(n):
+        return np.nanmean(tt[-n:], axis=0).astype(np.float32)
+
+    dsr = np.full(rr.shape[1:], float(win), np.float32)
+    wet = np.nan_to_num(rr, nan=0.0) >= wx_features.RAIN_EVENT
+    for i in range(D - 1, -1, -1):  # descendant : le premier hit (plus grand i) = plus récent
+        dsr[wet[i] & (dsr == float(win))] = float((D - 1) - i)
+    with np.errstate(all="ignore"):  # cellules tout-NaN (mer, hors-couverture) → NaN, sans warning
+        recent = tmean(7)
+        prev = np.nanmean(tt[-21:-7], axis=0).astype(np.float32) if D >= 8 else recent
+        both = np.isfinite(prev) & np.isfinite(recent)
+        tdrop = np.where(both, prev - recent, 0.0).astype(np.float32)
+        return {
+            "rain7": rain(7),
+            "rain14": rain(14),
+            "rain21": rain(21),
+            "rain30": rain(30),
+            "rain60": rain(60),
+            "tmean14": tmean(14),
+            "tdrop": tdrop,
+            "days_since_rain": dsr,
+        }
+
+
+def native_recent_features(date_str: str, win: int = WIN) -> dict:
+    """Grilles {feat: 2d} de pluie/T depuis les tuiles natives RR_*/T_* sur la fenêtre
+    finissant à date_str. {} si moins de _NATIVE_MIN_DAYS tuiles RR disponibles."""
+    end = dt.date.fromisoformat(date_str)
+    days = [end - dt.timedelta(days=k) for k in range(win)][::-1]  # ancien -> récent
+    rr, tt = [], []
+    for d in days:
+        s = d.strftime("%Y%m%d")
+        frr, ft = NATIVE_TIF / f"RR_{s}.tif", NATIVE_TIF / f"T_{s}.tif"
+        rr.append(_load_tif(frr) if frr.exists() else None)
+        tt.append(_load_tif(ft) if ft.exists() else None)
+    have = [a for a in rr if a is not None]
+    if len(have) < _NATIVE_MIN_DAYS:
+        return {}
+    shape = have[0].shape
+
+    def stack(lst):
+        z = np.full((len(lst), *shape), np.nan, np.float32)
+        for i, a in enumerate(lst):
+            if a is not None and a.shape == shape:
+                z[i] = a
+        return z
+
+    return _native_features_from_stacks(stack(rr), stack(tt), win)
 
 
 def score_species(species: str, date_str: str | None = None):
