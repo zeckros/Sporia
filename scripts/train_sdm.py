@@ -32,6 +32,7 @@ import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from sporia import api as core          # noqa: E402
+from sporia.domain.sdm_eval import repeated_cv_metrics  # noqa: E402
 from sporia.domain.species import habitat_feature_subset  # noqa: E402
 from sporia.enrich import forest as mmap         # noqa: E402
 from sporia.enrich import soil_static as soil_data                    # noqa: E402
@@ -248,13 +249,11 @@ def build_background(layers, feats, france, mode, n_bg):
     return br0[ok], bc0[ok], Xb[ok]
 
 
-def run_one(species, layers, feats, france, bg, predict, verbose=True):
+def run_one(species, layers, feats, france, bg, predict, repeats=25, verbose=True):
     """Entraîne + valide (CV spatiale) + calibre l'habitat d'une espèce.
-    Renvoie (n_presence, auc, boyce). Sauve un .npy si predict."""
+    Renvoie (n_presence, auc, boyce, boyce_se). Sauve un .npy si predict."""
     from sklearn.ensemble import RandomForestClassifier
     from sklearn.calibration import CalibratedClassifierCV
-    from sklearn.model_selection import GroupKFold
-    from sklearn.metrics import roc_auc_score
 
     sfeats = species_feats(feats, species)          # variables propres à la guilde
     idx = [feats.index(f) for f in sfeats]           # colonnes correspondantes dans l'arrière-plan
@@ -264,7 +263,7 @@ def run_one(species, layers, feats, france, bg, predict, verbose=True):
     pr, pc, Xp = pr[okp], pc[okp], Xp[okp]
     if len(pr) < 30:
         print(f"  [skip] {species} : seulement {len(pr)} occurrences")
-        return len(pr), float("nan"), float("nan")
+        return len(pr), float("nan"), float("nan"), float("nan")
 
     br0, bc0, Xb = bg
     pres = set(zip(pr.tolist(), pc.tolist()))
@@ -277,21 +276,13 @@ def run_one(species, layers, feats, france, bg, predict, verbose=True):
     y = np.r_[np.ones(len(Xp)), np.zeros(len(Xb))]
     grp = blocks(np.r_[pr, br0], np.r_[pc, bc0])
 
-    gkf = GroupKFold(n_splits=min(5, len(np.unique(grp))))
-    aucs, boyces = [], []
-    for tr, te in gkf.split(X, y, groups=grp):
-        clf = RandomForestClassifier(n_estimators=300, min_samples_leaf=3, n_jobs=-1,
-                                     class_weight="balanced_subsample", random_state=0).fit(X[tr], y[tr])
-        p = clf.predict_proba(X[te])[:, 1]
-        if len(np.unique(y[te])) == 2:
-            aucs.append(roc_auc_score(y[te], p))
-        boyces.append(boyce_index(p[y[te] == 1], p[y[te] == 0]))
-    auc, boyce = float(np.nanmean(aucs)), float(np.nanmean(boyces))
+    auc, boyce, boyce_se = repeated_cv_metrics(X, y, grp, repeats=repeats)
 
     base = RandomForestClassifier(n_estimators=500, min_samples_leaf=3, n_jobs=-1,
                                   class_weight="balanced_subsample", random_state=0).fit(X, y)
     if verbose:
-        print(f"  présence={len(pr)}  AUC(spatial)={auc:.3f}  Boyce={boyce:.3f}")
+        print(f"  présence={len(pr)}  AUC(spatial)={auc:.3f}  "
+              f"Boyce={boyce:.3f}  BoyceSE={boyce_se:.3f}")
         print("  importances : " + ", ".join(
             f"{f} {imp:.2f}" for f, imp in sorted(zip(sfeats, base.feature_importances_), key=lambda x: -x[1])[:5]))
     try:
@@ -309,7 +300,7 @@ def run_one(species, layers, feats, france, bg, predict, verbose=True):
         np.save(out, proba)
         if verbose:
             print(f"  → {out.name}  (habitat moyen {np.nanmean(proba):.2f})")
-    return len(pr), auc, boyce
+    return len(pr), auc, boyce, boyce_se
 
 
 def main():
@@ -319,6 +310,8 @@ def main():
     ap.add_argument("--bg", choices=["target", "random"], default="target")
     ap.add_argument("--n-bg", type=int, default=8000)
     ap.add_argument("--predict", action="store_true")
+    ap.add_argument("--repeats", type=int, default=25,
+                     help="nb de découpages CV pour stabiliser le Boyce")
     a = ap.parse_args()
 
     try:
@@ -341,17 +334,18 @@ def main():
         summary = []
         for i, sp in enumerate(species_list, 1):
             print(f"\n• [{i}/{len(species_list)}] {sp}", flush=True)
-            n, auc, boyce = run_one(sp, layers, feats, france, bg, a.predict)
-            summary.append((sp, n, auc, boyce))
+            n, auc, boyce, boyce_se = run_one(sp, layers, feats, france, bg, a.predict,
+                                               repeats=a.repeats)
+            summary.append((sp, n, auc, boyce, boyce_se))
         print("\n===================== RÉCAPITULATIF =====================")
-        print(f"{'espèce':32s} {'présence':>8s} {'AUC':>6s} {'Boyce':>6s}")
-        for sp, n, auc, boyce in summary:
-            print(f"{sp:32s} {n:8d} {auc:6.3f} {boyce:6.3f}")
+        print(f"{'espèce':32s} {'présence':>8s} {'AUC':>6s} {'Boyce':>6s} {'BoyceSE':>8s}")
+        for sp, n, auc, boyce, boyce_se in summary:
+            print(f"{sp:32s} {n:8d} {auc:6.3f} {boyce:6.3f} {boyce_se:8.3f}")
     else:
         if not a.species:
             sys.exit('Indique une espèce, ou --all.')
         print(f"\n• {a.species}")
-        run_one(a.species, layers, feats, france, bg, a.predict)
+        run_one(a.species, layers, feats, france, bg, a.predict, repeats=a.repeats)
 
 
 if __name__ == "__main__":
