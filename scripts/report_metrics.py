@@ -30,12 +30,19 @@ def _read(p):
 
 
 def parse_habitat():
-    """Tableau récap train_sdm : 'Latin binom   présence   AUC   Boyce'."""
+    """Tableau récap train_sdm : 'Latin binom  présence  AUC  Boyce  [BoyceSE]'.
+    Renvoie {latin: (auc, boyce, boyce_se)} ; boyce_se = None si absent (ancien log à 3
+    colonnes) ou 'nan' (tirages dégénérés) — la ligne est conservée dans les deux cas."""
     out = {}
     for line in _read("_retrain_sdm.log").splitlines():
-        m = re.match(r"\s*([A-Z][a-zéèA-Za-z]+ [a-z]+)\s+\d+\s+([01]\.\d{3})\s+(-?[01]\.\d{3})\s*$", line.rstrip())
+        m = re.match(
+            r"\s*([A-Z][a-zéèA-Za-z]+ [a-z]+)\s+\d+\s+([01]\.\d{3})\s+(-?[01]\.\d{3})(?:\s+([01]\.\d{3}|nan))?\s*$",
+            line.rstrip(),
+        )
         if m and m.group(1) in NOMS:
-            out[m.group(1)] = (float(m.group(2)), float(m.group(3)))
+            se_tok = m.group(4)
+            se = float(se_tok) if se_tok and se_tok != "nan" else None
+            out[m.group(1)] = (float(m.group(2)), float(m.group(3)), se)
     return out
 
 
@@ -67,14 +74,15 @@ def combine(hab, fru):
     de grandeur du score combiné ; mécaniquement ≤ habitat (×<1)."""
     out = {}
     for sp in set(hab) & set(fru):
-        (ah, bh), (af, bf) = hab[sp], fru[sp]
+        (ah, bh, _se), (af, bf) = hab[sp], fru[sp]
         f = lambda h, p: h * (HAB_FLOOR + (1 - HAB_FLOOR) * p)
         out[sp] = (f(ah, af), f(bh, bf))
     return out
 
 
 # Ordre d'affichage stable des champs (habitat d'abord, puis pousse ré-validée, puis radar).
-_FIELD_ORDER = ["boyce", "auc", "fruiting_boyce", "fruiting_auc", "radar_boyce", "radar_auc"]
+_FIELD_ORDER = ["boyce", "auc", "boyce_se",
+                "fruiting_boyce", "fruiting_auc", "radar_boyce", "radar_auc"]
 
 
 def _fmt_entry(d: dict) -> str:
@@ -90,9 +98,13 @@ def emit_yaml(hab: dict) -> Path:
     raw = {}
     if dest.exists():
         raw = yaml.safe_load(dest.read_text(encoding="utf-8")) or {}
-    for sp, (auc, boyce) in hab.items():
+    for sp, vals in hab.items():
+        auc, boyce = vals[0], vals[1]
+        se = vals[2] if len(vals) > 2 else None
         entry = dict(raw.get(sp) or {})
         entry["boyce"], entry["auc"] = round(boyce, 3), round(auc, 3)
+        if se is not None:
+            entry["boyce_se"] = round(se, 3)
         raw[sp] = entry
     hb = lambda v: v.get("boyce", -9.0) if isinstance(v, dict) else -9.0
     header = [
