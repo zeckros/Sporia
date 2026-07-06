@@ -33,7 +33,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from sporia import api as core                      # noqa: E402
 from sporia.pipeline import wx_features  # noqa: E402
 from train_sdm import (load_layers, cell_rc, match_key, blocks, boyce_index,  # noqa: E402
-                       GRID_H, GRID_W, BBOX, GBIF_OCC)
+                       GRID_H, GRID_W, BBOX, GBIF_OCC, LON0, LAT0)
 
 ARCHIVE = "https://archive-api.open-meteo.com/v1/archive"
 # v2 : jeu de variables enrichi (ET0, tmax/tmin, humidité 7-28 cm) → nouveau dossier de
@@ -151,12 +151,26 @@ def build_rows(layers, france, samples, kind):
 
 
 def main():
+    try:  # Windows : évite un crash cp1252 sur les caractères non-latin1 des messages (≥, →, …)
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
     ap = argparse.ArgumentParser()
     ap.add_argument("species")
     ap.add_argument("--max-pres", type=int, default=250, help="occurrences présence (borne les appels API)")
     ap.add_argument("--n-bg", type=int, default=500)
     ap.add_argument("--min-leaf", type=int, default=3, help="min_samples_leaf (régularisation ; ↑ pour espèces peu nombreuses)")
     ap.add_argument("--base-only", action="store_true", help="n'utiliser que les 8 variables de base (sans WorldClim/occupation) — anti sur-apprentissage")
+    ap.add_argument("--bg-mode", choices=["temporal", "spacetime"], default="temporal",
+                    help="temporal (défaut) = fond « même lieu, autre date en saison » → isole le QUAND "
+                         "(l'habitat étant identique entre présence et négatifs, le modèle apprend le timing) ; "
+                         "spacetime = ancien fond lieu+date aléatoires (mélange où/quand)")
+    ap.add_argument("--bg-per-pres", type=int, default=3, help="nb de négatifs par présence en mode temporal")
+    ap.add_argument("--guard-days", type=int, default=21,
+                    help="en mode temporal, exclut les dates de fond à ±N j de la présence dans la même année")
+    ap.add_argument("--weather-only", action="store_true",
+                    help="n'entraîne QUE sur les variables météo (le SDM porte l'habitat) → QUAND pur")
     a = ap.parse_args()
 
     try:
@@ -172,13 +186,18 @@ def main():
     # (clim_*) et occupation du sol (lc_*) aux variables statiques — corrige la
     # dominance lat/lon. On écarte host_* (NaN hors-forêt + logique par guilde).
     global STATIC, FEATURES
-    extra = [] if a.base_only else [f for f in all_feats if f.startswith("clim_") or f.startswith("lc_")]
-    STATIC = STATIC + extra
-    FEATURES = STATIC + TEMPORAL
-    if extra:
-        print(f"  features statiques enrichies : +{len(extra)} (WorldClim/occupation) -> {len(STATIC)} statiques")
-    elif a.base_only:
-        print(f"  --base-only : {len(STATIC)} variables de base (sans WorldClim/occupation)")
+    if a.weather_only:
+        STATIC = []                                  # le SDM d'habitat porte le « où » ; ici QUAND pur
+        FEATURES = list(TEMPORAL)
+        print(f"  --weather-only : {len(TEMPORAL)} variables météo, aucune statique (habitat délégué au SDM)")
+    else:
+        extra = [] if a.base_only else [f for f in all_feats if f.startswith("clim_") or f.startswith("lc_")]
+        STATIC = STATIC + extra
+        FEATURES = STATIC + TEMPORAL
+        if extra:
+            print(f"  features statiques enrichies : +{len(extra)} (WorldClim/occupation) -> {len(STATIC)} statiques")
+        elif a.base_only:
+            print(f"  --base-only : {len(STATIC)} variables de base (sans WorldClim/occupation)")
     ref = core._grid_ref()
     france = core._france_mask(str(ref)) if ref is not None else np.ones((GRID_H, GRID_W), bool)
     rng = np.random.default_rng(0)
@@ -219,18 +238,37 @@ def main():
     Xp, pr, pc = build_rows(layers, france, occ, "présence")
     print(f"  {len(Xp)} présences exploitables")
 
-    # Fond espace-temps : lieu France au hasard + date aléatoire en saison
     yrs = [int(d[:4]) for *_, d in occ] or [2015]
     ymin, ymax = min(yrs), max(yrs)
-    fr, fc = np.where(france)
-    bg = []
-    for _ in range(a.n_bg):
-        k = rng.integers(len(fr))
-        la = core.terrain_data.GRID_LAT0 - fr[k] * 0.01
-        lo = core.terrain_data.GRID_LON0 + fc[k] * 0.01
-        y = int(rng.integers(ymin, ymax + 1)); mo = int(rng.choice(months)); day = int(rng.integers(1, 28))
-        bg.append((lo, la, dt.date(y, mo, day).isoformat()))
-    print(f"  météo antécédente sur {len(bg)} points d'arrière-plan espace-temps…")
+    if a.bg_mode == "temporal":
+        # Contraste TEMPOREL : mêmes LIEUX que les présences, mais à d'AUTRES dates en
+        # saison (≥ guard-days de la date observée, ou une autre année). L'habitat étant
+        # identique entre une présence et ses négatifs, le modèle ne peut pas trancher sur
+        # le statique → il apprend le « quand » (météo). Le « où » reste au SDM d'habitat.
+        bg = []
+        for (lo, la, ds) in occ:
+            d0 = dt.date.fromisoformat(ds)
+            for _ in range(a.bg_per_pres):
+                dneg = d0
+                for _try in range(20):
+                    y = int(rng.integers(ymin, ymax + 1)); mo = int(rng.choice(months)); day = int(rng.integers(1, 28))
+                    dneg = dt.date(y, mo, day)
+                    if y != d0.year or abs((dneg - d0).days) >= a.guard_days:
+                        break
+                bg.append((lo, la, dneg.isoformat()))
+        print(f"  météo antécédente sur {len(bg)} négatifs de CONTRASTE TEMPOREL "
+              f"({a.bg_per_pres}/présence, ≥{a.guard_days} j)…")
+    else:
+        # Fond espace-temps (ancien) : lieu France au hasard + date aléatoire en saison
+        fr, fc = np.where(france)
+        bg = []
+        for _ in range(a.n_bg):
+            k = rng.integers(len(fr))
+            la = LAT0 - fr[k] * 0.01
+            lo = LON0 + fc[k] * 0.01
+            y = int(rng.integers(ymin, ymax + 1)); mo = int(rng.choice(months)); day = int(rng.integers(1, 28))
+            bg.append((lo, la, dt.date(y, mo, day).isoformat()))
+        print(f"  météo antécédente sur {len(bg)} points d'arrière-plan espace-temps…")
     Xb, br, bc = build_rows(layers, france, bg, "fond")
     print(f"  {len(Xb)} points de fond exploitables")
 
