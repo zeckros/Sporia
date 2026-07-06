@@ -2,16 +2,17 @@
 #   boyce/auc      = HABITAT (SDM)          — report_metrics.py --emit-yaml ; lu par is_reliable_habitat (seuil 0.10)
 #   fruiting_*     = FRUCTIFICATION seule    — eval_radar.py --emit-yaml (ré-validation)
 #   radar_*        = end-to-end habitat×pousse — eval_radar.py --emit-yaml (ce qui est réellement servi)
-Imleria badia: {boyce: 0.727, auc: 0.733, fruiting_boyce: 0.964, fruiting_auc: 0.997, radar_boyce: 1.0, radar_auc: 0.966}
-Lepista nuda: {boyce: 0.72, auc: 0.678, fruiting_boyce: 0.845, fruiting_auc: 0.999, radar_boyce: 1.0, radar_auc: 0.947}
-Boletus aereus: {boyce: 0.585, auc: 0.713, fruiting_boyce: 0.845, fruiting_auc: 1.0, radar_boyce: 1.0, radar_auc: 0.969}
-Cantharellus cibarius: {boyce: 0.546, auc: 0.683, fruiting_boyce: 0.941, fruiting_auc: 0.998, radar_auc: 0.946}
-Hydnum repandum: {boyce: 0.537, auc: 0.708, fruiting_boyce: 0.964, fruiting_auc: 0.998, radar_boyce: 0.9, radar_auc: 0.939}
-Lactarius deliciosus: {boyce: 0.506, auc: 0.663, fruiting_boyce: 0.906, fruiting_auc: 0.999, radar_auc: 0.961}
-Pleurotus ostreatus: {boyce: 0.503, auc: 0.694, fruiting_boyce: 0.845, fruiting_auc: 1.0, radar_auc: 0.98}
-Craterellus tubaeformis: {boyce: 0.45, auc: 0.726, fruiting_boyce: 0.964, fruiting_auc: 0.998, radar_boyce: 1.0, radar_auc: 0.976}
-Craterellus cornucopioides: {boyce: 0.43, auc: 0.741, fruiting_boyce: 0.906, fruiting_auc: 0.999, radar_boyce: 1.0, radar_auc: 0.952}
-Macrolepiota procera: {boyce: 0.403, auc: 0.618, fruiting_boyce: 0.991, fruiting_auc: 0.997, radar_boyce: 1.0, radar_auc: 0.991}
-Boletus edulis: {boyce: 0.389, auc: 0.685, fruiting_boyce: 1.0, fruiting_auc: 0.995, radar_boyce: 1.0, radar_auc: 0.968}
-Agaricus campestris: {boyce: 0.32, auc: 0.667, fruiting_boyce: 0.845, fruiting_auc: 1.0, radar_auc: 0.995}
-Calocybe gambosa: {boyce: -0.188, auc: 0.659, fruiting_boyce: 0.906, fruiting_auc: 0.999, radar_auc: 0.988}
+Boletus edulis: {boyce: 0.672, auc: 0.689, boyce_se: 0.026, fruiting_boyce: 1.0, fruiting_auc: 0.995, radar_boyce: 1.0, radar_auc: 0.968}
+Imleria badia: {boyce: 0.645, auc: 0.728, boyce_se: 0.034, fruiting_boyce: 0.964, fruiting_auc: 0.997, radar_boyce: 1.0, radar_auc: 0.966}
+Cantharellus cibarius: {boyce: 0.551, auc: 0.695, boyce_se: 0.027, fruiting_boyce: 0.941, fruiting_auc: 0.998, radar_auc: 0.946}
+Hydnum repandum: {boyce: 0.547, auc: 0.715, boyce_se: 0.032, fruiting_boyce: 0.964, fruiting_auc: 0.998, radar_boyce: 0.9, radar_auc: 0.939}
+Macrolepiota procera: {boyce: 0.519, auc: 0.614, boyce_se: 0.022, fruiting_boyce: 0.991, fruiting_auc: 0.997, radar_boyce: 1.0, radar_auc: 0.991}
+Craterellus cornucopioides: {boyce: 0.467, auc: 0.718, boyce_se: 0.036, fruiting_boyce: 0.906, fruiting_auc: 0.999, radar_boyce: 1.0, radar_auc: 0.952}
+Craterellus tubaeformis: {boyce: 0.443, auc: 0.713, boyce_se: 0.036, fruiting_boyce: 0.964, fruiting_auc: 0.998, radar_boyce: 1.0, radar_auc: 0.976}
+Boletus aereus: {boyce: 0.417, auc: 0.729, boyce_se: 0.025, fruiting_boyce: 0.845, fruiting_auc: 1.0, radar_boyce: 1.0, radar_auc: 0.969}
+Lepista nuda: {boyce: 0.381, auc: 0.703, boyce_se: 0.028, fruiting_boyce: 0.845, fruiting_auc: 0.999, radar_boyce: 1.0, radar_auc: 0.947}
+Agaricus campestris: {boyce: 0.262, auc: 0.682, boyce_se: 0.036, fruiting_boyce: 0.845, fruiting_auc: 1.0, radar_auc: 0.995}
+Pleurotus ostreatus: {boyce: 0.23, auc: 0.681, boyce_se: 0.036, fruiting_boyce: 0.845, fruiting_auc: 1.0, radar_auc: 0.98}
+Lactarius deliciosus: {boyce: 0.097, auc: 0.652, boyce_se: 0.039, fruiting_boyce: 0.906, fruiting_auc: 0.999, radar_auc: 0.961}
+Morchella esculenta: {boyce: -0.0, auc: 0.692, boyce_se: 0.035}
+Calocybe gambosa: {boyce: -0.043, auc: 0.678, boyce_se: 0.042, fruiting_boyce: 0.906, fruiting_auc: 0.999, radar_auc: 0.988}
