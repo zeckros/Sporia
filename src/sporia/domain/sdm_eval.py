@@ -39,7 +39,7 @@ def boyce_index_continuous(pres, bg, window: float = 0.1, res: int = 100) -> flo
 
 def repeated_cv_metrics(
     X, y, groups, repeats: int = 25, k: int = 5, n_estimators: int = 200, seed: int = 0
-):
+) -> tuple[float, float, float]:
     """Métriques de CV spatiale STABILISÉES. Répète `repeats` fois : assigne
     aléatoirement chaque groupe (bloc spatial) à l'un des `k` folds ; par fold, entraîne
     un RandomForest et mesure AUC + Boyce continu ; moyenne sur les folds → un couple
@@ -77,7 +77,7 @@ def repeated_cv_metrics(
             boyces.append(boyce_index_continuous(p[y[te] == 1], p[y[te] == 0]))
         if aucs:
             aucs_rep.append(float(np.nanmean(aucs)))
-        if boyces:
+        if boyces and np.isfinite(boyces).any():
             boyce_rep.append(float(np.nanmean(boyces)))
     auc_mean = float(np.nanmean(aucs_rep)) if aucs_rep else float("nan")
     boyce_mean = float(np.nanmean(boyce_rep)) if boyce_rep else float("nan")
