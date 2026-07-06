@@ -73,17 +73,35 @@ def combine(hab, fru):
     return out
 
 
+# Ordre d'affichage stable des champs (habitat d'abord, puis pousse ré-validée, puis radar).
+_FIELD_ORDER = ["boyce", "auc", "fruiting_boyce", "fruiting_auc", "radar_boyce", "radar_auc"]
+
+
+def _fmt_entry(d: dict) -> str:
+    keys = [k for k in _FIELD_ORDER if k in d] + [k for k in d if k not in _FIELD_ORDER]
+    return "{" + ", ".join(f"{k}: {d[k]}" for k in keys) + "}"
+
+
 def emit_yaml(hab: dict) -> Path:
-    """Écrit src/sporia/data/species_metrics.yaml depuis les métriques habitat parsées."""
+    """Met à jour le boyce/auc HABITAT dans species_metrics.yaml, en PRÉSERVANT les
+    métriques ré-validées fruiting_*/radar_* déjà présentes (émises par eval_radar.py)."""
+    import yaml
     dest = Path(__file__).resolve().parent.parent / "src" / "sporia" / "data" / "species_metrics.yaml"
-    lines = [
-        "# Métriques habitat (SDM) par espèce — Boyce/AUC (CV spatiale).",
-        "# Généré par : python scripts/report_metrics.py --emit-yaml",
-        "# Boyce ~0=hasard, 1=parfait. Sert à décider quelles espèces sont servies (seuil 0.10).",
+    raw = {}
+    if dest.exists():
+        raw = yaml.safe_load(dest.read_text(encoding="utf-8")) or {}
+    for sp, (auc, boyce) in hab.items():
+        entry = dict(raw.get(sp) or {})
+        entry["boyce"], entry["auc"] = round(boyce, 3), round(auc, 3)
+        raw[sp] = entry
+    hb = lambda v: v.get("boyce", -9.0) if isinstance(v, dict) else -9.0
+    header = [
+        "# Métriques par espèce — CV spatiale (Boyce ~0=hasard, 1=parfait).",
+        "#   boyce/auc      = HABITAT (SDM)          — report_metrics.py --emit-yaml ; lu par is_reliable_habitat (seuil 0.10)",
+        "#   fruiting_*     = FRUCTIFICATION seule    — eval_radar.py --emit-yaml (ré-validation)",
+        "#   radar_*        = end-to-end habitat×pousse — eval_radar.py --emit-yaml (ce qui est réellement servi)",
     ]
-    for sp in sorted(hab, key=lambda s: -hab[s][1]):
-        auc, boyce = hab[sp]
-        lines.append(f"{sp}: {{boyce: {boyce:.3f}, auc: {auc:.3f}}}")
+    lines = header + [f"{sp}: {_fmt_entry(raw[sp])}" for sp in sorted(raw, key=lambda s: -hb(raw[s]))]
     dest.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return dest
 
