@@ -109,3 +109,37 @@ def test_open_lean_set():
 def test_open_preserves_order():
     out = habitat_feature_subset(_FEATS, "Agaricus campestris")
     assert out == [f for f in _FEATS if f in out]
+
+
+_FEATS_FTEU = [
+    "forest_density",
+    "ph",
+    "clim_bio1",
+    "lc_grass",
+    "host_chene",
+    "host_hetre",
+    "fteu_broadleaf",
+    "fteu_needleleaf",
+    "fteu_mixed",
+]
+
+
+def test_ecto_cross_border_swaps_host_for_fteu():
+    out = habitat_feature_subset(_FEATS_FTEU, "Boletus edulis", cross_border=True)
+    assert not any(f.startswith("host_") for f in out)  # host fin retiré
+    for f in ["fteu_broadleaf", "fteu_needleleaf", "fteu_mixed"]:
+        assert f in out  # forêt-EU ajoutée
+    assert "forest_density" in out and "clim_bio1" in out  # reste inchangé
+
+
+def test_ecto_fr_only_keeps_host_drops_fteu():
+    out = habitat_feature_subset(_FEATS_FTEU, "Boletus edulis", cross_border=False)
+    assert "host_chene" in out  # host fin gardé
+    assert not any(f.startswith("fteu_") for f in out)  # fteu_* exclu
+
+
+def test_open_ignores_fteu_and_cross_border():
+    a = habitat_feature_subset(_FEATS_FTEU, "Calocybe gambosa", cross_border=False)
+    b = habitat_feature_subset(_FEATS_FTEU, "Calocybe gambosa", cross_border=True)
+    assert a == b  # open : cross_border sans effet
+    assert not any(f.startswith(("host_", "fteu_")) for f in a)

@@ -62,14 +62,20 @@ def _keep_open(feat: str) -> bool:
     return feat in _OPEN_HABITAT_KEEP or feat.startswith("lc_") or feat.startswith("clim_")
 
 
-def habitat_feature_subset(feats: list[str], latin: str) -> list[str]:
+def habitat_feature_subset(feats: list[str], latin: str, cross_border: bool = False) -> list[str]:
     """Sous-ensemble de variables d'habitat propre à la guilde (ordre de `feats` préservé).
-    'ecto' → jeu complet. 'sapro'/'open' → host_* retiré. 'open' → en plus, restreint au
-    jeu « milieu ouvert » (_keep_open)."""
+    'ecto' → jeu complet (host_* fin, sans fteu_*) ; en `cross_border`, host_* fin (France-only)
+    est REMPLACÉ par les couches forêt-EU grossières fteu_* (pan-européennes). 'sapro'/'open' →
+    host_* retiré ; 'open' → en plus restreint au jeu « milieu ouvert ». fteu_* n'est utilisé
+    QUE par les ecto en cross_border."""
     g = guild_of(latin)
+    no_fteu = [f for f in feats if not f.startswith("fteu_")]
     if g == "ecto":
-        return list(feats)
-    out = [f for f in feats if not f.startswith("host_")]
+        if cross_border:
+            base = [f for f in no_fteu if not f.startswith("host_")]
+            return base + [f for f in feats if f.startswith("fteu_")]
+        return no_fteu
+    out = [f for f in no_fteu if not f.startswith("host_")]
     if g == "open":
         out = [f for f in out if _keep_open(f)]
     return out
