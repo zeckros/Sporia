@@ -32,7 +32,7 @@ import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from sporia import api as core          # noqa: E402
-from sporia.domain.sdm_eval import repeated_cv_metrics  # noqa: E402
+from sporia.domain.sdm_eval import repeated_cv_metrics, spatial_thin  # noqa: E402
 from sporia.domain.species import habitat_feature_subset  # noqa: E402
 from sporia.enrich import forest as mmap         # noqa: E402
 from sporia.enrich import soil_static as soil_data                    # noqa: E402
@@ -62,10 +62,11 @@ EXTRA_STATIC = ["twi", "tpi", "dist_water", "slope_dem", "soc", "cec", "edge_den
 GEO_PROXY = ["lat", "lon"]
 
 
-def species_feats(feats, species):
+def species_feats(feats, species, cross_border=False):
     """Sous-ensemble de variables propre à la guilde de l'espèce (cf. domain.species —
-    'open' reçoit un jeu restreint « milieu ouvert », 'sapro'/'open' perdent host_*)."""
-    return habitat_feature_subset(feats, species)
+    'open' reçoit un jeu restreint « milieu ouvert », 'sapro'/'open' perdent host_* ;
+    en cross_border, host_* fin est remplacé par les couches forêt-EU fteu_* pour 'ecto')."""
+    return habitat_feature_subset(feats, species, cross_border)
 
 
 def load_layers():
@@ -129,6 +130,15 @@ def load_layers():
                 print(f"  + couche arbre-hôte {f.stem}")
         except Exception:
             pass
+    for f in sorted(Path("data/cache").glob("fteu_*.npy")):       # hook forêt-type européen
+        try:
+            arr = np.load(f)
+            if arr.shape == (GRID_H, GRID_W):
+                layers[f.stem] = arr.astype(np.float32)
+                feats.append(f.stem)
+                print(f"  + couche forêt-EU {f.stem}")
+        except Exception:
+            pass
     return layers, feats
 
 
@@ -155,12 +165,19 @@ def match_key(name):
     return k
 
 
-def fetch_occurrences(taxon_key, max_n=20000, min_year=2000, max_unc=5000, label=None):
+def fetch_occurrences(taxon_key, max_n=20000, min_year=2000, max_unc=5000, label=None, country="FR"):
     lons, lats, off, total = [], [], 0, None
     while off < max_n:
-        j = requests.get(GBIF_OCC, params={
-            "taxonKey": taxon_key, "country": "FR", "hasCoordinate": "true",
-            "hasGeospatialIssue": "false", "limit": 300, "offset": off}, timeout=60).json()
+        params = {"taxonKey": taxon_key, "hasCoordinate": "true",
+                  "hasGeospatialIssue": "false", "limit": 300, "offset": off}
+        if country:
+            params["country"] = country
+        else:
+            # transfrontalier : filtre bbox CÔTÉ SERVEUR (sinon on ne récupère qu'une fraction
+            # des occurrences in-bbox parmi les premiers max_n records mondiaux).
+            params["decimalLatitude"] = f"{BBOX[2]},{BBOX[3]}"
+            params["decimalLongitude"] = f"{BBOX[0]},{BBOX[1]}"
+        j = requests.get(GBIF_OCC, params=params, timeout=60).json()
         if total is None:
             total = min(j.get("count", max_n) or max_n, max_n)
         for o in j.get("results", []):
@@ -216,21 +233,23 @@ def boyce_index(pres, bg, nbins=10):
 
 
 _BG_CACHE = Path("data/cache") / "sdm_bg_target_cells.npy"
+_BG_CACHE_XB = Path("data/cache") / "sdm_bg_target_xborder_cells.npy"
 
 
-def build_background(layers, feats, france, mode, n_bg):
+def build_background(layers, feats, france, mode, n_bg, country="FR"):
     """Arrière-plan indépendant de l'espèce → (rows, cols, X). Récupéré 1 seule
     fois (mis en cache sur disque) et réutilisé pour toutes les espèces."""
     if mode == "target":
-        if _BG_CACHE.exists():
+        cache = _BG_CACHE if country else _BG_CACHE_XB
+        if cache.exists():
             print("Arrière-plan target-group (cache disque)…")
-            cells = np.load(_BG_CACHE)
+            cells = np.load(cache)
             br0, bc0 = cells[0], cells[1]
         else:
             print("GBIF target-group (règne Fungi) — arrière-plan partagé…")
             br0, bc0 = unique_cells(*cell_rc(*fetch_occurrences(
-                FUNGI_KINGDOM_KEY, max_n=60000, label="target-group")))
-            np.save(_BG_CACHE, np.vstack([br0, bc0]))
+                FUNGI_KINGDOM_KEY, max_n=60000, label="target-group", country=country)))
+            np.save(cache, np.vstack([br0, bc0]))
     else:
         fr, fc = np.where(france)
         idx = np.random.default_rng(42).choice(len(fr), min(n_bg, len(fr)), replace=False)
@@ -249,18 +268,25 @@ def build_background(layers, feats, france, mode, n_bg):
     return br0[ok], bc0[ok], Xb[ok]
 
 
-def run_one(species, layers, feats, france, bg, predict, repeats=25, verbose=True):
+def run_one(species, layers, feats, france, bg, predict, repeats=25, cross_border=False,
+            max_pres=None, verbose=True):
     """Entraîne + valide (CV spatiale) + calibre l'habitat d'une espèce.
     Renvoie (n_presence, auc, boyce, boyce_se). Sauve un .npy si predict."""
     from sklearn.ensemble import RandomForestClassifier
     from sklearn.calibration import CalibratedClassifierCV
 
-    sfeats = species_feats(feats, species)          # variables propres à la guilde
+    sfeats = species_feats(feats, species, cross_border)  # variables propres à la guilde
     idx = [feats.index(f) for f in sfeats]           # colonnes correspondantes dans l'arrière-plan
-    pr, pc = unique_cells(*cell_rc(*fetch_occurrences(match_key(species))))
+    pr, pc = unique_cells(*cell_rc(*fetch_occurrences(
+        match_key(species), country=None if cross_border else "FR")))
     Xp = sample(layers, sfeats, pr, pc)
-    okp = np.isfinite(Xp).all(axis=1) & france[np.clip(pr, 0, GRID_H - 1), np.clip(pc, 0, GRID_W - 1)]
+    okp = np.isfinite(Xp).all(axis=1)
+    if not cross_border:
+        okp &= france[np.clip(pr, 0, GRID_H - 1), np.clip(pc, 0, GRID_W - 1)]
     pr, pc, Xp = pr[okp], pc[okp], Xp[okp]
+    if max_pres:
+        pr, pc = spatial_thin(pr, pc, max_pres)
+        Xp = sample(layers, sfeats, pr, pc)
     if len(pr) < 30:
         print(f"  [skip] {species} : seulement {len(pr)} occurrences")
         return len(pr), float("nan"), float("nan"), float("nan")
@@ -312,6 +338,10 @@ def main():
     ap.add_argument("--predict", action="store_true")
     ap.add_argument("--repeats", type=int, default=25,
                      help="nb de découpages CV pour stabiliser le Boyce")
+    ap.add_argument("--cross-border", action="store_true",
+                     help="présences+fond hors France (bbox baké, host_* → fteu_* pour ecto)")
+    ap.add_argument("--max-pres", type=int, default=None,
+                     help="cap d'équilibrage spatial des présences")
     a = ap.parse_args()
 
     try:
@@ -322,7 +352,8 @@ def main():
     layers, feats = load_layers()
     ref = core._grid_ref()
     france = core._france_mask(str(ref)) if ref is not None else np.ones((GRID_H, GRID_W), bool)
-    bg = build_background(layers, feats, france, a.bg, a.n_bg)
+    bg = build_background(layers, feats, france, a.bg, a.n_bg,
+                          country=None if a.cross_border else "FR")
 
     do_all = a.all or (a.species or "").upper() == "ALL"
     if do_all:
@@ -335,7 +366,8 @@ def main():
         for i, sp in enumerate(species_list, 1):
             print(f"\n• [{i}/{len(species_list)}] {sp}", flush=True)
             n, auc, boyce, boyce_se = run_one(sp, layers, feats, france, bg, a.predict,
-                                               repeats=a.repeats)
+                                               repeats=a.repeats, cross_border=a.cross_border,
+                                               max_pres=a.max_pres)
             summary.append((sp, n, auc, boyce, boyce_se))
         print("\n===================== RÉCAPITULATIF =====================")
         print(f"{'espèce':32s} {'présence':>8s} {'AUC':>6s} {'Boyce':>6s} {'BoyceSE':>8s}")
@@ -345,7 +377,8 @@ def main():
         if not a.species:
             sys.exit('Indique une espèce, ou --all.')
         print(f"\n• {a.species}")
-        run_one(a.species, layers, feats, france, bg, a.predict, repeats=a.repeats)
+        run_one(a.species, layers, feats, france, bg, a.predict, repeats=a.repeats,
+                cross_border=a.cross_border, max_pres=a.max_pres)
 
 
 if __name__ == "__main__":
