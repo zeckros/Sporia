@@ -1,102 +1,104 @@
-# Sporia — SDM habitat transfrontalier (entraînement domaine élargi) — Design
+# Sporia — SDM habitat transfrontalier + type de forêt européen — Design
 
 ## Contexte
 
-Le SDM d'habitat s'entraîne sur des occurrences GBIF **France seulement** (`train_sdm.py`,
-`fetch_occurrences(..., country="FR")` + filtre présences par masque France). Les espèces
-**pauvres en données** en pâtissent — surtout Calocybe gambosa (190 présences FR exploitables,
-Boyce stable −0.043, non servie).
+Le SDM d'habitat s'entraîne sur des occurrences GBIF **France seulement**. Les espèces
+pauvres en données en pâtissent (Calocybe gambosa : 190 présences FR, Boyce stable −0.043,
+non servie). Objectif : entraîner sur un **domaine élargi** (pays voisins), tout en **servant
+uniquement la France**, et **équilibrer** les effectifs entre espèces.
 
-Diagnostic (mesuré) :
-- La grille/bbox actuelle `(-5.5..10.5 lon, 41..51.5 lat)` couvre déjà de larges pans des
-  voisins (Belgique, ouest de l'Allemagne, Suisse, nord de l'Italie, NE de l'Espagne).
-- Les rasters de prédicteurs **climat (WorldClim), relief (Copernicus DEM), occupation du sol
-  (CGLS), densité forêt, et sol (SoilGrids)** couvrent **déjà toute la bbox** (valeurs valides
-  à Bruxelles, Genève, Turin, Fribourg-DE…). Seul `host_*` (essence BD Forêt, inventaire
-  forestier **français**) est NaN hors de France.
+Faits mesurés :
+- La grille/bbox `(-5.5..10.5 lon, 41..51.5 lat)` couvre déjà de larges pans de BE / ouest-DE /
+  CH / nord-IT / NE-ES. Les rasters climat (WorldClim), relief (Copernicus DEM), occupation du
+  sol (WorldCover), sol (SoilGrids) **couvrent déjà toute la bbox**.
 - Occurrences **dans la bbox, tous pays** vs France seule : Calocybe 538 → **5 389 (×10)**,
   Agaricus 842 → **4 524 (×5.4)**, Macrolepiota 2 454 → **16 858 (×6.9)**.
-
-Conclusion : ×5-10 de données transfrontalières sont récupérables **sans étendre aucun raster**
-(les rasters couvrent déjà la bbox). Le jeu de variables disponible à l'étranger = climat + sol
-+ occupation + relief (+ densité forêt), **sans `host_*`** — c'est-à-dire le jeu « milieu
-ouvert » de la guilde. Le transfrontalier est donc *feature-cohérent* pour les espèces **sans
-arbre-hôte** (habitat ouvert + saprophytes), qui sont justement les plus pauvres en données.
+- **Seule `host_*` (essence BD Forêt) est France-only** (NaN à l'étranger, couches grossières
+  *et* fines confondues). Donc les espèces à arbre-hôte (ectomycorhiziennes) ne peuvent pas
+  utiliser la donnée transfrontalière : leurs cellules étrangères s'auto-filtrent faute d'hôte.
+- **Spike validé** : la couche **CGLS-LC100 Forest-Type** (Zenodo, record 3939050) est
+  streamable en COG `/vsicurl` (blocs 256×256, uint8, globale 362880×141120), avec les classes
+  1=conifère persistant, 3=conifère caduc, 2/4=feuillu, 5=mixte — et des **données valides des
+  deux côtés de la frontière** (fenêtre Vosges/Forêt-Noire : conifères + feuillus + mixte). Elle
+  fournit donc un **hôte grossier pan-européen** pour débloquer les ecto en transfrontalier.
 
 ## Décisions
 
-- **Approche A — in-bbox transfrontalier** : retirer le filtre `country=FR` du fetch GBIF (garder
+- **Transfrontalier in-bbox (approche A)** : retirer le filtre `country=FR` du fetch GBIF (garder
   le filtre bbox), entraîner sur les présences bbox tous-pays, **servir la France seule**
-  (prédiction inchangée). ×5-10 de données, quasi gratuit. Étendre la bbox plus loin (est-DE,
-  sud-ES/IT, GB) = chantier ultérieur (YAGNI tant que A n'a pas plafonné).
-- **Auto-filtrage par le jeu de variables** : `host_*` étant NaN hors des forêts françaises, une
-  espèce qui l'utilise (ectomycorhizienne) voit ses cellules étrangères **écartées
-  automatiquement** par le filtre « prédicteurs valides » → elle reste de facto FR-only. Aucune
-  logique par guilde à ajouter : seules les espèces **sans `host_*`** gagnent réellement les
-  données transfrontalières.
-- **Cible = espèces faibles sans arbre-hôte** : les 3 d'habitat ouvert (Calocybe, Agaricus,
-  Macrolepiota, guilde `open`) **et** le saprophyte Pleurotus ostreatus (guilde `sapro`,
-  n'utilise pas `host_*`, Boyce stable 0.230). On applique `--cross-border` à ces espèces.
-  Nuance Pleurotus : son jeu `sapro` garde des couches de structure forestière
-  (`edge_density`, `twi`) ; si l'une est France-only (NaN à l'étranger), ses cellules
-  étrangères s'auto-filtrent et le gain sera faible — **mesuré** en validation (Unité 4), pas
-  supposé. Le jeu `open` (Calocybe/Agaricus/Macrolepiota) est, lui, entièrement transfrontalier.
-- **Fond target-group transfrontalier** : le fond doit venir du **même domaine** que les
-  présences (bbox tous-pays), sinon le modèle apprend « France vs étranger » (densité
-  d'échantillonnage) au lieu de l'habitat. Cache séparé.
-- **Différé (repli documenté, hors périmètre)** : (a) les **trous SoilGrids à l'étranger**
-  (NaN épars) réduisent les cellules exploitables ; si ça limite trop le gain, chercher des
-  **données de sol européennes** plus complètes. (b) Les espèces faibles **à arbre-hôte**
-  (ex. Lactarius deliciosus, sortie du service) ne peuvent pas profiter de A ; il leur faudrait
-  un **équivalent européen du type de forêt** — chantier ultérieur.
+  (prédiction `np.where(france)` inchangée). Étendre la bbox au-delà = chantier ultérieur (YAGNI).
+- **Couche forêt-EU** : baker `fteu_broadleaf` / `fteu_needleleaf` depuis CGLS Forest-Type
+  (fractions par cellule 0.01°, toute la bbox) → hôte grossier disponible à l'étranger.
+- **Jeux de variables par guilde en transfrontalier** :
+  - sans hôte (open + sapro) → jeu « milieu ouvert » (déjà transfrontalier) ;
+  - ecto → **remplacer `host_*` fin (France-only) par `fteu_broadleaf/needleleaf` (grossier,
+    pan-européen)**.
+- **A/B par espèce — garder le meilleur, aucune régression forcée** : pour chaque espèce,
+  comparer au **Boyce stable ± SE** le modèle transfrontalier (plus de données) vs le modèle
+  actuel FR-only (host fin pour les ecto). On sert le meilleur des deux par espèce.
+- **Cap d'équilibrage à N dérivé empiriquement** : N n'est PAS hardcodé. Une **courbe
+  d'apprentissage** sur une espèce riche fixe N au plateau du Boyce stable (pari 1000-2000).
+  Amincissement **spatial** (pas aléatoire) pour préserver la couverture environnementale.
+- **S'appuie sur le Boyce stabilisé** (chantier précédent) : sans lui, le gain serait noyé
+  dans le bruit.
 
-## Unité 1 — Fetch sans filtre pays (`scripts/train_sdm.py`)
+## Unité 1 — Bake forêt-EU (`scripts/bake_foresttype_eu.py`)
 
-`fetch_occurrences(taxon_key, ..., country="FR")` gagne le paramètre `country` : si `None`,
-la requête GBIF **omet** `country` (le filtre bbox `BBOX[0] <= lo <= BBOX[1] and BBOX[2] <= la
-<= BBOX[3]` déjà présent restreint au domaine baké). Comportement par défaut (`"FR"`) inchangé.
+Nouveau script (motif `bake_landcover.py` : `/vsicurl`, lecture fenêtrée, agrégation en fraction
+de classe par cellule 0.01°). Source : CGLS-LC100 Forest-Type (URL Zenodo confirmée). Fenêtre =
+bbox. **3 sorties** (aucune classe forêt perdue) : `data/cache/fteu_broadleaf.npy` (fraction des
+classes 2+4), `fteu_needleleaf.npy` (1+3), `fteu_mixed.npy` (5) ; `NaN` hors données. Repris par
+`train_sdm` via un hook dédié (comme `lc_*`/`clim_*`).
+Volume streamé ~150-200 Mo (fenêtre France-bbox à 100 m, pas d'overviews → lecture pleine
+résolution de la fenêtre puis décimation, comme WorldCover).
 
-## Unité 2 — Domaine de présences & fond transfrontaliers
+## Unité 2 — Machinerie transfrontalière (`scripts/train_sdm.py`)
 
-- **Flag CLI `--cross-border`** sur `train_sdm.py`.
-- **Présences** : `run_one` fetch avec `country=None` quand le flag est actif ; le filtre de
-  présences passe de `isfinite(Xp) & france[...]` à **`isfinite(Xp)` seul** (on garde les
-  cellules à prédicteurs valides, on lève la contrainte France).
-- **Fond** : `build_background` fetch le target-group (règne Fungi) avec `country=None` et le
-  met en cache dans un fichier **séparé** `sdm_bg_target_xborder_cells.npy` (pour ne pas
-  écraser/mélanger avec le fond FR `sdm_bg_target_cells.npy`).
-- **Prédiction inchangée** : `rows, cols = np.where(france)` → carte servie France seule.
+- `fetch_occurrences(..., country="FR")` : paramètre `country` ; `None` → requête GBIF sans
+  filtre pays (le filtre bbox déjà présent restreint au domaine).
+- Flag CLI `--cross-border` : fetch présences (`run_one`) et fond (`build_background`) avec
+  `country=None` ; filtre présences `isfinite(Xp)` **sans** masque France ; fond target-group
+  transfrontalier en cache séparé `sdm_bg_target_xborder_cells.npy`. Prédiction inchangée
+  (France seule).
 
-## Unité 3 — Câblage `main()`
+## Unité 3 — Jeu de variables ecto transfrontalier (`sporia.domain.species`)
 
-`--cross-border` propage `country=None` au fetch de présences (`run_one`) et au fetch de fond
-(`build_background`), et lève le masque France sur les présences. Combinable avec `--predict`,
-`--repeats`, et une espèce nommée ou une petite liste. On l'invoque sur les 4 espèces sans hôte
-(Calocybe, Agaricus, Macrolepiota, Pleurotus) — les autres, si on les passait, s'auto-filtrent.
+`habitat_feature_subset(feats, latin, cross_border=False)` : nouveau paramètre. En mode
+`cross_border` pour une espèce `ecto`, **retirer `host_*`** et **ajouter `fteu_broadleaf`,
+`fteu_needleleaf`, `fteu_mixed`**. `open`/`sapro` inchangés (déjà transfrontaliers). `train_sdm` passe
+`cross_border=a.cross_border`. (Fonction pure, testable.)
 
-## Unité 4 — Validation (le payoff)
+## Unité 4 — Cap d'équilibrage à N empirique (`scripts/train_sdm.py`)
 
-Réentraîner chaque espèce cible en `--cross-border --predict --repeats 25` ; comparer le
-**Boyce stable ± SE** aux valeurs FR-only committées (`species_metrics.yaml` : Calocybe −0.043,
-Agaricus 0.262, Macrolepiota 0.519, Pleurotus 0.230). Sauvegardes des `sdm_*.npy` et du yaml
-avant. Décision par espèce, à métrique fiable :
-- Calocybe : la borne prudente `boyce − se` franchit-elle enfin **0.10** (redevient servie) ?
-- Autres : Boyce stable en hausse (au-delà de la SE) ?
-Ré-émettre `species_metrics.yaml` après. Noter le nb de présences exploitables gagné par espèce
-(mesure directe du bénéfice transfrontalier), et si les trous SoilGrids limitent (bcp de cellules
-étrangères écartées faute de sol).
+- Amincissement spatial des présences à `N` cellules max (sous-échantillon régulier dans
+  l'espace, pas aléatoire), paramètre `--max-pres` (défaut = valeur du plateau, cf. courbe).
+- **Courbe d'apprentissage** (opérationnel, avant de figer N) : sur une espèce riche
+  (Macrolepiota, transfrontalier), mesurer le Boyce stable à N = 500/1000/2000/4000 ; fixer N au
+  plateau. Documenter la courbe.
+
+## Unité 5 — A/B par espèce + validation (opérationnel)
+
+- Sauvegardes (`sdm_*.npy`, `species_metrics.yaml`) avant.
+- Pour chaque espèce cible : entraîner en `--cross-border --predict --repeats 25` (avec le jeu
+  guilde adapté + cap N) ; comparer le **Boyce stable ± SE** au modèle FR-only committé.
+  **Garder le meilleur** (si transfrontalier ≤ FR à la SE près, on garde FR). Consigner le
+  gain de présences et le verdict par espèce.
+- Ré-émettre `species_metrics.yaml`. Question tranchée : Calocybe franchit-elle le seuil ? les
+  ecto gagnent-elles avec l'hôte grossier + plus de données, ou l'hôte fin FR reste-t-il
+  meilleur ?
 
 ## Tests
 
-- **Smoke** : `fetch_occurrences(k, country=None)` renvoie nettement plus d'occurrences (bbox
-  tous-pays) que `country="FR"` pour une espèce test — vérifie que le filtre pays est bien levé.
-- Le reste est **opérationnel** (comme la ré-estimation du chantier stabilisation) : la
-  validation par le Boyce stable avant/après est la preuve.
+- `bake_foresttype_eu` : test unitaire de l'**agrégation** (fonction pure classe→fraction sur un
+  petit tableau synthétique : feuillu={2,4}, conifère={1,3}, mixte={5}, nodata ignoré).
+- `habitat_feature_subset(cross_border=True)` : ecto → `host_*` retirés, `fteu_*` ajoutés ;
+  open/sapro inchangés ; `cross_border=False` → comportement actuel.
+- `fetch_occurrences(country=None)` : smoke (compte bbox tous-pays > compte FR).
+- Le reste (bake réel, courbe, A/B) est **opérationnel**, validé par le Boyce stable.
 
 ## Réversibilité & indépendance
 
-- Touche `scripts/train_sdm.py` (fetch + run_one + build_background + main) et, en ré-émission,
-  `species_metrics.yaml` + les `sdm_*.npy` des espèces cibles (sauvegardés).
-- N'affecte **aucune** espèce à arbre-hôte (auto-filtrage) ni la prédiction/service (France seule).
-- S'appuie sur la métrique **Boyce stabilisée** (chantier précédent) pour mesurer le gain — sans
-  elle, le bénéfice serait noyé dans le bruit.
+- Nouveaux fichiers : `scripts/bake_foresttype_eu.py`, `data/cache/fteu_*.npy` (non versionné).
+- Modifie `scripts/train_sdm.py` et `sporia/domain/species.py` (paramètre `cross_border`).
+- **A/B garde-le-meilleur** ⇒ aucune espèce dégradée ; la prédiction reste **France seule**.
+- Cartes/metrics sauvegardées avant ré-estimation.
