@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from sporia.domain.sdm_eval import boyce_index_continuous, repeated_cv_metrics
+from sporia.domain.sdm_eval import boyce_index_continuous, repeated_cv_metrics, spatial_thin
 
 
 def test_continuous_boyce_perfect_separation():
@@ -64,3 +64,20 @@ def test_repeated_cv_se_shrinks_with_more_repeats():
     _, _, se_few = repeated_cv_metrics(X, y, g, repeats=4, n_estimators=60)
     _, _, se_many = repeated_cv_metrics(X, y, g, repeats=40, n_estimators=60)
     assert se_many < se_few
+
+
+def test_spatial_thin_noop_when_small():
+    r = np.arange(10)
+    c = np.arange(10)
+    tr, tc = spatial_thin(r, c, max_n=20)
+    assert len(tr) == 10 and list(tr) == list(r)
+
+
+def test_spatial_thin_caps_and_spreads():
+    # 4 blocs spatiaux distincts de 25 cellules chacun (100 total)
+    rows = np.concatenate([np.full(25, b * 50) for b in range(4)])
+    cols = np.concatenate([np.arange(25) for _ in range(4)])
+    tr, tc = spatial_thin(rows, cols, max_n=20, block=25)
+    assert len(tr) == 20
+    blocks_hit = {int(r) // 50 for r in tr}
+    assert blocks_hit == {0, 1, 2, 3}  # étalé : les 4 blocs représentés

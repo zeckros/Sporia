@@ -87,3 +87,30 @@ def repeated_cv_metrics(
         else float("nan")
     )
     return auc_mean, boyce_mean, boyce_se
+
+
+def spatial_thin(rows, cols, max_n: int, block: int = 25, seed: int = 0):
+    """Sous-échantillonne (rows, cols) à ≤ max_n cellules en préservant l'étalement spatial :
+    regroupe les cellules par bloc de `block`×`block` (~0.25° à 0.01°) puis tire en round-robin
+    entre blocs (chaque bloc mélangé). Renvoie (rows, cols) inchangés si len ≤ max_n."""
+    from collections import defaultdict
+
+    rows = np.asarray(rows)
+    cols = np.asarray(cols)
+    if len(rows) <= max_n:
+        return rows, cols
+    rng = np.random.default_rng(seed)
+    buckets = defaultdict(list)
+    for i, (r, c) in enumerate(zip(rows // block, cols // block, strict=False)):
+        buckets[(int(r), int(c))].append(i)
+    lists = [rng.permutation(v).tolist() for v in buckets.values()]
+    order = []
+    while len(order) < max_n and any(lists):
+        for lst in lists:
+            if lst:
+                order.append(lst.pop())
+                if len(order) >= max_n:
+                    break
+        lists = [lst for lst in lists if lst]
+    idx = np.array(order[:max_n], int)
+    return rows[idx], cols[idx]
