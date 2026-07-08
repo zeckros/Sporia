@@ -14,10 +14,12 @@ from __future__ import annotations
 
 import os
 import re
+from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -86,6 +88,8 @@ app.add_middleware(
 
 
 app.middleware("http")(security_headers)
+
+templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 
 
 # ===== Validation des entrées (anti path-traversal sur les noms de fichiers rasters) =====
@@ -219,11 +223,11 @@ def password_reset(body: ResetIn):
 
 
 @app.get("/api/verify-email")
-def verify_email(token: str):
+def verify_email(token: str, request: Request):
     uid = accounts.consume_token(token, "verify")
     if uid is not None:
         accounts.set_verified(uid)
-    return FileResponse(str(settings.web_dir / "index.html"), headers={"Cache-Control": "no-cache"})
+    return templates.TemplateResponse(request, "index.html", headers={"Cache-Control": "no-cache"})
 
 
 # ===== Paiement / abonnement (Stripe) =====
@@ -546,8 +550,10 @@ app.mount("/static", StaticFiles(directory=str(WEB_DIR)), name="static")
 
 
 @app.get("/")
-def index():
+def index(request: Request):
     # no-cache sur le document HTML → la référence versionnée de app.js est toujours fraîche
-    return FileResponse(
-        str(WEB_DIR / "index.html"), headers={"Cache-Control": "no-cache, must-revalidate"}
+    return templates.TemplateResponse(
+        request,
+        "index.html",
+        headers={"Cache-Control": "no-cache, must-revalidate"},
     )
