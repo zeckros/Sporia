@@ -1,7 +1,6 @@
 # Métriques par espèce — gating/paliers sur AUC (Boyce informatif, dépendant de N).
-#   auc            = HABITAT (SDM) — is_reliable_habitat (>=0.65) + confidence_tier (0.73/0.80)
-#   boyce/boyce_se = informatif (stabilisé mais dépendant de N)
-#   fruiting_*/radar_* = fructification / end-to-end (eval_radar)
+#   auc = HABITAT (SDM) — is_reliable_habitat (>=0.65) + confidence_tier (0.73/0.80)
+#   boyce/boyce_se = informatif ; fruiting_*/radar_* = fructification / end-to-end
 Boletus aereus: {boyce: 0.825, auc: 0.832, boyce_se: 0.016, fruiting_boyce: 0.845, fruiting_auc: 1.0, radar_boyce: 1.0, radar_auc: 0.969}
 Craterellus tubaeformis: {boyce: 0.94, auc: 0.824, boyce_se: 0.009, fruiting_boyce: 0.964, fruiting_auc: 0.998, radar_boyce: 1.0, radar_auc: 0.976}
 Craterellus cornucopioides: {boyce: 0.9, auc: 0.811, boyce_se: 0.011, fruiting_boyce: 0.906, fruiting_auc: 0.999, radar_boyce: 1.0, radar_auc: 0.952}
@@ -12,7 +11,7 @@ Hydnum repandum: {boyce: 0.861, auc: 0.755, boyce_se: 0.012, fruiting_boyce: 0.9
 Imleria badia: {boyce: 0.887, auc: 0.744, boyce_se: 0.013, fruiting_boyce: 0.964, fruiting_auc: 0.997, radar_boyce: 1.0, radar_auc: 0.966}
 Boletus edulis: {boyce: 0.823, auc: 0.737, boyce_se: 0.014, fruiting_boyce: 1.0, fruiting_auc: 0.995, radar_boyce: 1.0, radar_auc: 0.968}
 Lepista nuda: {boyce: 0.877, auc: 0.734, boyce_se: 0.015, fruiting_boyce: 0.845, fruiting_auc: 0.999, radar_boyce: 1.0, radar_auc: 0.947}
-Agaricus campestris: {boyce: 0.82, auc: 0.706, boyce_se: 0.016, fruiting_boyce: 0.845, fruiting_auc: 1.0, radar_auc: 0.995}
-Calocybe gambosa: {boyce: 0.822, auc: 0.705, boyce_se: 0.014, fruiting_boyce: 0.906, fruiting_auc: 0.999, radar_auc: 0.988}
-Macrolepiota procera: {boyce: 0.807, auc: 0.691, boyce_se: 0.016, fruiting_boyce: 0.991, fruiting_auc: 0.997, radar_boyce: 1.0, radar_auc: 0.991}
+Agaricus campestris: {boyce: 0.825, auc: 0.706, boyce_se: 0.014, fruiting_boyce: 0.845, fruiting_auc: 1.0, radar_auc: 0.995}
+Calocybe gambosa: {boyce: 0.813, auc: 0.705, boyce_se: 0.017, fruiting_boyce: 0.906, fruiting_auc: 0.999, radar_auc: 0.988}
+Macrolepiota procera: {boyce: 0.808, auc: 0.692, boyce_se: 0.015, fruiting_boyce: 0.991, fruiting_auc: 0.997, radar_boyce: 1.0, radar_auc: 0.991}
 Pleurotus ostreatus: {boyce: 0.23, auc: 0.681, boyce_se: 0.036, fruiting_boyce: 0.845, fruiting_auc: 1.0, radar_auc: 0.98}
