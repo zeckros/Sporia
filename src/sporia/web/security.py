@@ -4,17 +4,15 @@ from __future__ import annotations
 
 from fastapi import Request
 
-# CSP : autorise uniquement les CDN réellement utilisés par l'UI (Tailwind, Leaflet/unpkg,
-# Google Fonts) + les tuiles carto/IGN en image. 'unsafe-inline' nécessaire (config Tailwind
-# + styles inline dans index.html) ; les données utilisateur rendues en HTML sont échappées.
-# NOTE (chantier 4.5) : retirer 'unsafe-inline' supposerait d'abandonner le CDN Tailwind au profit
-# d'un build CSS statique + nonces — chantier frontend-build à part, reporté. Protection actuelle
-# contre l'injection = échappement des données + en-têtes ci-dessous. Voir ORACLE_DEPLOY.md.
+# CSP : tout en self après self-hosting (Tailwind CLI + Leaflet + Inter vendorés).
+# 'unsafe-inline' conservé pour script + style tant que subsistent des scripts/handlers
+# inline et les styles inline injectés par Leaflet (el.style). Le retrait de 'unsafe-inline'
+# sur script-src est prévu au Plan 2 (modules ES : plus d'inline). Données rendues échappées.
 CSP = (
     "default-src 'self'; "
-    "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com; "
-    "style-src 'self' 'unsafe-inline' https://unpkg.com https://fonts.googleapis.com; "
-    "font-src 'self' https://fonts.gstatic.com; "
+    "script-src 'self' 'unsafe-inline'; "
+    "style-src 'self' 'unsafe-inline'; "
+    "font-src 'self'; "
     "img-src 'self' data: https:; "
     "connect-src 'self'; "
     "frame-ancestors 'self'; base-uri 'self'; form-action 'self'"
