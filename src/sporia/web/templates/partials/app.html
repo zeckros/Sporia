@@ -1,0 +1,175 @@
+  <!-- ============ APP ============ -->
+  <div id="app-screen" class="hidden h-full flex flex-col">
+    <!-- Navbar (classique, blanche) -->
+    <header class="relative h-14 shrink-0 bg-white border-b border-slate-200 shadow-soft flex items-center px-4 gap-2 z-[1000]">
+      <div class="flex items-center gap-2 mr-3 select-none">
+        <svg class="mush-logo w-9 h-9" viewBox="0 0 32 32" role="img" aria-label="champignon">
+          <rect x="13" y="16" width="6" height="12" rx="3" fill="#f3e6cf"/>
+          <rect x="13" y="16" width="2.5" height="12" rx="1.25" fill="#e4cfa6"/>
+          <path d="M4 17 Q16 3 28 17 Q22 21.5 16 21.5 Q10 21.5 4 17 Z" fill="#c2620e"/>
+          <ellipse cx="16" cy="17" rx="12" ry="2.6" fill="#7c3d09" opacity=".25"/>
+          <circle cx="12" cy="12" r="1.7" fill="#fff7ed"/>
+          <circle cx="19.5" cy="10.5" r="2.1" fill="#fff7ed"/>
+          <circle cx="22" cy="14.5" r="1.3" fill="#fff7ed"/>
+        </svg>
+        <span class="font-black text-brand-500 text-lg">Sporia</span>
+      </div>
+      <!-- Bouton menu (mobile) -->
+      <button id="nav-toggle" class="md:hidden ml-auto p-2 rounded-lg text-slate-600 hover:bg-slate-100 transition" aria-label="Menu" aria-expanded="false">
+        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+
+      <!-- Navigation : en ligne sur desktop, tiroir déroulant sur mobile -->
+      <div id="nav-menu" class="hidden md:flex md:flex-1 md:items-center md:gap-2">
+        <nav class="flex flex-col md:flex-row md:items-center gap-1">
+          <button data-tab="carte" class="tab-btn px-4 py-2 md:py-1.5 rounded-lg font-semibold text-sm text-slate-600 hover:bg-brand-50 transition text-left md:text-center">Carte</button>
+          <button data-tab="guide" class="tab-btn px-4 py-2 md:py-1.5 rounded-lg font-semibold text-sm text-slate-600 hover:bg-brand-50 transition text-left md:text-center">Guide champignons</button>
+          <button data-tab="spots" class="tab-btn px-4 py-2 md:py-1.5 rounded-lg font-semibold text-sm text-slate-600 hover:bg-brand-50 transition text-left md:text-center">Mes spots</button>
+        </nav>
+        <div class="flex flex-col md:flex-row md:items-center gap-2 md:gap-3 md:ml-auto mt-1 md:mt-0 pt-2 md:pt-0 border-t md:border-0 border-slate-100">
+          <!-- Cloche : alerte « spots propices en ce moment » -->
+          <div class="relative self-start md:self-auto">
+            <button id="notif-btn" title="Mes spots propices"
+                    class="relative p-2 rounded-lg text-slate-500 hover:bg-slate-100 transition">
+              <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a5 5 0 00-5 5v2.6c0 .47-.18.92-.5 1.27L3 12.5V14h14v-1.5l-1.5-1.63a1.9 1.9 0 01-.5-1.27V7a5 5 0 00-5-5zM8 16a2 2 0 104 0H8z"/></svg>
+              <span id="notif-badge" class="hidden absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold leading-4 text-center"></span>
+            </button>
+            <div id="notif-panel" class="hidden absolute left-0 md:left-auto md:right-0 mt-2 w-72 max-w-[calc(100vw-2rem)] max-h-[60vh] overflow-y-auto nice-scroll bg-white rounded-2xl shadow-card border border-slate-200 p-2 z-[2100]"></div>
+          </div>
+          <button id="species-btn"
+                  class="px-3 py-2 md:py-1.5 rounded-lg text-sm font-semibold text-brand-700 border border-brand-200 bg-brand-50 hover:bg-brand-100 transition text-left md:text-center">
+             Mes champignons
+          </button>
+          <span id="nav-user" class="text-sm text-slate-500 px-1"></span>
+          <button id="manage-sub"
+                  class="hidden px-3 py-2 md:py-1.5 rounded-lg text-sm font-semibold text-brand-700 border border-brand-200 bg-brand-50 hover:bg-brand-100 transition text-left md:text-center">
+            Mon abonnement
+          </button>
+          <button id="logout-btn"
+                  class="px-3 py-2 md:py-1.5 rounded-lg text-sm font-semibold text-slate-500 border border-slate-200 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition text-left md:text-center">
+            Déconnexion
+          </button>
+          <button id="delete-account"
+                  class="px-3 py-2 md:py-1.5 rounded-lg text-sm font-semibold text-slate-400 border border-slate-200 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition text-left md:text-center">
+            Supprimer mon compte
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="flex-1 flex min-h-0 relative">
+      <!-- Sidebar : tiroir ABSOLU par-dessus la carte (glissement fluide, pas de reflow) -->
+      <aside id="sidebar" class="absolute inset-y-0 left-0 z-[900] w-96 max-w-[85vw] transition-transform duration-300 will-change-transform">
+        <div class="h-full overflow-y-auto nice-scroll bg-white border-r border-slate-200 shadow-card p-4 space-y-5">
+        <!-- Recherche -->
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Rechercher</label>
+          <div class="flex gap-2">
+            <button id="geolocate-btn" type="button" title="Me localiser"
+                    class="shrink-0 px-2.5 rounded-xl border border-slate-200 text-brand-600 hover:bg-brand-50 hover:border-brand-200 transition flex items-center justify-center">
+              <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a1 1 0 011 1v1.06A6 6 0 0115.94 9H17a1 1 0 110 2h-1.06A6 6 0 0111 15.94V17a1 1 0 11-2 0v-1.06A6 6 0 014.06 11H3a1 1 0 110-2h1.06A6 6 0 019 4.06V3a1 1 0 011-1zm0 4a4 4 0 100 8 4 4 0 000-8zm0 2.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3z"/></svg>
+            </button>
+            <input id="city-input" type="text" placeholder="Ville ou code postal…"
+                   class="flex-1 min-w-0 px-3 py-2 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 outline-none text-sm" />
+          </div>
+          <div id="city-results" class="mt-1 space-y-1"></div>
+        </div>
+
+        <!-- Titre du calque actif — TOUJOURS visible, en évidence (« en gros ») -->
+        <div id="active-layer-name" class="text-lg font-black text-brand-700 leading-snug"></div>
+
+        <!-- Zone légende + espèces : hauteur fixée EN JS à la plus grande hauteur de contenu
+             observée (légende + sélecteur d'espèces du radar = le plus haut) → empreinte constante,
+             le bouton ci-dessous reste STABLE au changement de calque, sans être collé au bas. -->
+        <div id="legend-region" class="overflow-y-auto nice-scroll space-y-4 pr-0.5">
+          <!-- Légende du calque actif -->
+          <div id="active-legend-wrap">
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Légende</label>
+            <div id="active-legend" class="rounded-xl border border-slate-200 bg-white shadow-soft p-3 text-xs text-slate-500"></div>
+          </div>
+
+          <!-- Champignons affichés sur le radar (sous-ensemble de « Mes champignons ») — radar uniquement -->
+          <div id="radar-species" class="hidden">
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Radar à champignons</label>
+            <div id="radar-species-list" class="space-y-0.5"></div>
+          </div>
+        </div>
+
+        <!-- Bouton « Fou des champignons » : sous la zone légende à hauteur fixe → position
+             STABLE au changement de calque. Déplie / replie le sélecteur de calques ci-dessous. -->
+        <button id="godmode-btn"
+                class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold shadow-card transition">
+          <span class="text-lg leading-none">🍄</span>
+          <span id="godmode-label">Fou des champignons</span>
+        </button>
+
+        <!-- Sélecteur de calques (déplié par le bouton) + période -->
+        <div id="layers-panel" class="hidden space-y-5">
+          <!-- Calques (exclusifs : un seul affiché à la fois) -->
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Afficher un calque</label>
+            <div class="space-y-1 text-sm">
+              <label class="flex items-center gap-2 cursor-pointer py-0.5"><input type="radio" name="layer" value="radar"     checked class="accent-brand-500"> <span>🍄 Radar à champignons <span class="text-[10px] text-brand-600 font-semibold align-top">habitat × moment</span></span></label>
+              <label class="flex items-center gap-2 cursor-pointer py-0.5"><input type="radio" name="layer" value="temp"              class="accent-brand-500"> <span>Température moyenne</span></label>
+              <label class="flex items-center gap-2 cursor-pointer py-0.5"><input type="radio" name="layer" value="precip"            class="accent-brand-500"> <span>Précipitations</span></label>
+              <label class="flex items-center gap-2 cursor-pointer py-0.5"><input type="radio" name="layer" value="forest"            class="accent-brand-500"> <span>Forêts (essences) — BD&nbsp;Forêt® IGN</span></label>
+              <label class="flex items-center gap-2 cursor-pointer py-0.5"><input type="radio" name="layer" value="soil"              class="accent-brand-500"> <span>Type de sol — SoilGrids® ISRIC</span></label>
+              <label class="flex items-center gap-2 cursor-pointer py-0.5"><input type="radio" name="layer" value="soilmoist"         class="accent-brand-500"> <span>Humidité du sol</span></label>
+              <label class="flex items-center gap-2 cursor-pointer py-0.5"><input type="radio" name="layer" value="altitude"          class="accent-brand-500"> <span>Altitude / relief</span></label>
+              <label class="flex items-center gap-2 cursor-pointer py-0.5"><input type="radio" name="layer" value="aspect"            class="accent-brand-500"> <span>Exposition (versants)</span></label>
+            </div>
+          </div>
+
+          <!-- Période (calques météo) — visible seulement pour Température / Précipitations -->
+          <div id="period-block">
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Période (calques météo)</label>
+            <div class="grid grid-cols-3 gap-1.5 p-1 bg-slate-100 rounded-xl">
+              <button data-period="jour" aria-selected="true"  class="seg-btn period-btn py-1.5 rounded-lg text-sm font-semibold text-slate-600 transition">Jour</button>
+              <button data-period="7"    aria-selected="false" class="seg-btn period-btn py-1.5 rounded-lg text-sm font-semibold text-slate-600 transition">7 j</button>
+              <button data-period="30"   aria-selected="false" class="seg-btn period-btn py-1.5 rounded-lg text-sm font-semibold text-slate-600 transition">30 j</button>
+            </div>
+            <div id="period-label" class="mt-2 text-xs font-semibold text-slate-500 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5"></div>
+          </div>
+        </div>
+        </div><!-- /scroll -->
+        <!-- Flèche au bord : replie (« ) / déploie ( » ) la barre — glisse avec elle -->
+        <button id="sidebar-toggle" title="Replier / déployer le panneau"
+                class="absolute top-1/2 right-0 -translate-y-1/2 translate-x-full z-[950] w-6 h-14 flex items-center justify-center
+                       bg-white border border-l-0 border-slate-200 rounded-r-lg shadow-md
+                       text-slate-500 hover:bg-slate-50 hover:text-brand-600 transition-colors">
+          <span id="sidebar-toggle-icon" class="text-base font-bold leading-none">«</span>
+        </button>
+      </aside>
+
+      <!-- Vue Carte -->
+      <main id="view-carte" class="flex-1 relative min-h-0">
+        <div id="map"></div>
+        <!-- Carte d'info, positionnée au pixel du point cliqué (suit la carte) -->
+        <div id="point-card" class="hidden absolute z-[800] w-64 bg-white rounded-2xl shadow-card border border-slate-200 p-3.5 fade-in"></div>
+      </main>
+
+      <!-- Vue Guide -->
+      <main id="view-guide" class="hidden flex-1 overflow-y-auto nice-scroll min-h-0 bg-slate-50">
+        <div class="max-w-5xl mx-auto px-6 py-7">
+          <h1 class="text-2xl font-black">Guide cueillette</h1>
+          <p class="text-sm text-slate-500 mt-1 mb-5 max-w-2xl">
+            Conditions estimées pour le point sélectionné (saison, température, pluie) + essence
+            forestière détectée. Indicatif — ne dispense jamais d'une identification formelle.
+          </p>
+          <div id="guide-content"></div>
+        </div>
+      </main>
+
+      <!-- Vue Mes spots -->
+      <main id="view-spots" class="hidden flex-1 overflow-y-auto nice-scroll min-h-0 bg-slate-50">
+        <div class="max-w-4xl mx-auto px-6 py-7">
+          <h1 class="text-2xl font-black">Mes spots</h1>
+          <p class="text-sm text-slate-500 mt-1 mb-5 max-w-2xl">
+            Vos coins enregistrés. Cliquez sur le nom pour le renommer ; le statut « propice »
+            suit la météo du jour (radar habitat × pousse).
+          </p>
+          <div id="spots-content"></div>
+        </div>
+      </main>
+    </div>
+  </div>

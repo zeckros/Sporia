@@ -22,3 +22,17 @@ def test_static_bundle_served():
     # /static est monté sur web/ → le JS applicatif est accessible
     r = client.get("/static/app.js")
     assert r.status_code == 200
+
+
+def test_index_composes_all_screens():
+    r = client.get("/")
+    assert r.status_code == 200
+    # chaque écran (partial) est bien inclus dans le rendu final
+    for marker in (
+        'id="landing-screen"',
+        'id="login-screen"',
+        'id="paywall-screen"',
+        'id="app-screen"',
+        'id="species-modal"',
+    ):
+        assert marker in r.text
