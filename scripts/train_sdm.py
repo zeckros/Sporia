@@ -258,11 +258,12 @@ def build_background(layers, feats, france, mode, n_bg, country="FR"):
         idx = np.random.default_rng(42).choice(len(br0), n_bg, replace=False)
         br0, bc0 = br0[idx], bc0[idx]
     Xb = sample(layers, feats, br0, bc0)
-    # NB : host_* est NaN hors forêt (CGLS Forest-Type masqué). On NE filtre QUE sur
-    # les variables toujours disponibles (base+climat+occupation) pour ne pas réduire
-    # l'arrière-plan aux seules cellules forestières ; chaque espèce re-filtre ensuite
-    # le fond sur SES variables (run_one) → fond correct par guilde.
-    always = [i for i, f in enumerate(feats) if not f.startswith("host_")]
+    # NB : host_* ET fteu_* sont NaN hors forêt (essence BD Forêt / type de forêt CGLS).
+    # On NE filtre QUE sur les variables toujours disponibles (base+climat+occupation) pour
+    # ne pas réduire l'arrière-plan aux seules cellules forestières — sinon les espèces de
+    # milieu ouvert (Calocybe, Agaricus…) seraient entraînées contre un fond forêt-seulement.
+    # Chaque espèce re-filtre ensuite le fond sur SES variables (run_one) → fond par guilde.
+    always = [i for i, f in enumerate(feats) if not f.startswith(("host_", "fteu_"))]
     ok = np.isfinite(Xb[:, always]).all(axis=1)
     print(f"  {ok.sum()} points d'arrière-plan ({mode})")
     return br0[ok], bc0[ok], Xb[ok]
