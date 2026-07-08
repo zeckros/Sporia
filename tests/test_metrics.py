@@ -1,44 +1,27 @@
-"""Fiabilité de l'habitat depuis species_metrics.yaml."""
+"""Fiabilité de l'habitat depuis species_metrics.yaml — gating/paliers sur l'AUC."""
 
 from __future__ import annotations
 
-import pytest
-
-from sporia.domain.metrics import (
-    _conservative,
-    _tier,
-    confidence_tier,
-    habitat_boyce,
-    is_reliable_habitat,
-)
+from sporia.domain.metrics import _tier_auc, confidence_tier, habitat_auc, is_reliable_habitat
 
 
-def test_habitat_boyce_loads_yaml():
-    b = habitat_boyce()
-    assert isinstance(b, dict)
-    assert "Boletus edulis" in b
+def test_habitat_auc_loads_yaml():
+    a = habitat_auc()
+    assert isinstance(a, dict)
+    assert "Boletus edulis" in a
 
 
-def test_cepe_is_reliable():
-    assert is_reliable_habitat("Boletus edulis") is True  # borne 0.672 - 0.026 >= 0.10
+def test_tier_auc_thresholds():
+    assert _tier_auc(0.82) == "élevée"  # >= 0.80
+    assert _tier_auc(0.75) == "bonne"  # >= 0.73, < 0.80
+    assert _tier_auc(0.70) == "modérée"  # < 0.73
 
 
-def test_mousseron_unreliable():
-    assert is_reliable_habitat("Calocybe gambosa") is False  # borne -0.043 - 0.042 < 0.10
+def test_reliable_when_auc_above_threshold():
+    assert is_reliable_habitat("Boletus edulis") is True  # AUC 0.737 >= 0.65
 
 
 def test_absent_species_unreliable_and_moderate():
-    # Espèce absente du yaml → _lower_bound None → non servie ET palier « modérée ».
+    # Espèce absente du yaml → non servie ET palier « modérée ».
     assert is_reliable_habitat("Amanita muscaria") is False
     assert confidence_tier("Amanita muscaria") == "modérée"
-
-
-def test_conservative_bound():
-    assert _conservative(0.50, 0.03) == pytest.approx(0.47)
-    assert _conservative(0.12, 0.05) == pytest.approx(0.07)
-
-
-def test_tier_thresholds_on_lower_bound():
-    assert _tier(0.55) == "élevée"  # >= 0.50
-    assert _tier(0.47) == "bonne"  # >= 0.35, < 0.50
-    assert _tier(0.20) == "modérée"  # < 0.35
