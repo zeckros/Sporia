@@ -20,7 +20,7 @@ def test_index_html_served():
 
 def test_static_bundle_served():
     # /static est monté sur web/ → le JS applicatif est accessible
-    r = client.get("/static/app.js")
+    r = client.get("/static/js/main.js")
     assert r.status_code == 200
 
 

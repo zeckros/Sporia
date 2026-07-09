@@ -1,7 +1,7 @@
 // tailwind.config.js — thème repris de l'ancien <script>tailwind.config</script> d'index.html.
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ["./src/sporia/web/templates/**/*.html", "./web/js/**/*.js", "./web/app.js"],
+  content: ["./src/sporia/web/templates/**/*.html", "./web/js/**/*.js"],
   theme: {
     extend: {
       fontFamily: { sans: ["Inter", "system-ui", "sans-serif"] },
