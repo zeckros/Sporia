@@ -866,37 +866,60 @@ function showPointCard(lat, lon, r) {
   const titleHtml = spot
     ? `<input class="pc-title font-bold text-slate-800 leading-tight bg-transparent w-full border-b border-dashed border-slate-300 focus:border-solid focus:border-brand-500 outline-none" value="${escapeHtml(spot.name)}" title="Cliquez pour renommer">`
     : `<div class="font-bold text-slate-800 leading-tight">${r.commune || "Point sélectionné"}</div>`;
+  // Aperçu (P2) : espèces favorables (level « good ») → badge + pastilles ; repli du détail sur mobile.
+  const favs = r.mushrooms.filter((m) => m.level === "good" && m.selected !== false);
+  const chipList = (favs.length ? favs : top).slice(0, 4);
+  const chips = chipList.length
+    ? chipList.map((m) => {
+        const [, fg, bg] = LEVEL[m.level];
+        return `<span class="inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded-full ${fg} ${bg}">${m.nom}</span>`;
+      }).join("")
+    : '<span class="text-xs text-slate-400">Aucune espèce en saison ici.</span>';
+  const peekBadge = favs.length
+    ? `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full text-green-700 bg-green-100">${favs.length} favorable${favs.length > 1 ? "s" : ""}</span>`
+    : "";
   const card = document.getElementById("point-card");
+  card.classList.remove("expanded");
   card.innerHTML = `
+    <div class="pc-handle"></div>
     <div class="flex items-start justify-between gap-2">
-      ${titleHtml}
+      <div class="min-w-0">${titleHtml}<div class="mt-1">${peekBadge}</div></div>
       <button class="pc-close text-slate-400 hover:text-slate-700 -mt-1 -mr-1 text-lg leading-none shrink-0">×</button>
     </div>
-    <div class="text-[11px] text-slate-400 mb-2">${r.lat.toFixed(3)}°N · ${r.lon.toFixed(3)}°E · dalle 1 km</div>
-    <div class="grid grid-cols-2 gap-2 mb-2">
-      ${miniStat(valFmt(r.t, "°C"), "température air", factorLevel("temp", r.t))}
-      ${miniStat(valFmt(r.rr, "mm"), "pluie / jour")}
-      ${miniStat(pct(r.soil_moisture), "humidité du sol", factorLevel("soil_moisture", r.soil_moisture))}
-      ${miniStat(valFmt(r.soil_temp, "°C"), "T° du sol", factorLevel("temp", r.soil_temp))}
-    </div>
-    <div class="text-xs mb-1.5 pc-forest">${forestLine}</div>
-    ${soilLine ? `<div class="text-xs mb-1.5 text-slate-600">${soilLine}</div>` : ""}
-    ${terrainLine ? `<div class="text-xs mb-2 text-slate-600">${terrainLine}</div>` : ""}
-    <div class="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-1">Probables ici</div>
-    <div class="space-y-1 mb-1">
-      ${top.length ? top.map((m) => {
-        const [, fg, bg] = LEVEL[m.level];
-        return `<div class="flex items-center gap-2 text-sm">
-          <span class="flex-1 truncate">${m.nom} ${hostDot(m.host)}</span>
-          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${fg} ${bg}">${m.label}${m.score_pct != null ? " · " + m.score_pct + "%" : ""}</span></div>`;
-      }).join("") : '<div class="text-xs text-slate-400">Aucune espèce en saison.</div>'}
-    </div>
-    <button class="pc-guide mt-2 w-full py-1.5 rounded-lg bg-brand-50 text-brand-700 text-sm font-semibold hover:bg-brand-100">Voir le guide complet</button>
-    ${spot
-      ? `<button class="pc-delete mt-1.5 w-full py-1.5 rounded-lg border border-red-200 text-red-600 text-sm font-semibold hover:bg-red-50">🗑 Supprimer ce spot</button>`
-      : `<button class="pc-save mt-1.5 w-full py-1.5 rounded-lg border border-brand-200 text-brand-700 text-sm font-semibold hover:bg-brand-50">📍 Enregistrer ce spot</button>`}`;
+    <div class="mt-1.5 flex flex-wrap gap-1.5">${chips}</div>
+    <button class="pc-expand mt-2 w-full py-1.5 rounded-lg bg-slate-50 text-slate-600 text-sm font-semibold hover:bg-slate-100">Voir le détail ▾</button>
+    <div class="pc-detail mt-2">
+      <div class="text-[11px] text-slate-400 mb-2">${r.lat.toFixed(3)}°N · ${r.lon.toFixed(3)}°E · dalle 1 km</div>
+      <div class="grid grid-cols-2 gap-2 mb-2">
+        ${miniStat(valFmt(r.t, "°C"), "température air", factorLevel("temp", r.t))}
+        ${miniStat(valFmt(r.rr, "mm"), "pluie / jour")}
+        ${miniStat(pct(r.soil_moisture), "humidité du sol", factorLevel("soil_moisture", r.soil_moisture))}
+        ${miniStat(valFmt(r.soil_temp, "°C"), "T° du sol", factorLevel("temp", r.soil_temp))}
+      </div>
+      <div class="text-xs mb-1.5 pc-forest">${forestLine}</div>
+      ${soilLine ? `<div class="text-xs mb-1.5 text-slate-600">${soilLine}</div>` : ""}
+      ${terrainLine ? `<div class="text-xs mb-2 text-slate-600">${terrainLine}</div>` : ""}
+      <div class="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-1">Probables ici</div>
+      <div class="space-y-1 mb-1">
+        ${top.length ? top.map((m) => {
+          const [, fg, bg] = LEVEL[m.level];
+          return `<div class="flex items-center gap-2 text-sm">
+            <span class="flex-1 truncate">${m.nom} ${hostDot(m.host)}</span>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${fg} ${bg}">${m.label}${m.score_pct != null ? " · " + m.score_pct + "%" : ""}</span></div>`;
+        }).join("") : '<div class="text-xs text-slate-400">Aucune espèce en saison.</div>'}
+      </div>
+      <button class="pc-guide mt-2 w-full py-1.5 rounded-lg bg-brand-50 text-brand-700 text-sm font-semibold hover:bg-brand-100">Voir le guide complet</button>
+      ${spot
+        ? `<button class="pc-delete mt-1.5 w-full py-1.5 rounded-lg border border-red-200 text-red-600 text-sm font-semibold hover:bg-red-50">🗑 Supprimer ce spot</button>`
+        : `<button class="pc-save mt-1.5 w-full py-1.5 rounded-lg border border-brand-200 text-brand-700 text-sm font-semibold hover:bg-brand-50">📍 Enregistrer ce spot</button>`}
+    </div>`;
   card.classList.remove("hidden");
   positionPointCard();
+  const expandBtn = card.querySelector(".pc-expand");
+  if (expandBtn) expandBtn.onclick = () => {
+    const exp = card.classList.toggle("expanded");
+    expandBtn.textContent = exp ? "Réduire ▴" : "Voir le détail ▾";
+  };
   card.querySelector(".pc-close").onclick = () => hidePointCard();
   card.querySelector(".pc-guide").onclick = () => setTab("guide");
   if (spot) {
@@ -916,6 +939,8 @@ function showPointCard(lat, lon, r) {
 function positionPointCard() {
   const card = document.getElementById("point-card");
   if (!state.cardLatLng || card.classList.contains("hidden")) return;
+  // Mobile : bottom-sheet ancré en bas (CSS) → pas de positionnement au pixel.
+  if (window.matchMedia("(max-width: 767px)").matches) { card.style.left = ""; card.style.top = ""; return; }
   const p = state.map.latLngToContainerPoint(state.cardLatLng);
   const cont = state.map.getContainer();
   const cw = card.offsetWidth || 256, ch = card.offsetHeight || 220;

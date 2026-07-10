@@ -3,6 +3,19 @@ html,body{height:100%;margin:0;font-family:'Inter',system-ui,sans-serif;backgrou
 /* Positionnement garanti de la carte d'info (indépendant de Tailwind) */
 #view-carte{position:relative}
 #point-card{position:absolute;z-index:800}
+/* Fiche au clic — desktop : détail toujours visible, poignée/toggle masqués */
+#point-card .pc-handle,#point-card .pc-expand{display:none}
+#point-card .pc-detail{display:block}
+/* Mobile (<768) : la fiche devient un bottom-sheet ancré en bas ; aperçu P2 + détail repliable */
+@media (max-width:767px){
+  #point-card{position:fixed!important;left:0!important;right:0!important;bottom:0!important;top:auto!important;
+    width:100%!important;max-width:100%!important;border-radius:18px 18px 0 0;max-height:80vh;overflow-y:auto;
+    z-index:1200;box-shadow:0 -8px 28px rgba(15,23,42,.18)}
+  #point-card .pc-handle{display:block;width:38px;height:4px;background:#cbd5e1;border-radius:4px;margin:0 auto .5rem}
+  #point-card .pc-expand{display:block}
+  #point-card .pc-detail{display:none}
+  #point-card.expanded .pc-detail{display:block}
+}
 .leaflet-container{font-family:'Inter',sans-serif}
 .leaflet-popup-content-wrapper{border-radius:14px;box-shadow:0 10px 30px rgba(15,23,42,.18);border:1px solid #e2e8f0}
 .leaflet-popup-content{margin:.7rem .9rem}
