@@ -257,6 +257,8 @@ async function startApp() {
   document.getElementById("app-screen").classList.remove("hidden");
   document.getElementById("paywall-screen")?.classList.add("hidden");
   document.getElementById("nav-user").textContent = state.name || "";
+  const profilUser = document.getElementById("profil-user");
+  if (profilUser) profilUser.textContent = state.name ? `Connecté : ${state.name}` : "";
   document.getElementById("manage-sub")?.classList.remove("hidden");
 
   const d = await API.get("/api/dates");
@@ -572,8 +574,11 @@ function wireControls() {
   document.getElementById("species-all").addEventListener("click", () => setAllSpeciesChecks(true));
   document.getElementById("species-none").addEventListener("click", () => setAllSpeciesChecks(false));
 
-  document.querySelectorAll(".tab-btn").forEach((b) =>
+  document.querySelectorAll(".tab-btn, .tabbar-btn").forEach((b) =>
     b.addEventListener("click", () => setTab(b.dataset.tab)));
+  // Onglet Profil (mobile) : chaque bouton relaie vers l'action correspondante du top-nav.
+  document.querySelectorAll(".profil-act").forEach((b) =>
+    b.addEventListener("click", () => document.getElementById(b.dataset.target)?.click()));
 
   // Menu sandwich (mobile) : ouvre/ferme le tiroir de navigation
   const navToggle = document.getElementById("nav-toggle");
@@ -730,10 +735,16 @@ function setTab(tab) {
     b.classList.toggle("text-white", active);
     b.classList.toggle("text-slate-600", !active);
   });
+  document.querySelectorAll(".tabbar-btn").forEach((b) => {
+    const active = b.dataset.tab === tab;
+    b.classList.toggle("text-brand-500", active);
+    b.classList.toggle("text-slate-400", !active);
+  });
   state.tab = tab;
   document.getElementById("view-carte").classList.toggle("hidden", tab !== "carte");
   document.getElementById("view-guide").classList.toggle("hidden", tab !== "guide");
   document.getElementById("view-spots").classList.toggle("hidden", tab !== "spots");
+  document.getElementById("view-profil").classList.toggle("hidden", tab !== "profil");
   applySidebar(true);   // barre latérale : visible seulement sur Carte, et selon repli
   if (tab === "guide") renderGuide();
   if (tab === "spots") renderSpots();
