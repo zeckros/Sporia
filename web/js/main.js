@@ -267,6 +267,12 @@ async function startApp() {
   initMap();
   await loadPreferences();
   wireControls();
+  // Hauteur réelle de la barre d'onglets basse → le bottom-sheet se cale juste au-dessus.
+  const syncTabbarH = () =>
+    document.documentElement.style.setProperty(
+      "--tabbar-h", (document.getElementById("tabbar")?.offsetHeight || 0) + "px");
+  syncTabbarH();
+  window.addEventListener("resize", syncTabbarH);
   await setActiveLayer("radar");   // « Radar à champignons » par défaut
   setTab("carte");
   // contour France (léger)
