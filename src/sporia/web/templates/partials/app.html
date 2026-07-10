@@ -151,8 +151,13 @@
             <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="temp">Température</button>
             <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="precip">Pluie</button>
             <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="forest">Forêt</button>
+            <!-- Secondaires : en ligne sur desktop (place dispo), masquées sur mobile (menu « ＋ Plus ») -->
+            <button class="layer-chip hidden md:flex items-center shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="soil">Sol</button>
+            <button class="layer-chip hidden md:flex items-center shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="soilmoist">Humidité</button>
+            <button class="layer-chip hidden md:flex items-center shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="altitude">Altitude</button>
+            <button class="layer-chip hidden md:flex items-center shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="aspect">Exposition</button>
           </div>
-          <div class="relative shrink-0">
+          <div class="relative shrink-0 md:hidden">
             <button id="more-layers-btn" class="px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap">＋ Plus</button>
             <div id="more-layers" class="hidden absolute right-0 mt-1.5 w-44 bg-white rounded-xl shadow-card border border-slate-200 p-1.5 space-y-1 z-[870]">
               <button class="layer-chip more-item w-full text-left px-3 py-1.5 rounded-lg bg-white text-slate-600 text-xs font-semibold hover:bg-slate-50" data-layer="soil">Type de sol</button>
