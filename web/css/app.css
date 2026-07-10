@@ -36,6 +36,8 @@ html,body{height:100%;margin:0;font-family:'Inter',system-ui,sans-serif;backgrou
 /* Bandeau de puces de calques : scroll horizontal sans barre visible */
 .no-scrollbar{scrollbar-width:none;-ms-overflow-style:none}
 .no-scrollbar::-webkit-scrollbar{display:none}
+/* Dropdown de résultats de recherche : masqué quand vide (pas de boîte fantôme) */
+#city-results:empty{display:none}
 .seg-btn[aria-selected="true"]{background:#c2620e;color:#fff}
 /* Menu sandwich (mobile) : le contenu de la navbar passe en tiroir déroulant */
 @media (max-width:767px){

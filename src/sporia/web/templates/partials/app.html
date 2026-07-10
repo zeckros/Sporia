@@ -61,19 +61,7 @@
       <!-- Sidebar : tiroir ABSOLU par-dessus la carte (glissement fluide, pas de reflow) -->
       <aside id="sidebar" class="absolute inset-y-0 left-0 z-[900] w-96 max-w-[85vw] transition-transform duration-300 will-change-transform">
         <div class="h-full overflow-y-auto nice-scroll bg-white border-r border-slate-200 shadow-card p-4 space-y-5">
-        <!-- Recherche -->
-        <div>
-          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Rechercher</label>
-          <div class="flex gap-2">
-            <button id="geolocate-btn" type="button" title="Me localiser"
-                    class="shrink-0 px-2.5 rounded-xl border border-slate-200 text-brand-600 hover:bg-brand-50 hover:border-brand-200 transition flex items-center justify-center">
-              <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a1 1 0 011 1v1.06A6 6 0 0115.94 9H17a1 1 0 110 2h-1.06A6 6 0 0111 15.94V17a1 1 0 11-2 0v-1.06A6 6 0 014.06 11H3a1 1 0 110-2h1.06A6 6 0 019 4.06V3a1 1 0 011-1zm0 4a4 4 0 100 8 4 4 0 000-8zm0 2.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3z"/></svg>
-            </button>
-            <input id="city-input" type="text" placeholder="Ville ou code postal…"
-                   class="flex-1 min-w-0 px-3 py-2 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 outline-none text-sm" />
-          </div>
-          <div id="city-results" class="mt-1 space-y-1"></div>
-        </div>
+        <!-- (Recherche déplacée dans la pill flottante en haut de la carte) -->
 
         <!-- Titre du calque actif — TOUJOURS visible, en évidence (« en gros ») -->
         <div id="active-layer-name" class="text-lg font-black text-brand-700 leading-snug"></div>
@@ -144,8 +132,18 @@
       <!-- Vue Carte -->
       <main id="view-carte" class="flex-1 relative min-h-0">
         <div id="map"></div>
+        <!-- Recherche + géoloc : pill flottante en haut de la carte -->
+        <div id="search-pill" class="absolute top-3 left-3 right-14 z-[865]">
+          <div class="flex items-center gap-1 bg-white rounded-full shadow-card border border-slate-200 pl-1 pr-2 py-1">
+            <button id="geolocate-btn" type="button" title="Me localiser" class="shrink-0 w-8 h-8 rounded-full text-brand-600 hover:bg-brand-50 flex items-center justify-center">
+              <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a1 1 0 011 1v1.06A6 6 0 0115.94 9H17a1 1 0 110 2h-1.06A6 6 0 0111 15.94V17a1 1 0 11-2 0v-1.06A6 6 0 014.06 11H3a1 1 0 110-2h1.06A6 6 0 019 4.06V3a1 1 0 011-1zm0 4a4 4 0 100 8 4 4 0 000-8zm0 2.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3z"/></svg>
+            </button>
+            <input id="city-input" type="text" placeholder="Rechercher une commune…" class="flex-1 min-w-0 bg-transparent outline-none text-sm" />
+          </div>
+          <div id="city-results" class="mt-1 space-y-1 bg-white rounded-xl shadow-card border border-slate-200 p-1"></div>
+        </div>
         <!-- Direction A : puces principales + « Plus » pour les calques secondaires -->
-        <div class="absolute top-3 left-3 right-14 z-[860] flex gap-1.5 items-start">
+        <div class="absolute top-16 left-3 right-14 z-[860] flex gap-1.5 items-start">
           <div id="layer-chips" class="flex gap-1.5 overflow-x-auto no-scrollbar min-w-0">
             <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-brand-500 text-white shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="radar">🍄 Radar</button>
             <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="temp">Température</button>
