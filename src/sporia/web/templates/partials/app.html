@@ -76,11 +76,7 @@
             <div id="active-legend" class="rounded-xl border border-slate-200 bg-white shadow-soft p-3 text-xs text-slate-500"></div>
           </div>
 
-          <!-- Champignons affichés sur le radar (sous-ensemble de « Mes champignons ») — radar uniquement -->
-          <div id="radar-species" class="hidden">
-            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Radar à champignons</label>
-            <div id="radar-species-list" class="space-y-0.5"></div>
-          </div>
+          <!-- (Espèces du radar déplacées dans un popover sur la carte) -->
         </div>
 
         <!-- Bouton « Fou des champignons » : sous la zone légende à hauteur fixe → position
@@ -167,6 +163,14 @@
         </div>
         <!-- Légende en étiquette (bas-gauche de la carte) -->
         <div id="map-legend" class="hidden absolute left-3 bottom-3 z-[850] max-w-[75vw] bg-white/95 backdrop-blur rounded-xl shadow-card border border-slate-200 px-3 py-2 text-xs text-slate-500"></div>
+        <!-- Espèces du radar : bouton + popover (visible quand le calque Radar est actif) -->
+        <div id="radar-species" class="hidden absolute top-28 left-3 z-[859]">
+          <button id="radar-species-btn" class="flex items-center gap-1 px-3 py-1.5 rounded-full bg-white shadow-soft border border-slate-200 text-xs font-semibold text-slate-600">🍄 Espèces ▾</button>
+          <div id="radar-species-pop" class="hidden mt-1.5 w-56 max-h-64 overflow-y-auto nice-scroll bg-white rounded-xl shadow-card border border-slate-200 p-2">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 px-1">Afficher sur le radar</div>
+            <div id="radar-species-list" class="space-y-0.5"></div>
+          </div>
+        </div>
         <!-- Carte d'info, positionnée au pixel du point cliqué (suit la carte) -->
         <div id="point-card" class="hidden absolute z-[800] w-64 bg-white rounded-2xl shadow-card border border-slate-200 p-3.5 fade-in"></div>
       </main>

@@ -575,6 +575,14 @@ function wireControls() {
     if (morePop && !morePop.classList.contains("hidden") && !morePop.contains(e.target) && e.target !== moreBtn)
       morePop.classList.add("hidden");
   });
+  // Espèces du radar : popover depuis le bouton « 🍄 Espèces »
+  const rsBtn = document.getElementById("radar-species-btn");
+  const rsPop = document.getElementById("radar-species-pop");
+  rsBtn?.addEventListener("click", (e) => { e.stopPropagation(); rsPop.classList.toggle("hidden"); });
+  document.addEventListener("click", (e) => {
+    if (rsPop && !rsPop.classList.contains("hidden") && !rsPop.contains(e.target) && !rsBtn.contains(e.target))
+      rsPop.classList.add("hidden");
+  });
 
   // Période → recharge le calque météo actif
   document.querySelectorAll(".period-btn").forEach((b) =>
