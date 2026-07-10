@@ -144,6 +144,11 @@
       <!-- Vue Carte -->
       <main id="view-carte" class="flex-1 relative min-h-0">
         <div id="map"></div>
+        <!-- Bouton « Calques » (mobile) : ouvre le panneau calques/légende en feuille basse -->
+        <button id="layers-fab" class="md:hidden absolute top-3 right-3 z-[860] flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white shadow-card border border-slate-200 text-sm font-semibold text-brand-700">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 8l10 5 10-5-10-5Z"/><path d="M2 16l10 5 10-5M2 12l10 5 10-5"/></svg>
+          Calques
+        </button>
         <!-- Carte d'info, positionnée au pixel du point cliqué (suit la carte) -->
         <div id="point-card" class="hidden absolute z-[800] w-64 bg-white rounded-2xl shadow-card border border-slate-200 p-3.5 fade-in"></div>
       </main>

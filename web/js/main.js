@@ -585,6 +585,9 @@ function wireControls() {
   // Onglet Profil (mobile) : chaque bouton relaie vers l'action correspondante du top-nav.
   document.querySelectorAll(".profil-act").forEach((b) =>
     b.addEventListener("click", () => document.getElementById(b.dataset.target)?.click()));
+  // Bouton « Calques » (mobile) : ouvre/ferme le volet calques/légende en feuille basse.
+  document.getElementById("layers-fab")?.addEventListener("click", () =>
+    document.getElementById("sidebar").classList.toggle("sheet-open"));
 
   // Menu sandwich (mobile) : ouvre/ferme le tiroir de navigation
   const navToggle = document.getElementById("nav-toggle");
@@ -762,6 +765,7 @@ function applySidebar(resize) {
   const onMap = state.tab === "carte";
   const sb = document.getElementById("sidebar");
   sb.classList.toggle("hidden", !onMap);                          // pas de barre hors Carte
+  if (!onMap) sb.classList.remove("sheet-open");                  // referme la feuille Calques (mobile)
   sb.classList.toggle("-translate-x-full", state.sidebarCollapsed); // repli = glissement CSS
   const icon = document.getElementById("sidebar-toggle-icon");
   if (icon) icon.textContent = state.sidebarCollapsed ? "»" : "«";
