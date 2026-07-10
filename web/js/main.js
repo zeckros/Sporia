@@ -3,10 +3,25 @@
 
 import { API } from "./api.js";
 import {
-  state, MONTHS, CMAP, LEVEL, FACTOR_CLR, LAYER_DEFS, LAYER_KEYS, LAYER_NAMES,
+  state, MONTHS, CMAP, LEVEL, FACTOR_CLR, LAYER_NAMES,
   CONF_BADGE, FOREST_TFV,
 } from "./state.js";
 import { escapeHtml, valFmt, fmtNum, pct, monthNum } from "./util.js";
+
+/* Calques exclusifs (un seul affiché à la fois). def.refresh (re)construit
+   state.layers[key] ; def.weather = dépend de la période. Défini ici (et non dans
+   state.js) pour éviter un import circulaire avec les fonctions refresh*. */
+const LAYER_DEFS = {
+  radar:     { refresh: () => refreshRadar(), weather: true },  // défaut : habitat × pousse du jour
+  temp:      { refresh: () => refreshWeatherLayer("T"),  weather: true },
+  precip:    { refresh: () => refreshWeatherLayer("RR"), weather: true },
+  forest:    { refresh: null },                          // WMS construit dans initMap
+  soil:      { refresh: () => refreshSoil() },
+  soilmoist: { refresh: () => refreshSoilMoisture() },
+  altitude:  { refresh: () => refreshAltitude() },
+  aspect:    { refresh: () => refreshAspect() },
+};
+const LAYER_KEYS = Object.keys(LAYER_DEFS);
 
 /* ---------- Auth ---------- */
 async function boot() {

@@ -1,8 +1,3 @@
-// LAYER_DEFS.refresh closures call these — defined in main.js (not otherwise moved).
-// This creates a circular import (main.js <-> state.js) but is safe: the closures only
-// look up these bindings when invoked (post-boot), by which time both modules are evaluated.
-import { refreshRadar, refreshWeatherLayer, refreshSoil, refreshSoilMoisture, refreshAltitude, refreshAspect } from "./main.js";
-
 export const MONTHS = ["J","F","M","A","M","J","J","A","S","O","N","D"];
 export const CMAP = {
   T:  ["#313695","#74add1","#fee090","#f46d43","#a50026"],   // RdYlBu_r
@@ -38,20 +33,6 @@ export const FACTOR_CLR = {
   bad:  "bg-red-50 border-red-200 text-red-800",
   off:  "bg-slate-50 border-slate-200 text-slate-800",
 };
-
-/* ---------- Calques exclusifs (un seul affiché à la fois) ---------- */
-// def.refresh (re)construit state.layers[key] ; def.weather = dépend de la période.
-export const LAYER_DEFS = {
-  radar:     { refresh: () => refreshRadar(), weather: true },  // défaut : habitat × pousse du jour
-  temp:      { refresh: () => refreshWeatherLayer("T"),  weather: true },
-  precip:    { refresh: () => refreshWeatherLayer("RR"), weather: true },
-  forest:    { refresh: null },                          // WMS construit dans initMap
-  soil:      { refresh: () => refreshSoil() },
-  soilmoist: { refresh: () => refreshSoilMoisture() },
-  altitude:  { refresh: () => refreshAltitude() },
-  aspect:    { refresh: () => refreshAspect() },
-};
-export const LAYER_KEYS = Object.keys(LAYER_DEFS);
 
 // Noms lisibles des calques (pour le titre affiché quand le volet est replié).
 export const LAYER_NAMES = {
