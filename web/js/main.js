@@ -1,64 +1,12 @@
 /* Sporia — frontend (Leaflet + Tailwind). Parle à l'API FastAPI (server.py). */
 "use strict";
 
-const API = {
-  async get(url) {
-    const r = await fetch(url, { credentials: "include" });
-    if (r.status === 401) throw { unauth: true };
-    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
-    return r.json();
-  },
-  async post(url, body) {
-    const r = await fetch(url, {
-      method: "POST", credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body || {}),
-    });
-    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
-    return r.json();
-  },
-  async del(url) {
-    const r = await fetch(url, { method: "DELETE", credentials: "include" });
-    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
-    return r.json();
-  },
-  async patch(url, body) {
-    const r = await fetch(url, {
-      method: "PATCH", credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body || {}),
-    });
-    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
-    return r.json();
-  },
-};
-
-const MONTHS = ["J","F","M","A","M","J","J","A","S","O","N","D"];
-const CMAP = {
-  T:  ["#313695","#74add1","#fee090","#f46d43","#a50026"],   // RdYlBu_r
-  RR: ["#ffffcc","#a1dab4","#41b6c4","#2c7fb8","#253494"],   // YlGnBu
-  fav:["#ffffe5","#d9f0a3","#78c679","#238443","#004529"],   // YlGn
-  sm: ["#8c510a","#d8b365","#f6e8c3","#c7eae5","#5ab4ac","#01665e"], // BrBG (sec→humide)
-  alt:["#3a7d3a","#a6cf6a","#f1e0a0","#b08040","#8b5a2b","#ffffff"], // hypsométrique
-  fruit:["#ffffb2","#fecc5c","#fd8d3c","#f03b20","#bd0026"],         // YlOrRd (indice de pousse)
-};
-const LEVEL = {
-  good: ["Favorable", "text-green-700", "bg-green-100"],
-  mid:  ["Conditions partielles", "text-amber-700", "bg-amber-100"],
-  bad:  ["Peu probable", "text-red-700", "bg-red-100"],
-  off:  ["Hors saison", "text-slate-500", "bg-slate-100"],
-};
-
-const state = {
-  dates: [], period: "jour", selectedDates: [],
-  map: null, layers: {}, lastPoint: null, name: null,
-  species: null, allSpecies: [], godmode: false, activeLayer: "radar", legendData: {}, legendMaxH: 0,
-  spots: [], spotLayer: null, lastSpot: null,
-  radarSpecies: null,   // sous-ensemble actif sur le calque radar (null = toute la pré-sélection)
-  tab: "carte",
-  // replié par défaut sur petit écran (téléphone) pour laisser la carte en plein
-  sidebarCollapsed: !!(window.matchMedia && window.matchMedia("(max-width: 767px)").matches),
-};
+import { API } from "./api.js";
+import {
+  state, MONTHS, CMAP, LEVEL, FACTOR_CLR, LAYER_DEFS, LAYER_KEYS, LAYER_NAMES,
+  CONF_BADGE, FOREST_TFV,
+} from "./state.js";
+import { escapeHtml, valFmt, fmtNum, pct, monthNum } from "./util.js";
 
 /* ---------- Auth ---------- */
 async function boot() {
@@ -362,7 +310,7 @@ function _setOverlay(key, res, opacity) {
 }
 
 /* Calques météo séparés : 'T' (température moyenne) et 'RR' (précipitations). */
-async function refreshWeatherLayer(varName) {
+export async function refreshWeatherLayer(varName) {
   computeSelectedDates();
   if (!state.selectedDates.length) return;
   const key = varName === "RR" ? "precip" : "temp";
@@ -381,7 +329,7 @@ function radarActiveSpecies() {
 
 // Radar à champignons : calque de TUILES (habitat × pousse du jour, clippé au contour
 // forêt exact côté serveur). Sur les espèces cochées du calque (parmi « Mes champignons »).
-async function refreshRadar() {
+export async function refreshRadar() {
   const active = radarActiveSpecies();
   if (state.layers.radar) { state.map.removeLayer(state.layers.radar); state.layers.radar = null; }
   // Aucune espèce cochée (alors qu'une pré-sélection existe) → rien à afficher.
@@ -410,7 +358,7 @@ async function refreshRadar() {
   if (state.activeLayer === "radar") updateLegend();
 }
 
-async function refreshSoil() {
+export async function refreshSoil() {
   try {
     const res = await API.get("/api/soil");
     _setOverlay("soil", res, 0.8);
@@ -418,21 +366,21 @@ async function refreshSoil() {
   } catch (e) { console.warn("soil", e); }
 }
 
-async function refreshSoilMoisture() {
+export async function refreshSoilMoisture() {
   try {
     const res = await API.get(`/api/soil-moisture?date=${state.dates[state.dates.length - 1] || ""}`);
     _setOverlay("soilmoist", res, 0.78);
   } catch (e) { console.warn("soilmoist", e); }
 }
 
-async function refreshAltitude() {
+export async function refreshAltitude() {
   try {
     const res = await API.get("/api/altitude");
     _setOverlay("altitude", res, 0.7);
   } catch (e) { console.warn("altitude", e); }
 }
 
-async function refreshAspect() {
+export async function refreshAspect() {
   try {
     const res = await API.get("/api/aspect");
     _setOverlay("aspect", res, 0.75);
@@ -440,43 +388,6 @@ async function refreshAspect() {
 }
 
 /* ---------- Légende (calque actif) ---------- */
-// BD Forêt® V2 (IGN) — 32 types de formation végétale, couleurs exactes du calque
-// (échantillonnées sur la légende officielle IGN). [couleur, libellé court, libellé complet].
-const FOREST_TFV = [
-  ["#e5c45d", "Sans couvert arboré", "Forêt fermée sans couvert arboré"],
-  ["#008c4d", "Feuillus en îlots", "Forêt fermée de feuillus purs en îlots"],
-  ["#004d2e", "Chênes décidus", "Forêt fermée de chênes décidus purs"],
-  ["#668040", "Chênes sempervirents", "Forêt fermée de chênes sempervirents purs"],
-  ["#00ff80", "Hêtre", "Forêt fermée de hêtre pur"],
-  ["#40ff1c", "Châtaignier", "Forêt fermée de châtaignier pur"],
-  ["#915633", "Robinier", "Forêt fermée de robinier pur"],
-  ["#afca59", "Autre feuillu", "Forêt fermée d'un autre feuillu pur"],
-  ["#00d92f", "Mélange feuillus", "Forêt fermée à mélange de feuillus"],
-  ["#8080ff", "Conifères en îlots", "Forêt fermée de conifères purs en îlots"],
-  ["#bf26ff", "Pin maritime", "Forêt fermée de pin maritime pur"],
-  ["#9926ff", "Pin sylvestre", "Forêt fermée de pin sylvestre pur"],
-  ["#4d33ff", "Pin laricio / noir", "Forêt fermée de pin laricio ou pin noir pur"],
-  ["#ff1aff", "Pin d'Alep", "Forêt fermée de pin d'Alep pur"],
-  ["#734de6", "Pin à crochets / cembro", "Forêt fermée de pin à crochets ou pin cembro pur"],
-  ["#a666ff", "Autre pin", "Forêt fermée d'un autre pin pur"],
-  ["#d999ff", "Mélange de pins", "Forêt fermée à mélange de pins purs"],
-  ["#1ae6e6", "Sapin / épicéa", "Forêt fermée de sapin ou épicéa"],
-  ["#4d80ff", "Mélèze", "Forêt fermée de mélèze pur"],
-  ["#3399ff", "Douglas", "Forêt fermée de douglas pur"],
-  ["#00929f", "Mélange autres conifères", "Forêt fermée à mélange d'autres conifères"],
-  ["#59ffff", "Autre conifère", "Forêt fermée d'un autre conifère pur autre que pin"],
-  ["#404dff", "Mélange conifères", "Forêt fermée à mélange de conifères"],
-  ["#ff6633", "Feuillus + conifères", "Forêt fermée à mélange de feuillus prépondérants et conifères"],
-  ["#ff4033", "Conifères + feuillus", "Forêt fermée à mélange de conifères prépondérants et feuillus"],
-  ["#b3b3b3", "Ouverte : sans couvert", "Forêt ouverte sans couvert arboré"],
-  ["#ccffbf", "Ouverte : feuillus", "Forêt ouverte de feuillus purs"],
-  ["#99b3cc", "Ouverte : conifères", "Forêt ouverte de conifères purs"],
-  ["#ffd138", "Ouverte : mixte", "Forêt ouverte à mélange de feuillus et conifères"],
-  ["#ffff00", "Peupleraie", "Peupleraie"],
-  ["#ffe6bf", "Lande", "Lande"],
-  ["#fff9a5", "Formation herbacée", "Formation herbacée"],
-];
-
 function _grad(colors) {
   return `<div class="h-2.5 rounded-full mb-1" style="background:linear-gradient(to right, ${colors.join(",")})"></div>`;
 }
@@ -580,12 +491,6 @@ function updateLegend() {
   }
 }
 
-// Noms lisibles des calques (pour le titre affiché quand le volet est replié).
-const LAYER_NAMES = {
-  radar: "🍄 Radar à champignons", temp: "Température moyenne", precip: "Précipitations",
-  forest: "Forêts — BD Forêt® IGN", soil: "Type de sol — SoilGrids®",
-  soilmoist: "Humidité du sol", altitude: "Altitude / relief", aspect: "Exposition (versants)",
-};
 function updateActiveLayerName() {
   const el = document.getElementById("active-layer-name");
   if (!el) return;
@@ -594,19 +499,6 @@ function updateActiveLayerName() {
 }
 
 /* ---------- Calques exclusifs (un seul affiché à la fois) ---------- */
-// def.refresh (re)construit state.layers[key] ; def.weather = dépend de la période.
-const LAYER_DEFS = {
-  radar:     { refresh: () => refreshRadar(), weather: true },  // défaut : habitat × pousse du jour
-  temp:      { refresh: () => refreshWeatherLayer("T"),  weather: true },
-  precip:    { refresh: () => refreshWeatherLayer("RR"), weather: true },
-  forest:    { refresh: null },                          // WMS construit dans initMap
-  soil:      { refresh: () => refreshSoil() },
-  soilmoist: { refresh: () => refreshSoilMoisture() },
-  altitude:  { refresh: () => refreshAltitude() },
-  aspect:    { refresh: () => refreshAspect() },
-};
-const LAYER_KEYS = Object.keys(LAYER_DEFS);
-
 async function setActiveLayer(key) {
   state.activeLayer = key;
   // Période : utile seulement pour les calques météo (température / précipitations) → masquée sinon
@@ -747,11 +639,6 @@ async function loadPreferences() {
   } catch (e) { state.allSpecies = []; state.species = null; }
 }
 
-const CONF_BADGE = {
-  "élevée": "bg-green-100 text-green-700",
-  "bonne": "bg-amber-100 text-amber-700",
-  "modérée": "bg-slate-100 text-slate-500",
-};
 function confidenceBadge(conf) {
   const cls = CONF_BADGE[conf] || CONF_BADGE["modérée"];
   return `<span class="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${cls}" title="Fiabilité de la carte d'habitat">${conf || "modérée"}</span>`;
@@ -872,18 +759,6 @@ async function loadPoint(lat, lon, spot) {
   } catch (e) { console.warn("point", e); }
 }
 
-function valFmt(v, u) { return v === null || v === undefined ? "n.d." : `${v.toFixed(1)} ${u}`; }
-function fmtNum(v) { return v === null || v === undefined ? "—" : v.toFixed(1); }
-function pct(v) { return v === null || v === undefined ? "n.d." : `${Math.round(v * 100)} %`; }
-
-// Coloration des facteurs météo de la fiche : vert = favorable, orange = limite,
-// rouge = défavorable (atténue). Seuils « grand public » (pas par espèce).
-const FACTOR_CLR = {
-  good: "bg-green-50 border-green-200 text-green-800",
-  mid:  "bg-amber-50 border-amber-200 text-amber-800",
-  bad:  "bg-red-50 border-red-200 text-red-800",
-  off:  "bg-slate-50 border-slate-200 text-slate-800",
-};
 function factorLevel(key, v) {
   if (v === null || v === undefined) return key === "days_since_rain" ? "bad" : "off";
   switch (key) {
@@ -1138,15 +1013,7 @@ function chip(big, small, level) {
   return `<div class="${c} rounded-xl px-3 py-2 text-center shadow-soft">
     <div class="font-extrabold">${big}</div><div class="text-[11px] opacity-70">${small}</div></div>`;
 }
-const FR_MONTHS = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
-function monthNum(frName) { const i = FR_MONTHS.indexOf((frName || "").toLowerCase()); return i >= 0 ? i + 1 : 0; }
-
 /* ---------- Spots enregistrés + notifications « propice » ---------- */
-function escapeHtml(s) {
-  return (s || "").replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-}
-
 async function loadSpots() {
   try {
     const res = await API.get("/api/spots");
