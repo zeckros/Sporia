@@ -128,19 +128,20 @@
       <!-- Vue Carte -->
       <main id="view-carte" class="flex-1 relative min-h-0">
         <div id="map"></div>
-        <!-- Recherche + géoloc : pill flottante en haut de la carte -->
-        <div id="search-pill" class="absolute top-3 left-3 right-14 md:right-auto md:w-80 z-[865]">
+        <!-- Recherche + puces empilées : même largeur (= largeur des puces sur desktop) -->
+        <div class="absolute top-3 left-3 right-14 md:right-auto md:w-fit md:max-w-[calc(100%-4.5rem)] z-[865] flex flex-col gap-1.5">
+          <div id="search-pill" class="relative w-full">
           <div class="flex items-center gap-1 bg-white rounded-full shadow-card border border-slate-200 pl-1 pr-2 py-1">
             <button id="geolocate-btn" type="button" title="Me localiser" class="shrink-0 w-8 h-8 rounded-full text-brand-600 hover:bg-brand-50 flex items-center justify-center">
               <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a1 1 0 011 1v1.06A6 6 0 0115.94 9H17a1 1 0 110 2h-1.06A6 6 0 0111 15.94V17a1 1 0 11-2 0v-1.06A6 6 0 014.06 11H3a1 1 0 110-2h1.06A6 6 0 019 4.06V3a1 1 0 011-1zm0 4a4 4 0 100 8 4 4 0 000-8zm0 2.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3z"/></svg>
             </button>
             <input id="city-input" type="text" placeholder="Rechercher une commune…" class="flex-1 min-w-0 bg-transparent outline-none text-sm" />
           </div>
-          <div id="city-results" class="mt-1 space-y-1 bg-white rounded-xl shadow-card border border-slate-200 p-1"></div>
-        </div>
-        <!-- Direction A : puces principales + « Plus » pour les calques secondaires -->
-        <div class="absolute top-16 left-3 right-14 z-[860] flex gap-1.5 items-start">
-          <div id="layer-chips" class="flex gap-1.5 overflow-x-auto no-scrollbar min-w-0">
+          <div id="city-results" class="absolute left-0 right-0 top-full mt-1 space-y-1 bg-white rounded-xl shadow-card border border-slate-200 p-1 z-10"></div>
+          </div>
+          <!-- Direction A : puces principales + « Plus » pour les calques secondaires -->
+          <div class="flex gap-1.5 items-start">
+          <div id="layer-chips" class="flex gap-1.5 overflow-x-auto md:overflow-visible no-scrollbar min-w-0">
             <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-brand-500 text-white shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="radar">🍄 Radar</button>
             <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="temp">Température</button>
             <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="precip">Pluie</button>
@@ -160,6 +161,7 @@
               <button class="layer-chip more-item w-full text-left px-3 py-1.5 rounded-lg bg-white text-slate-600 text-xs font-semibold hover:bg-slate-50" data-layer="aspect">Exposition</button>
             </div>
           </div>
+        </div>
         </div>
         <!-- Légende en étiquette (bas-gauche de la carte) -->
         <div id="map-legend" class="hidden absolute left-3 bottom-3 z-[850] max-w-[75vw] bg-white/95 backdrop-blur rounded-xl shadow-card border border-slate-200 px-3 py-2 text-xs text-slate-500"></div>
