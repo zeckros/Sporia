@@ -501,6 +501,8 @@ function updateLegend() {
   const wrap = document.getElementById("active-legend-wrap");
   document.getElementById("active-legend").innerHTML = html;
   wrap.classList.toggle("hidden", !html);
+  const capt = document.getElementById("map-legend");   // légende en étiquette sur la carte (direction A)
+  if (capt) { capt.innerHTML = html; capt.classList.toggle("hidden", !html); }
   updateRadarSpecies();      // liste des espèces du radar (peuple #radar-species)
   updateActiveLayerName();   // titre du calque (toujours visible)
   // Hauteur de la zone légende = la PLUS GRANDE hauteur de contenu observée (légende +
@@ -524,6 +526,15 @@ function updateActiveLayerName() {
 /* ---------- Calques exclusifs (un seul affiché à la fois) ---------- */
 async function setActiveLayer(key) {
   state.activeLayer = key;
+  // Sync des contrôles : puces (carte) + radios (volet)
+  document.querySelectorAll(".layer-chip").forEach((c) => {
+    const on = c.dataset.layer === key;
+    c.classList.toggle("bg-brand-500", on);
+    c.classList.toggle("text-white", on);
+    c.classList.toggle("bg-white", !on);
+    c.classList.toggle("text-slate-600", !on);
+  });
+  document.querySelectorAll('input[name="layer"]').forEach((r) => { r.checked = (r.value === key); });
   // Période : utile seulement pour les calques météo (température / précipitations) → masquée sinon
   const pb = document.getElementById("period-block");
   if (pb) pb.classList.toggle("hidden", !(key === "temp" || key === "precip"));
@@ -542,6 +553,9 @@ function wireControls() {
   // Switch de calque (radio) : un seul calque à la fois
   document.querySelectorAll('input[name="layer"]').forEach((r) =>
     r.addEventListener("change", () => { if (r.checked) setActiveLayer(r.value); }));
+  // Puces de calques (direction A) : switch rapide depuis la carte
+  document.querySelectorAll(".layer-chip").forEach((c) =>
+    c.addEventListener("click", () => setActiveLayer(c.dataset.layer)));
 
   // Période → recharge le calque météo actif
   document.querySelectorAll(".period-btn").forEach((b) =>
