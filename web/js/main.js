@@ -535,6 +535,15 @@ async function setActiveLayer(key) {
     c.classList.toggle("text-slate-600", !on);
   });
   document.querySelectorAll('input[name="layer"]').forEach((r) => { r.checked = (r.value === key); });
+  // « ＋ Plus » surligné si le calque actif est un secondaire (dans le menu déroulant)
+  const moreB = document.getElementById("more-layers-btn");
+  if (moreB) {
+    const sec = ["soil", "soilmoist", "altitude", "aspect"].includes(key);
+    moreB.classList.toggle("bg-brand-500", sec);
+    moreB.classList.toggle("text-white", sec);
+    moreB.classList.toggle("bg-white", !sec);
+    moreB.classList.toggle("text-slate-600", !sec);
+  }
   // Période : utile seulement pour les calques météo (température / précipitations) → masquée sinon
   const pb = document.getElementById("period-block");
   if (pb) pb.classList.toggle("hidden", !(key === "temp" || key === "precip"));
@@ -556,6 +565,16 @@ function wireControls() {
   // Puces de calques (direction A) : switch rapide depuis la carte
   document.querySelectorAll(".layer-chip").forEach((c) =>
     c.addEventListener("click", () => setActiveLayer(c.dataset.layer)));
+  // « ＋ Plus » : menu des calques secondaires
+  const moreBtn = document.getElementById("more-layers-btn");
+  const morePop = document.getElementById("more-layers");
+  moreBtn?.addEventListener("click", (e) => { e.stopPropagation(); morePop.classList.toggle("hidden"); });
+  document.querySelectorAll(".more-item").forEach((b) =>
+    b.addEventListener("click", () => morePop.classList.add("hidden")));
+  document.addEventListener("click", (e) => {
+    if (morePop && !morePop.classList.contains("hidden") && !morePop.contains(e.target) && e.target !== moreBtn)
+      morePop.classList.add("hidden");
+  });
 
   // Période → recharge le calque météo actif
   document.querySelectorAll(".period-btn").forEach((b) =>
