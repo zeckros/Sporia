@@ -1,5 +1,5 @@
 html,body{height:100%;margin:0;font-family:'Inter',system-ui,sans-serif;background:#f8fafc;color:#0f172a}
-#map{height:100%;width:100%}
+#map{position:absolute;inset:0}
 /* Positionnement garanti de la carte d'info (indépendant de Tailwind) */
 #view-carte{position:relative}
 #point-card{position:absolute;z-index:800}
