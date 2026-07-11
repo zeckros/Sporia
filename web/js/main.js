@@ -570,7 +570,7 @@ async function setActiveLayer(key) {
   // « ＋ Plus » surligné si le calque actif est un secondaire (dans le menu déroulant)
   const moreB = document.getElementById("more-layers-btn");
   if (moreB) {
-    const sec = ["soil", "soilmoist", "altitude", "aspect"].includes(key);
+    const sec = ["forest", "soil", "soilmoist", "altitude", "aspect"].includes(key);
     moreB.classList.toggle("bg-brand-500", sec);
     moreB.classList.toggle("text-white", sec);
     moreB.classList.toggle("bg-white", !sec);
