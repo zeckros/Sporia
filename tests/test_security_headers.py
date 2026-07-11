@@ -12,7 +12,7 @@ def test_core_security_headers_present():
     assert r.headers.get("X-Content-Type-Options") == "nosniff"
     assert r.headers.get("X-Frame-Options") == "SAMEORIGIN"
     assert "Content-Security-Policy" in r.headers
-    assert r.headers.get("Permissions-Policy") == "geolocation=(), camera=(), microphone=()"
+    assert r.headers.get("Permissions-Policy") == "geolocation=(self), camera=(), microphone=()"
 
 
 def test_csp_has_no_external_cdn():

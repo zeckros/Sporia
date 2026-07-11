@@ -26,5 +26,6 @@ async def security_headers(request: Request, call_next):
     resp.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
     resp.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
     resp.headers.setdefault("Content-Security-Policy", CSP)
-    resp.headers.setdefault("Permissions-Policy", "geolocation=(), camera=(), microphone=()")
+    # geolocation=(self) : autorise « Me localiser » (même origine) ; caméra/micro coupés.
+    resp.headers.setdefault("Permissions-Policy", "geolocation=(self), camera=(), microphone=()")
     return resp
