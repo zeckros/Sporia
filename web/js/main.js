@@ -874,13 +874,16 @@ function renderAccessRequests(reqs) {
         <span class="text-[11px] text-slate-400 shrink-0">${date}</span>
       </div>
       <div class="mt-2 text-sm text-slate-600 whitespace-pre-line break-words">${escapeHtml(r.message)}</div>
-      <div class="areq-action mt-3">
+      <div class="areq-action mt-3 flex gap-2">
         <button class="areq-create px-3 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold shadow-card">Créer le compte</button>
+        <button class="areq-reject px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-red-600 hover:border-red-200 text-xs font-bold transition">Refuser</button>
       </div>
     </div>`;
   }).join("");
-  list.querySelectorAll("[data-id]").forEach((card) =>
-    card.querySelector(".areq-create").addEventListener("click", () => createFromRequest(card)));
+  list.querySelectorAll("[data-id]").forEach((card) => {
+    card.querySelector(".areq-create").addEventListener("click", () => createFromRequest(card));
+    card.querySelector(".areq-reject").addEventListener("click", () => rejectRequest(card));
+  });
 }
 
 async function createFromRequest(card) {
@@ -903,6 +906,20 @@ async function createFromRequest(card) {
     });
   } catch (e) {
     box.innerHTML = `<div class="text-xs text-red-600">${escapeHtml(e.message || "Échec de la création.")}</div>`;
+  }
+}
+
+async function rejectRequest(card) {
+  const box = card.querySelector(".areq-action");
+  box.innerHTML = `<span class="text-xs text-slate-400">Suppression…</span>`;
+  try {
+    await API.del(`/api/access-requests/${encodeURIComponent(card.dataset.id)}`);
+    const list = card.parentElement;
+    card.remove();
+    if (!list.querySelector("[data-id]"))
+      list.innerHTML = `<div class="text-sm text-slate-400 text-center py-6">Aucune demande pour le moment.</div>`;
+  } catch (e) {
+    box.innerHTML = `<div class="text-xs text-red-600">${escapeHtml(e.message || "Échec de la suppression.")}</div>`;
   }
 }
 function setAllSpeciesChecks(v) {

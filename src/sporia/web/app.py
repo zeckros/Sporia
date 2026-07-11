@@ -600,6 +600,14 @@ def api_create_account_from_request(
     return {"ok": True, "email": email, "invite_url": invite_url}
 
 
+@app.delete("/api/access-requests/{req_id}")
+def api_delete_access_request(req_id: str, user=Depends(require_admin)):
+    """Refuse/retire une demande d'accès sans créer de compte — RÉSERVÉ ADMIN."""
+    if not access_requests.remove_request(req_id):
+        raise HTTPException(status_code=404, detail="Demande introuvable.")
+    return {"ok": True}
+
+
 # ===== Statique =====
 OVERLAY_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/overlays", StaticFiles(directory=str(OVERLAY_DIR)), name="overlays")
