@@ -6,3 +6,26 @@
   font-display: swap;
   src: url("/static/vendor/inter/InterVariable.woff2") format("woff2");
 }
+
+/* --- Polices DA « Girolle × Cèpe » (self-hostées) --- */
+@font-face {
+  font-family: "Clash Display";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/static/vendor/clash/ClashDisplay-Bold.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Fraunces";
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/static/vendor/fraunces/Fraunces-Italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Space Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/static/vendor/spacemono/SpaceMono-Regular.woff2") format("woff2");
+}
