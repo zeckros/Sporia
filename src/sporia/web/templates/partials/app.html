@@ -64,53 +64,53 @@
         <!-- Recherche + puces empilées : même largeur (= largeur des puces sur desktop) -->
         <div class="absolute top-3 left-3 right-14 lg:right-auto lg:w-fit lg:max-w-[calc(100%-4.5rem)] z-[865] flex flex-col gap-1.5">
           <div id="search-pill" class="relative w-full">
-          <div class="flex items-center gap-1 bg-white rounded-full shadow-card border border-slate-200 pl-1 pr-2 py-1">
-            <button id="geolocate-btn" type="button" title="Me localiser" class="shrink-0 w-8 h-8 rounded-full text-brand-600 hover:bg-brand-50 flex items-center justify-center">
+          <div class="flex items-center gap-1 bg-sousbois rounded-full shadow-card border border-os/10 pl-1 pr-2 py-1">
+            <button id="geolocate-btn" type="button" title="Me localiser" class="shrink-0 w-8 h-8 rounded-full text-girolle hover:bg-os/10 flex items-center justify-center">
               <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a1 1 0 011 1v1.06A6 6 0 0115.94 9H17a1 1 0 110 2h-1.06A6 6 0 0111 15.94V17a1 1 0 11-2 0v-1.06A6 6 0 014.06 11H3a1 1 0 110-2h1.06A6 6 0 019 4.06V3a1 1 0 011-1zm0 4a4 4 0 100 8 4 4 0 000-8zm0 2.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3z"/></svg>
             </button>
-            <input id="city-input" type="text" placeholder="Rechercher une commune…" class="flex-1 min-w-0 bg-transparent outline-none text-sm" />
+            <input id="city-input" type="text" placeholder="Rechercher une commune…" class="flex-1 min-w-0 bg-transparent outline-none text-sm text-os placeholder:text-os/40" />
           </div>
-          <div id="city-results" class="absolute left-0 right-0 top-full mt-1 space-y-1 bg-white rounded-xl shadow-card border border-slate-200 p-1 z-10"></div>
+          <div id="city-results" class="absolute left-0 right-0 top-full mt-1 space-y-1 bg-sousbois text-os rounded-xl shadow-card border border-os/10 p-1 z-10"></div>
           </div>
           <!-- Direction A : nombre de puces affiché calculé dynamiquement (priority+) ; le reste va dans « ＋ Plus » -->
           <div id="chips-row" class="flex gap-1.5 items-start">
           <div id="layer-chips" class="flex gap-1.5 overflow-x-auto no-scrollbar min-w-0">
-            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-brand-500 text-white shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="radar">🍄 Radar</button>
-            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="temp">Température</button>
-            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="precip">Pluie</button>
-            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="forest">Forêt</button>
-            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="soil">Sol</button>
-            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="soilmoist">Humidité</button>
-            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="altitude">Altitude</button>
-            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="aspect">Exposition</button>
+            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-girolle text-sousbois shadow-soft border border-os/10 text-xs font-semibold whitespace-nowrap" data-layer="radar">🍄 Radar</button>
+            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-sousbois text-os shadow-soft border border-os/10 text-xs font-semibold whitespace-nowrap" data-layer="temp">Température</button>
+            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-sousbois text-os shadow-soft border border-os/10 text-xs font-semibold whitespace-nowrap" data-layer="precip">Pluie</button>
+            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-sousbois text-os shadow-soft border border-os/10 text-xs font-semibold whitespace-nowrap" data-layer="forest">Forêt</button>
+            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-sousbois text-os shadow-soft border border-os/10 text-xs font-semibold whitespace-nowrap" data-layer="soil">Sol</button>
+            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-sousbois text-os shadow-soft border border-os/10 text-xs font-semibold whitespace-nowrap" data-layer="soilmoist">Humidité</button>
+            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-sousbois text-os shadow-soft border border-os/10 text-xs font-semibold whitespace-nowrap" data-layer="altitude">Altitude</button>
+            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-sousbois text-os shadow-soft border border-os/10 text-xs font-semibold whitespace-nowrap" data-layer="aspect">Exposition</button>
           </div>
           <div id="more-wrap" class="relative shrink-0 hidden">
-            <button id="more-layers-btn" class="px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap">＋ Plus</button>
-            <div id="more-layers" class="hidden absolute right-0 mt-1.5 w-44 bg-white rounded-xl shadow-card border border-slate-200 p-1.5 space-y-1 z-[870]">
-              <button class="layer-chip more-item hidden w-full text-left px-3 py-1.5 rounded-lg bg-white text-slate-600 text-xs font-semibold hover:bg-slate-50" data-layer="temp">Température</button>
-              <button class="layer-chip more-item hidden w-full text-left px-3 py-1.5 rounded-lg bg-white text-slate-600 text-xs font-semibold hover:bg-slate-50" data-layer="precip">Pluie</button>
-              <button class="layer-chip more-item hidden w-full text-left px-3 py-1.5 rounded-lg bg-white text-slate-600 text-xs font-semibold hover:bg-slate-50" data-layer="forest">Forêt — essences</button>
-              <button class="layer-chip more-item hidden w-full text-left px-3 py-1.5 rounded-lg bg-white text-slate-600 text-xs font-semibold hover:bg-slate-50" data-layer="soil">Type de sol</button>
-              <button class="layer-chip more-item hidden w-full text-left px-3 py-1.5 rounded-lg bg-white text-slate-600 text-xs font-semibold hover:bg-slate-50" data-layer="soilmoist">Humidité du sol</button>
-              <button class="layer-chip more-item hidden w-full text-left px-3 py-1.5 rounded-lg bg-white text-slate-600 text-xs font-semibold hover:bg-slate-50" data-layer="altitude">Altitude / relief</button>
-              <button class="layer-chip more-item hidden w-full text-left px-3 py-1.5 rounded-lg bg-white text-slate-600 text-xs font-semibold hover:bg-slate-50" data-layer="aspect">Exposition</button>
+            <button id="more-layers-btn" class="px-3 py-1.5 rounded-full bg-sousbois text-os shadow-soft border border-os/10 text-xs font-semibold whitespace-nowrap">＋ Plus</button>
+            <div id="more-layers" class="hidden absolute right-0 mt-1.5 w-44 bg-sousbois rounded-xl shadow-card border border-os/10 p-1.5 space-y-1 z-[870]">
+              <button class="layer-chip more-item hidden w-full text-left px-3 py-1.5 rounded-lg bg-sousbois text-os text-xs font-semibold hover:bg-os/10" data-layer="temp">Température</button>
+              <button class="layer-chip more-item hidden w-full text-left px-3 py-1.5 rounded-lg bg-sousbois text-os text-xs font-semibold hover:bg-os/10" data-layer="precip">Pluie</button>
+              <button class="layer-chip more-item hidden w-full text-left px-3 py-1.5 rounded-lg bg-sousbois text-os text-xs font-semibold hover:bg-os/10" data-layer="forest">Forêt — essences</button>
+              <button class="layer-chip more-item hidden w-full text-left px-3 py-1.5 rounded-lg bg-sousbois text-os text-xs font-semibold hover:bg-os/10" data-layer="soil">Type de sol</button>
+              <button class="layer-chip more-item hidden w-full text-left px-3 py-1.5 rounded-lg bg-sousbois text-os text-xs font-semibold hover:bg-os/10" data-layer="soilmoist">Humidité du sol</button>
+              <button class="layer-chip more-item hidden w-full text-left px-3 py-1.5 rounded-lg bg-sousbois text-os text-xs font-semibold hover:bg-os/10" data-layer="altitude">Altitude / relief</button>
+              <button class="layer-chip more-item hidden w-full text-left px-3 py-1.5 rounded-lg bg-sousbois text-os text-xs font-semibold hover:bg-os/10" data-layer="aspect">Exposition</button>
             </div>
           </div>
         </div>
           <!-- Espèces radar (dans le conteneur → même espacement que search/puces) -->
           <div id="radar-species" class="hidden relative w-fit">
-            <button id="radar-species-btn" class="flex items-center gap-1 px-3 py-1.5 rounded-full bg-white shadow-soft border border-slate-200 text-xs font-semibold text-slate-600">🍄 Espèces ▾</button>
-            <div id="radar-species-pop" class="hidden absolute top-full left-0 mt-1.5 w-56 max-h-64 overflow-y-auto nice-scroll bg-white rounded-xl shadow-card border border-slate-200 p-2 z-10">
+            <button id="radar-species-btn" class="flex items-center gap-1 px-3 py-1.5 rounded-full bg-sousbois shadow-soft border border-os/10 text-xs font-semibold text-os">🍄 Espèces ▾</button>
+            <div id="radar-species-pop" class="hidden absolute top-full left-0 mt-1.5 w-56 max-h-64 overflow-y-auto nice-scroll bg-sousbois text-os rounded-xl shadow-card border border-os/10 p-2 z-10">
               <div class="flex items-center justify-between mb-1.5 px-1">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Afficher sur le radar</span>
-                <button id="radar-all-toggle" class="text-[10px] font-bold text-brand-600 hover:underline whitespace-nowrap">Tout / Aucun</button>
+                <span class="text-[10px] font-bold uppercase tracking-wider text-os/50">Afficher sur le radar</span>
+                <button id="radar-all-toggle" class="text-[10px] font-bold text-girolle hover:underline whitespace-nowrap">Tout / Aucun</button>
               </div>
               <div id="radar-species-list" class="space-y-0.5"></div>
             </div>
           </div>
           <!-- Curseur de dates (du…au…) : Température / Pluie -->
-          <div id="date-range" class="hidden w-full lg:w-80 bg-white/95 backdrop-blur rounded-xl shadow-card border border-slate-200 px-3 py-2.5">
-            <div class="text-[11px] font-semibold text-slate-600 mb-2.5">Période : du <span id="dr-from" class="text-brand-700 font-bold"></span> au <span id="dr-to" class="text-brand-700 font-bold"></span></div>
+          <div id="date-range" class="hidden w-full lg:w-80 bg-sousbois/95 backdrop-blur rounded-xl shadow-card border border-os/10 px-3 py-2.5">
+            <div class="text-[11px] font-semibold text-os/70 mb-2.5">Période : du <span id="dr-from" class="text-girolle font-bold"></span> au <span id="dr-to" class="text-girolle font-bold"></span></div>
             <div class="dr-slider relative h-5">
               <div class="dr-track"></div>
               <div id="dr-fill" class="dr-fill"></div>
@@ -120,7 +120,7 @@
           </div>
         </div>
         <!-- Légende en étiquette (bas-gauche de la carte) -->
-        <div id="map-legend" class="hidden absolute left-3 bottom-16 lg:bottom-3 z-[850] w-64 max-w-[calc(100vw-1.5rem)] max-h-[45vh] overflow-y-auto nice-scroll bg-white/95 backdrop-blur rounded-xl shadow-card border border-slate-200 px-3 py-2 text-xs text-slate-500"></div>
+        <div id="map-legend" class="hidden absolute left-3 bottom-16 lg:bottom-3 z-[850] w-64 max-w-[calc(100vw-1.5rem)] max-h-[45vh] overflow-y-auto nice-scroll bg-sousbois/95 text-os/70 backdrop-blur rounded-xl shadow-card border border-os/10 px-3 py-2 text-xs"></div>
         <!-- Carte d'info, positionnée au pixel du point cliqué (suit la carte) -->
         <div id="point-card" class="hidden absolute z-[800] w-64 bg-white rounded-2xl shadow-card border border-slate-200 p-3.5 fade-in"></div>
       </main>

@@ -622,10 +622,10 @@ function layoutChips() {
   moreWrap.classList.toggle("hidden", fit >= chips.length);
   const mb = document.getElementById("more-layers-btn");
   if (mb) {   // « ＋ Plus » surligné si le calque actif est rangé dedans
-    mb.classList.toggle("bg-brand-500", overflowActive);
-    mb.classList.toggle("text-white", overflowActive);
-    mb.classList.toggle("bg-white", !overflowActive);
-    mb.classList.toggle("text-slate-600", !overflowActive);
+    mb.classList.toggle("bg-girolle", overflowActive);
+    mb.classList.toggle("text-sousbois", overflowActive);
+    mb.classList.toggle("bg-sousbois", !overflowActive);
+    mb.classList.toggle("text-os", !overflowActive);
   }
 }
 
@@ -635,10 +635,10 @@ async function setActiveLayer(key) {
   // Sync des contrôles : puces (carte) + radios (volet)
   document.querySelectorAll(".layer-chip").forEach((c) => {
     const on = c.dataset.layer === key;
-    c.classList.toggle("bg-brand-500", on);
-    c.classList.toggle("text-white", on);
-    c.classList.toggle("bg-white", !on);
-    c.classList.toggle("text-slate-600", !on);
+    c.classList.toggle("bg-girolle", on);
+    c.classList.toggle("text-sousbois", on);
+    c.classList.toggle("bg-sousbois", !on);
+    c.classList.toggle("text-os", !on);
   });
   document.querySelectorAll('input[name="layer"]').forEach((r) => { r.checked = (r.value === key); });
   // « ＋ Plus » surligné si le calque actif est rangé dans le menu (puce débordée)
@@ -646,10 +646,10 @@ async function setActiveLayer(key) {
   if (moreB) {
     const chip = document.querySelector(`#layer-chips .layer-chip[data-layer="${key}"]`);
     const inMenu = !!chip && chip.classList.contains("hidden");
-    moreB.classList.toggle("bg-brand-500", inMenu);
-    moreB.classList.toggle("text-white", inMenu);
-    moreB.classList.toggle("bg-white", !inMenu);
-    moreB.classList.toggle("text-slate-600", !inMenu);
+    moreB.classList.toggle("bg-girolle", inMenu);
+    moreB.classList.toggle("text-sousbois", inMenu);
+    moreB.classList.toggle("bg-sousbois", !inMenu);
+    moreB.classList.toggle("text-os", !inMenu);
   }
   // Période : utile seulement pour les calques météo (température / précipitations) → masquée sinon
   const pb = document.getElementById("period-block");
