@@ -1,124 +1,78 @@
-  <!-- ============ PAGE DE CONNEXION ============ -->
-  <div id="login-screen" class="hidden fixed inset-0 z-50 overflow-auto">
-    <div class="min-h-screen grid md:grid-cols-2">
-      <!-- Panneau gauche : dégradé automnal (forêt + bruns chauds) + scène SVG -->
-      <div class="relative overflow-hidden text-white p-10 hidden md:flex flex-col justify-between min-h-[34vh]"
+  <!-- ============ ÉCRAN D'AUTH UNIFIÉ (connexion / inscription) — DA ============ -->
+  <div id="login-screen" class="hidden fixed inset-0 z-50 overflow-auto bg-sousbois text-os">
+    <div class="da-grain fixed inset-0"></div>
+    <div class="relative min-h-screen grid md:grid-cols-2">
+
+      <!-- Panneau gauche : DA + collage (masqué en mobile) -->
+      <div class="relative overflow-hidden hidden md:flex flex-col justify-between p-10"
            style="background:
-             radial-gradient(640px 360px at 84% 4%, #d97706 0%, transparent 52%),
-             radial-gradient(720px 540px at -5% 105%, #14532d 0%, transparent 58%),
-             linear-gradient(155deg,#3a2a17 0%, #5b3a1a 60%, #6b4423 100%)">
-        <button class="back-landing font-black text-xl tracking-tight hover:opacity-80 transition text-left" title="Retour à l'accueil">Sporia</button>
+             radial-gradient(640px 380px at 84% 4%, rgba(242,169,59,.24) 0%, transparent 54%),
+             radial-gradient(720px 560px at -5% 105%, rgba(120,158,80,.22) 0%, transparent 58%),
+             linear-gradient(155deg,#1c1712 0%, #191510 60%, #120e0a 100%)">
+        <button class="back-landing font-display font-extrabold text-2xl uppercase tracking-tight text-os hover:text-girolle transition text-left" title="Retour à l'accueil">Sporia</button>
 
-        <!-- Scène automnale épurée (sous-bois sous une pluie fine) -->
-        <svg viewBox="0 0 400 340" class="w-full max-w-sm mx-auto my-4" role="img" aria-label="Champignons d'automne en sous-bois">
-          <defs>
-            <linearGradient id="capCepe" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b07a4a"/><stop offset="1" stop-color="#6b3f17"/></linearGradient>
-            <linearGradient id="capChant" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8a23d"/><stop offset="1" stop-color="#b45309"/></linearGradient>
-            <linearGradient id="capSmall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#caa06a"/><stop offset="1" stop-color="#7c4a12"/></linearGradient>
-            <radialGradient id="glowA" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fcd9a0" stop-opacity=".75"/><stop offset="1" stop-color="#fcd9a0" stop-opacity="0"/></radialGradient>
-          </defs>
-
-          <!-- Lueur chaude diffuse -->
-          <circle class="twinkle" cx="318" cy="74" r="66" fill="url(#glowA)"/>
-
-          <!-- Un seul nuage, teinte chaude -->
-          <g class="cloud-float">
-            <ellipse cx="138" cy="60" rx="48" ry="28" fill="#efe6d6" opacity=".9"/>
-            <ellipse cx="176" cy="50" rx="34" ry="26" fill="#efe6d6" opacity=".95"/>
-            <rect x="112" y="64" width="104" height="18" rx="9" fill="#efe6d6" opacity=".9"/>
-          </g>
-
-          <!-- Pluie fine -->
-          <g fill="#d7cbb6">
-            <rect class="rain-drop" style="animation-delay:0s"   x="124" y="84" width="2.6" height="13" rx="1.3"/>
-            <rect class="rain-drop" style="animation-delay:.5s"  x="150" y="84" width="2.6" height="13" rx="1.3"/>
-            <rect class="rain-drop" style="animation-delay:.28s" x="176" y="84" width="2.6" height="13" rx="1.3"/>
-            <rect class="rain-drop" style="animation-delay:.78s" x="138" y="84" width="2.6" height="13" rx="1.3"/>
-            <rect class="rain-drop" style="animation-delay:.62s" x="164" y="84" width="2.6" height="13" rx="1.3"/>
-          </g>
-
-          <!-- Feuilles mortes qui tombent -->
-          <g class="leaf" style="animation-delay:0s">
-            <path d="M300 70 q11 6 0 20 q-11 -14 0 -20z" fill="#c2410c"/>
-            <path d="M300 72 v16" stroke="#7c2d12" stroke-width="1"/>
-          </g>
-          <g class="leaf" style="animation-delay:2.2s">
-            <path d="M336 60 q9 5 0 17 q-9 -12 0 -17z" fill="#d97706"/>
-            <path d="M336 62 v13" stroke="#92400e" stroke-width="1"/>
-          </g>
-          <g class="leaf" style="animation-delay:4.1s">
-            <path d="M268 58 q8 4 0 15 q-8 -11 0 -15z" fill="#a16207"/>
-          </g>
-
-          <!-- Sol : mousse + terre -->
-          <ellipse cx="200" cy="294" rx="196" ry="42" fill="#4d7c0f" opacity=".30"/>
-          <ellipse cx="200" cy="306" rx="196" ry="36" fill="#3f6212" opacity=".5"/>
-          <ellipse cx="200" cy="314" rx="196" ry="30" fill="#5b3a1a" opacity=".55"/>
-
-          <!-- Cèpe (héros, bulbeux) -->
-          <g class="bob">
-            <ellipse cx="172" cy="300" rx="44" ry="9" fill="#3b2a16" opacity=".4"/>
-            <path d="M152 256 q-12 38 0 46 q20 9 40 0 q12 -8 0 -46z" fill="#f3e6cf"/>
-            <path d="M150 254 q22 12 44 0 l-3 9 q-19 10 -38 0z" fill="#e4cfa6" opacity=".8"/>
-            <path d="M120 258 Q172 196 224 258 Q200 280 172 280 Q144 280 120 258 Z" fill="url(#capCepe)"/>
-            <ellipse cx="172" cy="258" rx="52" ry="10" fill="#4a2c0e" opacity=".22"/>
-            <ellipse cx="158" cy="236" rx="16" ry="7" fill="#fff" opacity=".14"/>
-          </g>
-
-          <!-- Chanterelle (en trompette, ambre) -->
-          <g class="bob2">
-            <ellipse cx="262" cy="304" rx="26" ry="6" fill="#3b2a16" opacity=".4"/>
-            <path d="M250 300 q-9 -42 12 -56 q9 18 11 56z" fill="#f3e0bd"/>
-            <path d="M238 270 q22 -30 50 -8 q-9 20 -25 22 q-16 -2 -25 -14z" fill="url(#capChant)"/>
-            <path d="M252 268 q9 -12 21 -6 M256 276 q9 -10 19 -5" stroke="#92400e" stroke-width="1.4" fill="none" opacity=".5"/>
-          </g>
-
-          <!-- Petit champignon -->
-          <g class="bob">
-            <ellipse cx="320" cy="306" rx="18" ry="5" fill="#3b2a16" opacity=".4"/>
-            <rect x="314" y="282" width="12" height="24" rx="6" fill="#f3e6cf"/>
-            <path d="M302 286 q18 -22 36 0 q-9 9 -18 9 q-9 0 -18 -9z" fill="url(#capSmall)"/>
-          </g>
-
-          <!-- Feuilles posées au sol -->
-          <path d="M96 312 q12 5 2 16 q-13 -7 -2 -16z" fill="#b45309" opacity=".8"/>
-          <path d="M360 314 q-11 5 -2 15 q12 -7 2 -15z" fill="#c2410c" opacity=".8"/>
-
-          <!-- Quelques herbes sobres -->
-          <g stroke-linecap="round" fill="none" opacity=".85">
-            <path class="sway"  d="M64 312 q3 -20 -2 -30" stroke="#65a30d" stroke-width="3"/>
-            <path class="sway2" d="M72 314 q5 -18 11 -24" stroke="#4d7c0f" stroke-width="3"/>
-            <path class="sway2" d="M214 310 q3 -16 -3 -24" stroke="#65a30d" stroke-width="3"/>
-            <path class="sway"  d="M348 312 q-3 -18 3 -26" stroke="#4d7c0f" stroke-width="3"/>
-          </g>
-        </svg>
+        <div class="relative h-64" aria-hidden="true">
+          <img src="/static/img/shrooms/cepe.png"     alt="" class="absolute drop-shadow-2xl" style="width:220px;right:2%;top:0;transform:rotate(6deg)">
+          <img src="/static/img/shrooms/girolle.png"  alt="" class="absolute drop-shadow-2xl" style="width:170px;left:0;bottom:0;transform:rotate(-9deg)">
+          <img src="/static/img/shrooms/pied-bleu.png" alt="" class="absolute drop-shadow-2xl" style="width:150px;left:42%;top:34%;transform:rotate(7deg)">
+        </div>
 
         <div>
-          <div class="text-2xl font-black leading-tight">Trouvez les champignons<br>avant tout le monde.</div>
-          <div class="text-amber-100/90 mt-2 text-sm">Météo, forêts &amp; essences — réunies sur une seule carte.</div>
+          <div class="font-display font-extrabold uppercase leading-[0.95] text-3xl text-os">Trouvez les <span class="font-serif italic normal-case text-girolle">bons</span><br>champignons.</div>
+          <div class="mt-3 font-mono text-xs uppercase tracking-wide text-os/50">Météo · forêts · sol · relief — sur une seule carte.</div>
         </div>
       </div>
 
-      <!-- Panneau droit : formulaire -->
-      <div class="bg-white flex items-center justify-center p-8">
-        <form id="login-form" class="w-full max-w-sm">
-          <button type="button" class="back-landing font-black text-brand-600 text-lg hover:opacity-80 transition" title="Retour à l'accueil">Sporia</button>
-          <h2 class="text-2xl font-black mt-2 text-slate-900">Bon retour</h2>
-          <p class="text-sm text-slate-400 mb-6">Connectez-vous pour accéder à la carte et au guide champignons.</p>
-          <label class="block text-xs font-semibold text-slate-500 mb-1">Email</label>
-          <input id="login-user" type="email" autocomplete="email"
-                 class="w-full mb-3 px-3 py-2.5 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 outline-none" />
-          <label class="block text-xs font-semibold text-slate-500 mb-1">Mot de passe</label>
-          <input id="login-pass" type="password" autocomplete="current-password"
-                 class="w-full mb-2 px-3 py-2.5 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 outline-none" />
-          <p id="login-error" class="hidden text-sm text-red-600 mb-2"></p>
-          <button type="submit"
-                  class="mt-3 w-full py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold transition">
-            Se connecter
-          </button>
-          <button type="button" id="forgot-link"
-                  class="mt-3 w-full text-sm text-slate-500 hover:text-brand-600 transition">Mot de passe oublié ?</button>
-        </form>
+      <!-- Panneau droit : bascule + formulaires -->
+      <div class="relative flex items-center justify-center p-8" style="background:#0e0a06">
+        <div class="w-full max-w-sm">
+          <button type="button" class="back-landing font-display font-extrabold text-girolle text-lg uppercase tracking-tight hover:opacity-80 transition md:hidden" title="Retour à l'accueil">Sporia</button>
+
+          <!-- Sélecteur de mode -->
+          <div class="mt-2 flex rounded-sm border-2 border-os/15 p-1">
+            <button type="button" data-auth-mode="login" class="auth-tab flex-1 py-2 rounded-sm font-bold text-sm bg-girolle text-sousbois transition">Connexion</button>
+            <button type="button" data-auth-mode="register" class="auth-tab flex-1 py-2 rounded-sm font-bold text-sm text-os/60 transition">Créer un compte</button>
+          </div>
+
+          <!-- Connexion -->
+          <form id="login-form" class="mt-6">
+            <h2 class="font-display font-extrabold text-2xl uppercase text-os">Bon retour</h2>
+            <p class="mt-1 text-sm text-os/50 mb-5">Connectez-vous pour accéder à la carte et au guide.</p>
+            <label class="block font-mono text-[11px] uppercase tracking-wide text-os/50 mb-1">Email</label>
+            <input id="login-user" type="email" autocomplete="email"
+                   class="w-full mb-3 px-3 py-2.5 rounded-sm bg-sousbois border border-os/20 text-os focus:border-girolle focus:ring-2 focus:ring-girolle/30 outline-none" />
+            <label class="block font-mono text-[11px] uppercase tracking-wide text-os/50 mb-1">Mot de passe</label>
+            <input id="login-pass" type="password" autocomplete="current-password"
+                   class="w-full mb-2 px-3 py-2.5 rounded-sm bg-sousbois border border-os/20 text-os focus:border-girolle focus:ring-2 focus:ring-girolle/30 outline-none" />
+            <p id="login-error" class="hidden text-sm text-red-400 mb-2"></p>
+            <button type="submit" class="mt-3 w-full py-2.5 rounded-sm bg-girolle hover:bg-lactaire text-sousbois font-bold transition">Se connecter</button>
+            <button type="button" id="forgot-link" class="mt-3 w-full text-sm text-os/50 hover:text-girolle transition">Mot de passe oublié ?</button>
+          </form>
+
+          <!-- Inscription (déplacée depuis la landing) -->
+          <form id="register-form" class="mt-6 hidden">
+            <h2 class="font-display font-extrabold text-2xl uppercase text-os">Créer un compte</h2>
+            <p class="mt-1 text-sm text-os/50 mb-1">Inscrivez-vous, puis activez votre abonnement.</p>
+            <p class="mb-5 text-xs text-os/60">Tout compris — <span class="font-bold text-girolle" data-price-label>15 €/an</span>, résiliable à tout moment.</p>
+            <label class="block font-mono text-[11px] uppercase tracking-wide text-os/50 mb-1">Nom (optionnel)</label>
+            <input id="reg-name" type="text" maxlength="80"
+                   class="w-full mb-3 px-3 py-2.5 rounded-sm bg-sousbois border border-os/20 text-os focus:border-girolle focus:ring-2 focus:ring-girolle/30 outline-none" />
+            <label class="block font-mono text-[11px] uppercase tracking-wide text-os/50 mb-1">Email</label>
+            <input id="reg-email" type="email" required maxlength="120" autocomplete="email"
+                   class="w-full mb-3 px-3 py-2.5 rounded-sm bg-sousbois border border-os/20 text-os focus:border-girolle focus:ring-2 focus:ring-girolle/30 outline-none" />
+            <label class="block font-mono text-[11px] uppercase tracking-wide text-os/50 mb-1">Mot de passe (min 8)</label>
+            <input id="reg-pass" type="password" required minlength="8" autocomplete="new-password"
+                   class="w-full mb-2 px-3 py-2.5 rounded-sm bg-sousbois border border-os/20 text-os focus:border-girolle focus:ring-2 focus:ring-girolle/30 outline-none" />
+            <button type="submit" class="mt-3 w-full py-2.5 rounded-sm bg-girolle hover:bg-lactaire text-sousbois font-bold transition">Créer mon compte</button>
+            <p id="reg-msg" class="hidden text-sm font-semibold"></p>
+          </form>
+
+          <!-- Lien bêta + retour -->
+          <div class="mt-6 pt-4 border-t border-os/10 text-center">
+            <button type="button" class="goto-beta text-sm text-os/60 hover:text-girolle font-semibold transition">Pas prêt à payer ? Devenir bêta-testeur — gratuit</button>
+            <button type="button" class="back-landing block w-full mt-3 text-xs text-os/40 hover:text-os transition">← Retour à l'accueil</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
