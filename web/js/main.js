@@ -125,7 +125,7 @@ function setupLandingNav() {
   const io = new IntersectionObserver((entries) => {
     entries.forEach((e) => { if (e.isIntersecting) setActive(e.target.id); });
   }, { root, threshold: 0.5 });
-  ["hero", "apercu", "contact"].forEach((id) => {
+  ["hero", "apercu", "sec-fiche", "sec-spots", "sec-mobile", "contact"].forEach((id) => {
     const el = document.getElementById(id); if (el) io.observe(el);
   });
   setActive("hero");

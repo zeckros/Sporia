@@ -24,9 +24,12 @@
 
     <!-- Points de navigation (verticaux, écrans moyens+) -->
     <nav class="hidden sm:flex fixed right-5 top-1/2 -translate-y-1/2 z-30 flex-col gap-3">
-      <a href="#hero"    data-dot="hero"    class="w-2.5 h-2.5 rounded-full bg-slate-300/80 hover:bg-brand-500 transition-all duration-300" aria-label="Accueil"></a>
-      <a href="#apercu"  data-dot="apercu"  class="w-2.5 h-2.5 rounded-full bg-slate-300/80 hover:bg-brand-500 transition-all duration-300" aria-label="Aperçu"></a>
-      <a href="#contact" data-dot="contact" class="w-2.5 h-2.5 rounded-full bg-slate-300/80 hover:bg-brand-500 transition-all duration-300" aria-label="Demander un accès"></a>
+      <a href="#hero"       data-dot="hero"       class="w-2.5 h-2.5 rounded-full bg-slate-300/80 hover:bg-brand-500 transition-all duration-300" aria-label="Accueil"></a>
+      <a href="#apercu"     data-dot="apercu"     class="w-2.5 h-2.5 rounded-full bg-slate-300/80 hover:bg-brand-500 transition-all duration-300" aria-label="Aperçu"></a>
+      <a href="#sec-fiche"  data-dot="sec-fiche"  class="w-2.5 h-2.5 rounded-full bg-slate-300/80 hover:bg-brand-500 transition-all duration-300" aria-label="Fiche au clic"></a>
+      <a href="#sec-spots"  data-dot="sec-spots"  class="w-2.5 h-2.5 rounded-full bg-slate-300/80 hover:bg-brand-500 transition-all duration-300" aria-label="Spots et alertes"></a>
+      <a href="#sec-mobile" data-dot="sec-mobile" class="w-2.5 h-2.5 rounded-full bg-slate-300/80 hover:bg-brand-500 transition-all duration-300" aria-label="Mobile et méthode"></a>
+      <a href="#contact"    data-dot="contact"    class="w-2.5 h-2.5 rounded-full bg-slate-300/80 hover:bg-brand-500 transition-all duration-300" aria-label="Demander un accès"></a>
     </nav>
 
     <!-- ===== Section 1 : HERO ===== -->
@@ -310,6 +313,129 @@
               <text x="184" y="44" text-anchor="end" font-size="8.5" fill="#94a3b8">très probable</text>
             </g>
           </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Section : FICHE AU CLIC ===== -->
+    <section id="sec-fiche" class="snap-start min-h-[100dvh] flex items-center">
+      <div class="max-w-6xl mx-auto w-full px-5 sm:px-6 py-16 sm:py-20 grid lg:grid-cols-2 gap-10 items-center">
+        <!-- Visuel : fiche au clic (maquette). Pour une vraie capture, remplacez ce bloc .shot par :
+             <img src="/static/shots/fiche.png" class="block w-full max-w-sm mx-auto rounded-2xl shadow-lg2 border border-slate-200"> -->
+        <div class="order-1">
+          <div class="shot max-w-sm mx-auto w-full rounded-2xl bg-white shadow-lg2 border border-slate-200 overflow-hidden">
+            <div class="h-1.5 bg-gradient-to-r from-green-400 to-green-600"></div>
+            <div class="p-4">
+              <div class="flex items-center gap-2">
+                <span class="w-3.5 h-3.5 rounded-full bg-green-500"></span>
+                <span class="font-black text-slate-800 text-lg leading-none">Très propice</span>
+                <span class="ml-auto text-[11px] font-bold text-green-700 bg-green-50 px-2 py-0.5 rounded-full">86 %</span>
+              </div>
+              <div class="mt-1.5 text-xs text-slate-500">Forêt de chênes · 320 m · Cèpe de Bordeaux, Girolle</div>
+              <div class="mt-3 space-y-2">
+                <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-green-500"></span><span class="text-sm text-slate-600 flex-1">Pluie (14 j)</span><span class="text-sm font-bold text-slate-800">32 mm</span></div>
+                <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-amber-500"></span><span class="text-sm text-slate-600 flex-1">Température</span><span class="text-sm font-bold text-slate-800">13 °C</span></div>
+                <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-green-500"></span><span class="text-sm text-slate-600 flex-1">Humidité du sol</span><span class="text-sm font-bold text-slate-800">élevée</span></div>
+                <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-green-500"></span><span class="text-sm text-slate-600 flex-1">Essence détectée</span><span class="text-sm font-bold text-slate-800">Chênaie</span></div>
+              </div>
+              <div class="mt-3 pt-3 border-t border-slate-100 flex items-center gap-1.5 text-xs text-slate-400">
+                <svg class="w-4 h-4 text-brand-500" viewBox="0 0 20 20" fill="currentColor"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-12a.75.75 0 00-1.5 0v4c0 .3.18.57.46.69l3 1.25a.75.75 0 00.58-1.38L10.75 9.5V6z"/></svg>
+                Fenêtre de pousse ouverte depuis 5 jours
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="max-w-xl order-2">
+          <span class="inline-block px-3 py-1 rounded-full bg-white border border-slate-200 shadow-soft text-brand-500 font-bold text-xs">Fiche au clic</span>
+          <h2 class="mt-4 text-3xl sm:text-4xl font-black tracking-tight text-slate-900">Tout le diagnostic d'un point, d'un seul geste.</h2>
+          <p class="mt-4 text-slate-500 text-base sm:text-lg leading-relaxed">
+            Cliquez n'importe où sur la carte : Sporia lit l'<strong class="text-slate-700">essence sur place</strong>, le
+            <strong class="text-slate-700">bilan météo récent</strong>, le sol et le relief, puis tranche —
+            <span class="text-green-600 font-semibold">favorable</span> ou <span class="text-amber-600 font-semibold">limitant</span> —
+            pour chacune de vos espèces.
+          </p>
+          <ul class="mt-6 space-y-2.5 text-slate-600">
+            <li class="flex items-start gap-2.5"><svg class="w-5 h-5 text-brand-500 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.6 13.4l-3-3 1.4-1.4 1.6 1.6 4.2-4.2 1.4 1.4-5.6 5.6z"/></svg><span>Chaque facteur noté et coloré — vous voyez <em>pourquoi</em> ça pousse (ou pas).</span></li>
+            <li class="flex items-start gap-2.5"><svg class="w-5 h-5 text-brand-500 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.6 13.4l-3-3 1.4-1.4 1.6 1.6 4.2-4.2 1.4 1.4-5.6 5.6z"/></svg><span>Fenêtre de pousse par espèce : pluie trop vieille ou sécheresse = pénalisées.</span></li>
+            <li class="flex items-start gap-2.5"><svg class="w-5 h-5 text-brand-500 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.6 13.4l-3-3 1.4-1.4 1.6 1.6 4.2-4.2 1.4 1.4-5.6 5.6z"/></svg><span>Un guide par espèce intégré : habitat, saison, confusions à éviter.</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Section : SPOTS & ALERTES ===== -->
+    <section id="sec-spots" class="snap-start min-h-[100dvh] flex items-center">
+      <div class="max-w-6xl mx-auto w-full px-5 sm:px-6 py-16 sm:py-20 grid lg:grid-cols-2 gap-10 items-center">
+        <div class="max-w-xl order-2 lg:order-1">
+          <span class="inline-block px-3 py-1 rounded-full bg-white border border-slate-200 shadow-soft text-brand-500 font-bold text-xs">Spots &amp; alertes</span>
+          <h2 class="mt-4 text-3xl sm:text-4xl font-black tracking-tight text-slate-900">Vos coins secrets, surveillés pour vous.</h2>
+          <p class="mt-4 text-slate-500 text-base sm:text-lg leading-relaxed">
+            Enregistrez vos coins d'un clic sur la carte. Chaque jour, Sporia les <strong class="text-slate-700">réévalue</strong>
+            avec la météo fraîche — et la <strong class="text-slate-700">cloche vous prévient</strong> quand l'un d'eux devient
+            vraiment propice. Vous n'y allez plus au hasard.
+          </p>
+          <ul class="mt-6 space-y-2.5 text-slate-600">
+            <li class="flex items-start gap-2.5"><svg class="w-5 h-5 text-brand-500 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.6 13.4l-3-3 1.4-1.4 1.6 1.6 4.2-4.2 1.4 1.4-5.6 5.6z"/></svg><span>Marqueurs 🍄 sur vos coins, renommables, retrouvés en un tap.</span></li>
+            <li class="flex items-start gap-2.5"><svg class="w-5 h-5 text-brand-500 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.6 13.4l-3-3 1.4-1.4 1.6 1.6 4.2-4.2 1.4 1.4-5.6 5.6z"/></svg><span>Notification du jour : uniquement les spots réellement favorables.</span></li>
+            <li class="flex items-start gap-2.5"><svg class="w-5 h-5 text-brand-500 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.6 13.4l-3-3 1.4-1.4 1.6 1.6 4.2-4.2 1.4 1.4-5.6 5.6z"/></svg><span>Géolocalisation pour poser un spot depuis le terrain.</span></li>
+          </ul>
+        </div>
+        <!-- Visuel : carte + alerte (maquette). Pour une vraie capture, remplacez ce bloc .shot par :
+             <img src="/static/shots/spots.png" class="block w-full max-w-md mx-auto rounded-2xl shadow-lg2 border border-slate-200"> -->
+        <div class="order-1 lg:order-2">
+          <div class="shot relative max-w-md mx-auto w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-lg2 border border-slate-200"
+               style="background:radial-gradient(120% 120% at 20% 10%, #eef3e6, #dfe7d3)">
+            <div class="absolute" style="left:60%;top:24%;width:34%;height:30%;background:#cde0a0;opacity:.85;border-radius:45% 55% 50% 50%"></div>
+            <div class="absolute" style="left:12%;top:52%;width:30%;height:26%;background:#cde0a0;opacity:.85;border-radius:55% 45% 50% 50%"></div>
+            <div class="absolute -translate-x-1/2 -translate-y-full" style="left:32%;top:44%"><div class="w-8 h-8 rounded-full bg-white shadow-card border border-slate-200 flex items-center justify-center">🍄</div></div>
+            <div class="absolute -translate-x-1/2 -translate-y-full" style="left:68%;top:34%"><div class="w-8 h-8 rounded-full bg-white shadow-card border border-slate-200 flex items-center justify-center">🍄</div></div>
+            <div class="absolute left-3 right-3 bottom-3 bg-white rounded-xl shadow-card border border-slate-200 p-3 flex items-center gap-3">
+              <div class="w-9 h-9 rounded-full bg-green-50 flex items-center justify-center shrink-0">🔔</div>
+              <div class="min-w-0">
+                <div class="text-sm font-bold text-slate-800">1 spot devient propice</div>
+                <div class="text-xs text-slate-500 truncate">Chênaie du Bois-Joli — pluie + douceur cette semaine</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Section : MOBILE INSTALLABLE + MÉTHODE ===== -->
+    <section id="sec-mobile" class="snap-start min-h-[100dvh] flex items-center">
+      <div class="max-w-6xl mx-auto w-full px-5 sm:px-6 py-16 sm:py-20 grid lg:grid-cols-2 gap-10 items-center">
+        <!-- Visuel : app sur téléphone (maquette). Pour une vraie capture, remplacez le contenu de l'écran .shot-screen par :
+             <img src="/static/shots/mobile.png" class="absolute inset-0 w-full h-full object-cover"> -->
+        <div class="order-1 flex justify-center">
+          <div class="shot w-[232px] rounded-[2.2rem] bg-slate-900 p-2.5 shadow-lg2">
+            <div class="shot-screen relative rounded-[1.7rem] overflow-hidden bg-white" style="aspect-ratio:9/19">
+              <div class="absolute inset-0" style="background:radial-gradient(120% 90% at 30% 10%, #eef3e6, #dfe7d3)"></div>
+              <div class="absolute rounded-full" style="left:18%;top:26%;width:130px;height:130px;background:radial-gradient(circle,#238443aa,transparent 70%)"></div>
+              <div class="absolute rounded-full" style="left:48%;top:52%;width:96px;height:96px;background:radial-gradient(circle,#78c67988,transparent 70%)"></div>
+              <div class="absolute top-3 left-3 right-3 h-8 rounded-full bg-white/90 shadow-soft border border-slate-200 flex items-center px-3 text-[11px] text-slate-400">Rechercher une commune…</div>
+              <div class="absolute -translate-x-1/2 -translate-y-full" style="left:40%;top:52%"><div class="w-6 h-6 rounded-full bg-white shadow-card border border-slate-200 flex items-center justify-center text-xs">🍄</div></div>
+              <div class="absolute bottom-0 left-0 right-0 h-14 bg-white border-t border-slate-200 flex items-center justify-around text-[9px] font-semibold">
+                <div class="flex flex-col items-center gap-0.5 text-brand-600"><span class="text-base leading-none">🗺️</span>Carte</div>
+                <div class="flex flex-col items-center gap-0.5 text-slate-400"><span class="text-base leading-none">📖</span>Guide</div>
+                <div class="flex flex-col items-center gap-0.5 text-slate-400"><span class="text-base leading-none">📍</span>Spots</div>
+                <div class="flex flex-col items-center gap-0.5 text-slate-400"><span class="text-base leading-none">👤</span>Profil</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="max-w-xl order-2">
+          <span class="inline-block px-3 py-1 rounded-full bg-white border border-slate-200 shadow-soft text-brand-500 font-bold text-xs">Mobile &amp; méthode</span>
+          <h2 class="mt-4 text-3xl sm:text-4xl font-black tracking-tight text-slate-900">Dans votre poche, prêt pour la forêt.</h2>
+          <p class="mt-4 text-slate-500 text-base sm:text-lg leading-relaxed">
+            Sporia s'installe sur votre téléphone comme une vraie appli — plein écran, sans passer par un store.
+            Et derrière l'écran, une méthode sérieuse :
+          </p>
+          <ol class="mt-6 space-y-3">
+            <li class="flex gap-3"><span class="w-7 h-7 rounded-full bg-brand-50 text-brand-600 font-black text-sm flex items-center justify-center shrink-0">1</span><span class="text-slate-600 pt-0.5"><strong class="text-slate-700">On agrège les données</strong> — BD Forêt® IGN, essences, sol, relief et la météo des 3 dernières semaines.</span></li>
+            <li class="flex gap-3"><span class="w-7 h-7 rounded-full bg-brand-50 text-brand-600 font-black text-sm flex items-center justify-center shrink-0">2</span><span class="text-slate-600 pt-0.5"><strong class="text-slate-700">Un modèle probabiliste</strong> (SDM validé) croise habitat et conditions du moment, espèce par espèce.</span></li>
+            <li class="flex gap-3"><span class="w-7 h-7 rounded-full bg-brand-50 text-brand-600 font-black text-sm flex items-center justify-center shrink-0">3</span><span class="text-slate-600 pt-0.5"><strong class="text-slate-700">Vous obtenez le radar du jour</strong> — réglé sur vos espèces, actualisé chaque matin.</span></li>
+          </ol>
+          <div class="mt-7"><a href="#contact" class="inline-block px-7 py-3 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold shadow-card transition">Commencer</a></div>
         </div>
       </div>
     </section>
