@@ -529,9 +529,10 @@ function legendFor(key) {
 function updateLegend() {
   // Une seule légende, TOUJOURS en bas de la barre (volet calques ouvert comme replié).
   const html = legendFor(state.activeLayer);
+  const legEl = document.getElementById("active-legend");   // légende du volet (peut être supprimée)
+  if (legEl) legEl.innerHTML = html;
   const wrap = document.getElementById("active-legend-wrap");
-  document.getElementById("active-legend").innerHTML = html;
-  wrap.classList.toggle("hidden", !html);
+  if (wrap) wrap.classList.toggle("hidden", !html);
   const capt = document.getElementById("map-legend");   // légende en étiquette sur la carte (direction A)
   if (capt) { capt.innerHTML = html; capt.classList.toggle("hidden", !html); }
   updateRadarSpecies();      // liste des espèces du radar (peuple #radar-species)
@@ -629,8 +630,8 @@ function wireControls() {
       if (state.activeLayer === "temp" || state.activeLayer === "precip") setActiveLayer(state.activeLayer);
     }));
 
-  // Bouton « Fou des champignons » : déplie/replie le panneau calques
-  document.getElementById("godmode-btn").addEventListener("click", () => {
+  // Bouton « Fou des champignons » (volet, si présent) : déplie/replie le panneau calques
+  document.getElementById("godmode-btn")?.addEventListener("click", () => {
     state.godmode = !state.godmode;
     document.getElementById("layers-panel").classList.toggle("hidden", !state.godmode);
     document.getElementById("godmode-label").textContent =
@@ -661,10 +662,6 @@ function wireControls() {
   // Onglet Profil (mobile) : chaque bouton relaie vers l'action correspondante du top-nav.
   document.querySelectorAll(".profil-act").forEach((b) =>
     b.addEventListener("click", () => document.getElementById(b.dataset.target)?.click()));
-  // Bouton « Calques » (mobile) : ouvre/ferme le volet calques/légende en feuille basse.
-  document.getElementById("layers-fab")?.addEventListener("click", () =>
-    document.getElementById("sidebar").classList.toggle("sheet-open"));
-
   // Menu sandwich (mobile) : ouvre/ferme le tiroir de navigation
   const navToggle = document.getElementById("nav-toggle");
   const navMenu = document.getElementById("nav-menu");
@@ -683,8 +680,8 @@ function wireControls() {
     if (navMenu.classList.contains("mobile-open") && !navMenu.contains(e.target) && !navToggle.contains(e.target)) closeNavMenu();
   });
 
-  // Replier / déployer la barre latérale (pratique sur téléphone)
-  document.getElementById("sidebar-toggle").addEventListener("click", toggleSidebar);
+  // Replier / déployer la barre latérale (si le volet existe encore)
+  document.getElementById("sidebar-toggle")?.addEventListener("click", toggleSidebar);
 
   // Cloche de notifications (spots propices)
   document.getElementById("notif-btn").addEventListener("click", (e) => { e.stopPropagation(); toggleNotifPanel(); });
@@ -839,14 +836,15 @@ function setTab(tab) {
    et si non repliée. Le bouton de bascule n'apparaît que sur Carte. */
 function applySidebar(resize) {
   const onMap = state.tab === "carte";
-  const sb = document.getElementById("sidebar");
-  sb.classList.toggle("hidden", !onMap);                          // pas de barre hors Carte
-  if (!onMap) sb.classList.remove("sheet-open");                  // referme la feuille Calques (mobile)
-  sb.classList.toggle("-translate-x-full", state.sidebarCollapsed); // repli = glissement CSS
-  const icon = document.getElementById("sidebar-toggle-icon");
-  if (icon) icon.textContent = state.sidebarCollapsed ? "»" : "«";
-  // Tiroir absolu : la carte ne change plus de taille au repli → invalidateSize
-  // seulement au changement d'onglet (la carte (ré)apparaît).
+  const sb = document.getElementById("sidebar");   // volet (peut être supprimé)
+  if (sb) {
+    sb.classList.toggle("hidden", !onMap);                          // pas de barre hors Carte
+    if (!onMap) sb.classList.remove("sheet-open");                  // referme la feuille Calques (mobile)
+    sb.classList.toggle("-translate-x-full", state.sidebarCollapsed); // repli = glissement CSS
+    const icon = document.getElementById("sidebar-toggle-icon");
+    if (icon) icon.textContent = state.sidebarCollapsed ? "»" : "«";
+  }
+  // invalidateSize au changement d'onglet (la carte (ré)apparaît).
   if (resize && state.map && onMap) setTimeout(() => state.map.invalidateSize(), 60);
 }
 
