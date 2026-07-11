@@ -17,7 +17,7 @@ import re
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Request
-from fastapi.responses import Response
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
@@ -547,6 +547,24 @@ def api_list_access_requests(user=Depends(require_admin)):
 OVERLAY_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/overlays", StaticFiles(directory=str(OVERLAY_DIR)), name="overlays")
 app.mount("/static", StaticFiles(directory=str(WEB_DIR)), name="static")
+
+
+# ===== PWA (coquille seule) =====
+@app.get("/sw.js", include_in_schema=False)
+def service_worker():
+    # Servi à la racine → scope du SW = tout le site. no-cache pour maj immédiate.
+    return FileResponse(
+        str(WEB_DIR / "sw.js"),
+        media_type="application/javascript",
+        headers={"Cache-Control": "no-cache"},
+    )
+
+
+@app.get("/manifest.webmanifest", include_in_schema=False)
+def manifest():
+    return FileResponse(
+        str(WEB_DIR / "manifest.webmanifest"), media_type="application/manifest+json"
+    )
 
 
 @app.get("/")

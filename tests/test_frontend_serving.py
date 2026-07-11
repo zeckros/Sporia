@@ -24,6 +24,18 @@ def test_static_bundle_served():
     assert r.status_code == 200
 
 
+def test_service_worker_served():
+    r = client.get("/sw.js")
+    assert r.status_code == 200
+    assert "javascript" in r.headers["content-type"]
+
+
+def test_manifest_served():
+    r = client.get("/manifest.webmanifest")
+    assert r.status_code == 200
+    assert "manifest" in r.headers["content-type"]
+
+
 def test_index_composes_all_screens():
     r = client.get("/")
     assert r.status_code == 200

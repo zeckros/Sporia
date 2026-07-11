@@ -1,5 +1,7 @@
   <!-- ============ APP ============ -->
   <div id="app-screen" class="hidden h-[100dvh] overflow-hidden flex flex-col">
+    <!-- Bandeau hors-ligne (PWA coquille seule : données indisponibles sans réseau) -->
+    <div id="offline-banner" class="hidden shrink-0 bg-amber-500 text-white text-center text-xs font-semibold py-1">Hors-ligne — les données ne se mettent pas à jour</div>
     <!-- Navbar (classique, blanche) -->
     <header class="relative h-14 shrink-0 bg-white border-b border-slate-200 shadow-soft flex items-center px-4 gap-2 z-[1000]">
       <div class="flex items-center gap-2 mr-3 select-none">
@@ -153,6 +155,7 @@
         <div class="max-w-xl mx-auto px-6 pt-7 pb-24 md:pb-7 space-y-3">
           <h1 class="text-2xl font-black">Profil</h1>
           <p id="profil-user" class="text-sm text-slate-500 mb-2"></p>
+          <button id="install-btn" class="hidden w-full text-left px-4 py-3 rounded-xl bg-brand-500 text-white font-semibold hover:bg-brand-600 transition">📲 Installer l'application</button>
           <button class="profil-act w-full text-left px-4 py-3 rounded-xl bg-white border border-slate-200 font-semibold text-brand-700 hover:bg-brand-50 transition" data-target="species-btn">🍄 Mes champignons</button>
           <button class="profil-act w-full text-left px-4 py-3 rounded-xl bg-white border border-slate-200 font-semibold text-brand-700 hover:bg-brand-50 transition" data-target="manage-sub">Mon abonnement</button>
           <button class="profil-act w-full text-left px-4 py-3 rounded-xl bg-white border border-slate-200 font-semibold text-slate-600 hover:bg-slate-50 transition" data-target="logout-btn">Déconnexion</button>

@@ -15,6 +15,7 @@ CSP = (
     "font-src 'self'; "
     "img-src 'self' data: https:; "
     "connect-src 'self'; "
+    "worker-src 'self'; manifest-src 'self'; "  # PWA : service worker + manifest
     "frame-ancestors 'self'; base-uri 'self'; form-action 'self'"
 )
 

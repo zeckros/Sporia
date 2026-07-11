@@ -1303,3 +1303,29 @@ function renderSpots() {
 }
 
 boot();
+
+/* ---------- PWA (coquille seule) ---------- */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
+}
+// Prompt d'installation (Android/Chrome) → bouton « Installer » dans Profil
+let deferredInstall = null;
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredInstall = e;
+  document.getElementById("install-btn")?.classList.remove("hidden");
+});
+document.getElementById("install-btn")?.addEventListener("click", async () => {
+  if (!deferredInstall) return;
+  deferredInstall.prompt();
+  await deferredInstall.userChoice;
+  deferredInstall = null;
+  document.getElementById("install-btn")?.classList.add("hidden");
+});
+// Bandeau hors-ligne
+function updateOnline() {
+  document.getElementById("offline-banner")?.classList.toggle("hidden", navigator.onLine);
+}
+window.addEventListener("online", updateOnline);
+window.addEventListener("offline", updateOnline);
+updateOnline();
