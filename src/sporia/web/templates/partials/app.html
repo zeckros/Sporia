@@ -162,27 +162,27 @@
             </div>
           </div>
         </div>
+          <!-- Espèces radar (dans le conteneur → même espacement que search/puces) -->
+          <div id="radar-species" class="hidden relative w-fit">
+            <button id="radar-species-btn" class="flex items-center gap-1 px-3 py-1.5 rounded-full bg-white shadow-soft border border-slate-200 text-xs font-semibold text-slate-600">🍄 Espèces ▾</button>
+            <div id="radar-species-pop" class="hidden absolute top-full left-0 mt-1.5 w-56 max-h-64 overflow-y-auto nice-scroll bg-white rounded-xl shadow-card border border-slate-200 p-2 z-10">
+              <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 px-1">Afficher sur le radar</div>
+              <div id="radar-species-list" class="space-y-0.5"></div>
+            </div>
+          </div>
+          <!-- Curseur de dates (du…au…) : Température / Pluie -->
+          <div id="date-range" class="hidden w-full md:w-80 bg-white/95 backdrop-blur rounded-xl shadow-card border border-slate-200 px-3 py-2.5">
+            <div class="text-[11px] font-semibold text-slate-600 mb-2.5">Période : du <span id="dr-from" class="text-brand-700 font-bold"></span> au <span id="dr-to" class="text-brand-700 font-bold"></span></div>
+            <div class="dr-slider relative h-5">
+              <div class="dr-track"></div>
+              <div id="dr-fill" class="dr-fill"></div>
+              <input type="range" id="dr-start" class="dr-input" min="0" max="0" value="0" aria-label="Date de début">
+              <input type="range" id="dr-end" class="dr-input" min="0" max="0" value="0" aria-label="Date de fin">
+            </div>
+          </div>
         </div>
         <!-- Légende en étiquette (bas-gauche de la carte) -->
         <div id="map-legend" class="hidden absolute left-3 bottom-3 z-[850] w-64 max-w-[calc(100vw-1.5rem)] max-h-[45vh] overflow-y-auto nice-scroll bg-white/95 backdrop-blur rounded-xl shadow-card border border-slate-200 px-3 py-2 text-xs text-slate-500"></div>
-        <!-- Espèces du radar : bouton + popover (visible quand le calque Radar est actif) -->
-        <div id="radar-species" class="hidden absolute top-28 left-3 z-[859]">
-          <button id="radar-species-btn" class="flex items-center gap-1 px-3 py-1.5 rounded-full bg-white shadow-soft border border-slate-200 text-xs font-semibold text-slate-600">🍄 Espèces ▾</button>
-          <div id="radar-species-pop" class="hidden mt-1.5 w-56 max-h-64 overflow-y-auto nice-scroll bg-white rounded-xl shadow-card border border-slate-200 p-2">
-            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 px-1">Afficher sur le radar</div>
-            <div id="radar-species-list" class="space-y-0.5"></div>
-          </div>
-        </div>
-        <!-- Curseur de dates (du…au…) : visible pour Température / Pluie -->
-        <div id="date-range" class="hidden absolute top-28 left-3 right-3 md:right-auto md:w-80 z-[858] bg-white/95 backdrop-blur rounded-xl shadow-card border border-slate-200 px-3 py-2.5">
-          <div class="text-[11px] font-semibold text-slate-600 mb-2.5">Période : du <span id="dr-from" class="text-brand-700 font-bold"></span> au <span id="dr-to" class="text-brand-700 font-bold"></span></div>
-          <div class="dr-slider relative h-5">
-            <div class="dr-track"></div>
-            <div id="dr-fill" class="dr-fill"></div>
-            <input type="range" id="dr-start" class="dr-input" min="0" max="0" value="0" aria-label="Date de début">
-            <input type="range" id="dr-end" class="dr-input" min="0" max="0" value="0" aria-label="Date de fin">
-          </div>
-        </div>
         <!-- Carte d'info, positionnée au pixel du point cliqué (suit la carte) -->
         <div id="point-card" class="hidden absolute z-[800] w-64 bg-white rounded-2xl shadow-card border border-slate-200 p-3.5 fade-in"></div>
       </main>
