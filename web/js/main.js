@@ -619,6 +619,13 @@ function wireControls() {
     if (rsPop && !rsPop.classList.contains("hidden") && !rsPop.contains(e.target) && !rsBtn.contains(e.target))
       rsPop.classList.add("hidden");
   });
+  // « Tout / Aucun » : coche/décoche toutes les espèces du radar
+  document.getElementById("radar-all-toggle")?.addEventListener("click", () => {
+    const boxes = Array.from(document.querySelectorAll("#radar-species-list .radar-check"));
+    const allChecked = boxes.length > 0 && boxes.every((b) => b.checked);
+    state.radarSpecies = allChecked ? [] : null;   // tout coché → tout décocher (sous-ensemble vide) ; sinon tout cocher (null)
+    refreshRadar();   // updateLegend rappelle updateRadarSpecies → cases resynchronisées
+  });
 
   // Période → recharge le calque météo actif
   document.querySelectorAll(".period-btn").forEach((b) =>
