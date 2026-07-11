@@ -173,6 +173,16 @@
             <div id="radar-species-list" class="space-y-0.5"></div>
           </div>
         </div>
+        <!-- Curseur de dates (du…au…) : visible pour Température / Pluie -->
+        <div id="date-range" class="hidden absolute top-28 left-3 right-3 md:right-auto md:w-80 z-[858] bg-white/95 backdrop-blur rounded-xl shadow-card border border-slate-200 px-3 py-2.5">
+          <div class="text-[11px] font-semibold text-slate-600 mb-2.5">Période : du <span id="dr-from" class="text-brand-700 font-bold"></span> au <span id="dr-to" class="text-brand-700 font-bold"></span></div>
+          <div class="dr-slider relative h-5">
+            <div class="dr-track"></div>
+            <div id="dr-fill" class="dr-fill"></div>
+            <input type="range" id="dr-start" class="dr-input" min="0" max="0" value="0" aria-label="Date de début">
+            <input type="range" id="dr-end" class="dr-input" min="0" max="0" value="0" aria-label="Date de fin">
+          </div>
+        </div>
         <!-- Carte d'info, positionnée au pixel du point cliqué (suit la carte) -->
         <div id="point-card" class="hidden absolute z-[800] w-64 bg-white rounded-2xl shadow-card border border-slate-200 p-3.5 fade-in"></div>
       </main>

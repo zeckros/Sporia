@@ -264,6 +264,7 @@ async function startApp() {
   const d = await API.get("/api/dates");
   state.dates = d.dates;
   computeSelectedDates();
+  buildDateSlider();
   initMap();
   await loadPreferences();
   wireControls();
@@ -324,6 +325,37 @@ function computeSelectedDates() {
                     : `${fmt(sd[0])} → ${fmt(sd[sd.length-1])} · ${sd.length} j`;
 }
 
+/* Curseur de dates à deux poignées (du…au…) : écrit directement state.selectedDates.
+   oninput = MAJ live des libellés/remplissage ; onchange (relâchement) = recharge le calque. */
+function buildDateSlider() {
+  const n = (state.dates || []).length;
+  const s = document.getElementById("dr-start");
+  const e = document.getElementById("dr-end");
+  if (!n || !s || !e) return;
+  s.min = e.min = "0"; s.max = e.max = String(n - 1);
+  s.value = String(n - 1); e.value = String(n - 1);   // défaut : dernier jour
+  const fmt = (i) => { const d = state.dates[i]; return `${d.slice(6, 8)}/${d.slice(4, 6)}`; };
+  const paint = () => {
+    let a = +s.value, b = +e.value;
+    if (a > b) [a, b] = [b, a];
+    document.getElementById("dr-from").textContent = fmt(a);
+    document.getElementById("dr-to").textContent = fmt(b);
+    const pc = (v) => (n > 1 ? (v / (n - 1)) * 100 : 0);
+    const fill = document.getElementById("dr-fill");
+    fill.style.left = pc(a) + "%";
+    fill.style.right = (100 - pc(b)) + "%";
+    return [a, b];
+  };
+  const apply = () => {
+    const [a, b] = paint();
+    state.selectedDates = state.dates.slice(a, b + 1);
+    if (state.activeLayer === "temp" || state.activeLayer === "precip") setActiveLayer(state.activeLayer);
+  };
+  s.oninput = paint; e.oninput = paint;
+  s.onchange = apply; e.onchange = apply;
+  paint();
+}
+
 function _setOverlay(key, res, opacity) {
   const b = res.bounds;
   if (state.layers[key]) state.map.removeLayer(state.layers[key]);
@@ -334,8 +366,7 @@ function _setOverlay(key, res, opacity) {
 
 /* Calques météo séparés : 'T' (température moyenne) et 'RR' (précipitations). */
 export async function refreshWeatherLayer(varName) {
-  computeSelectedDates();
-  if (!state.selectedDates.length) return;
+  if (!state.selectedDates.length) return;   // state.selectedDates piloté par le curseur de dates
   const key = varName === "RR" ? "precip" : "temp";
   try {
     const res = await API.get(`/api/overlay?var=${varName}&dates=${state.selectedDates.join(",")}`);
@@ -547,6 +578,8 @@ async function setActiveLayer(key) {
   // Période : utile seulement pour les calques météo (température / précipitations) → masquée sinon
   const pb = document.getElementById("period-block");
   if (pb) pb.classList.toggle("hidden", !(key === "temp" || key === "precip"));
+  const dr = document.getElementById("date-range");   // curseur de dates : Température / Pluie
+  if (dr) dr.classList.toggle("hidden", !(key === "temp" || key === "precip"));
   // calques exclusifs : on retire tout, puis on (ré)affiche le calque choisi
   LAYER_KEYS.forEach((k) => { if (state.layers[k]) state.map.removeLayer(state.layers[k]); });
   const def = LAYER_DEFS[key];

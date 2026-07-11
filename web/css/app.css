@@ -38,6 +38,14 @@ html,body{height:100%;margin:0;font-family:'Inter',system-ui,sans-serif;backgrou
 .no-scrollbar::-webkit-scrollbar{display:none}
 /* Dropdown de résultats de recherche : masqué quand vide (pas de boîte fantôme) */
 #city-results:empty{display:none}
+/* Curseur de dates à deux poignées (du…au…) : deux <input range> superposés */
+.dr-track{position:absolute;top:50%;left:0;right:0;height:4px;transform:translateY(-50%);background:#e2e8f0;border-radius:4px}
+.dr-fill{position:absolute;top:50%;height:4px;transform:translateY(-50%);background:#c2620e;border-radius:4px}
+.dr-input{position:absolute;top:0;left:0;width:100%;height:100%;margin:0;background:none;pointer-events:none;-webkit-appearance:none;appearance:none}
+.dr-input::-webkit-slider-thumb{pointer-events:auto;-webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;background:#fff;border:2px solid #c2620e;box-shadow:0 1px 4px rgba(0,0,0,.25);cursor:pointer}
+.dr-input::-moz-range-thumb{pointer-events:auto;width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid #c2620e;box-shadow:0 1px 4px rgba(0,0,0,.25);cursor:pointer}
+.dr-input::-webkit-slider-runnable-track{background:none;border:none}
+.dr-input::-moz-range-track{background:none;border:none}
 .seg-btn[aria-selected="true"]{background:#c2620e;color:#fff}
 /* Menu sandwich (mobile) : le contenu de la navbar passe en tiroir déroulant */
 @media (max-width:767px){
