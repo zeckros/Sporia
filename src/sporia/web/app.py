@@ -15,6 +15,7 @@ from __future__ import annotations
 import html
 import os
 import re
+import secrets
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Request
@@ -560,6 +561,43 @@ def api_list_access_requests(user=Depends(require_admin)):
     """Liste des demandes d'accès — RÉSERVÉ ADMIN (contient des emails).
     Nécessite `role: admin` sur le compte dans config.yaml."""
     return {"requests": access_requests.list_requests()}
+
+
+class CreateFromRequestIn(BaseModel):
+    request_id: str
+
+
+@app.post("/api/admin/accounts/from-request")
+def api_create_account_from_request(
+    body: CreateFromRequestIn, request: Request, user=Depends(require_admin)
+):
+    """Crée un compte à partir d'une demande d'accès, puis retire la demande — RÉSERVÉ ADMIN.
+
+    Le compte a un mot de passe aléatoire inutilisable ; un lien d'invitation (jeton reset,
+    7 j) permet à la personne de définir le sien. Le lien est envoyé par email (best-effort)
+    ET renvoyé pour affichage/copie (utile si l'email n'est pas configuré)."""
+    req = access_requests.get_request(body.request_id)
+    if req is None:
+        raise HTTPException(status_code=404, detail="Demande introuvable.")
+    email = _valid_email(req["email"])
+    try:
+        acc = accounts.create_user(
+            email, secrets.token_urlsafe(24), name=(req.get("name") or "").strip() or None
+        )
+    except ValueError:
+        raise HTTPException(
+            status_code=409, detail="Un compte existe déjà pour cet email."
+        ) from None
+    token = accounts.create_token(acc["id"], "reset", 7 * 24 * 3600)
+    invite_url = f"{str(request.base_url).rstrip('/')}/?reset={token}"
+    send_email(
+        email,
+        "Votre accès à Sporia",
+        f"<p>Un compte Sporia a été créé pour vous. Définissez votre mot de passe : "
+        f'<a href="{invite_url}">choisir mon mot de passe</a> (lien valide 7 jours).</p>',
+    )
+    access_requests.remove_request(body.request_id)
+    return {"ok": True, "email": email, "invite_url": invite_url}
 
 
 # ===== Statique =====

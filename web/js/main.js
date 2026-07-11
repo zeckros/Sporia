@@ -38,6 +38,7 @@ async function boot() {
     applyPriceLabel(me.price_label);
     if (me.authenticated) {
       state.name = me.name;
+      state.role = me.role;
       if (me.subscribed) { startApp(); return; }
       showPaywall(justPaid);
       return;
@@ -68,6 +69,7 @@ async function routeAfterAuth() {
   try {
     const me = await API.get("/api/me");
     applyPriceLabel(me.price_label);
+    state.role = me.role;
     if (me.subscribed) { startApp(); return; }
   } catch (e) { /* ignore */ }
   showPaywall(false);
@@ -260,6 +262,8 @@ async function startApp() {
   const profilUser = document.getElementById("profil-user");
   if (profilUser) profilUser.textContent = state.name ? `Connecté : ${state.name}` : "";
   document.getElementById("manage-sub")?.classList.remove("hidden");
+  if (state.role === "admin")
+    document.querySelectorAll(".admin-only").forEach((el) => el.classList.remove("hidden"));
 
   const d = await API.get("/api/dates");
   state.dates = d.dates;
@@ -713,6 +717,11 @@ function wireControls() {
   document.getElementById("species-all").addEventListener("click", () => setAllSpeciesChecks(true));
   document.getElementById("species-none").addEventListener("click", () => setAllSpeciesChecks(false));
 
+  // Modale « Demandes d'accès » (admin)
+  document.getElementById("admin-requests-btn").addEventListener("click", openAccessRequests);
+  document.getElementById("areq-close").addEventListener("click", closeAccessRequests);
+  document.getElementById("areq-backdrop").addEventListener("click", closeAccessRequests);
+
   document.querySelectorAll(".tab-btn, .tabbar-btn").forEach((b) =>
     b.addEventListener("click", () => setTab(b.dataset.tab)));
   // Onglet Profil (mobile) : chaque bouton relaie vers l'action correspondante du top-nav.
@@ -829,6 +838,73 @@ function openSpeciesModal() {
 }
 
 function closeSpeciesModal() { document.getElementById("species-modal").classList.add("hidden"); }
+
+/* ---------- Demandes d'accès (admin) ---------- */
+async function openAccessRequests() {
+  const list = document.getElementById("areq-list");
+  list.innerHTML = `<div class="text-sm text-slate-400 text-center py-6">Chargement…</div>`;
+  document.getElementById("access-requests-modal").classList.remove("hidden");
+  try {
+    const r = await API.get("/api/access-requests");
+    renderAccessRequests(r.requests || []);
+  } catch (e) {
+    list.innerHTML = `<div class="text-sm text-red-600 text-center py-6">Erreur de chargement.</div>`;
+  }
+}
+
+function closeAccessRequests() {
+  document.getElementById("access-requests-modal").classList.add("hidden");
+}
+
+function renderAccessRequests(reqs) {
+  const list = document.getElementById("areq-list");
+  if (!reqs.length) {
+    list.innerHTML = `<div class="text-sm text-slate-400 text-center py-6">Aucune demande pour le moment.</div>`;
+    return;
+  }
+  // list_requests() renvoie les plus anciennes d'abord → on affiche les plus récentes en haut.
+  list.innerHTML = reqs.slice().reverse().map((r) => {
+    const date = r.created ? new Date(r.created * 1000).toLocaleDateString("fr-FR") : "";
+    return `<div class="rounded-xl border border-slate-200 p-3" data-id="${escapeHtml(r.id)}">
+      <div class="flex items-start justify-between gap-2">
+        <div class="min-w-0">
+          <div class="font-semibold text-sm text-slate-800 truncate">${escapeHtml(r.name)}</div>
+          <div class="text-xs text-slate-500 truncate">${escapeHtml(r.email)}</div>
+        </div>
+        <span class="text-[11px] text-slate-400 shrink-0">${date}</span>
+      </div>
+      <div class="mt-2 text-sm text-slate-600 whitespace-pre-line break-words">${escapeHtml(r.message)}</div>
+      <div class="areq-action mt-3">
+        <button class="areq-create px-3 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold shadow-card">Créer le compte</button>
+      </div>
+    </div>`;
+  }).join("");
+  list.querySelectorAll("[data-id]").forEach((card) =>
+    card.querySelector(".areq-create").addEventListener("click", () => createFromRequest(card)));
+}
+
+async function createFromRequest(card) {
+  const box = card.querySelector(".areq-action");
+  box.innerHTML = `<span class="text-xs text-slate-400">Création…</span>`;
+  try {
+    const r = await API.post("/api/admin/accounts/from-request", { request_id: card.dataset.id });
+    card.classList.add("opacity-70");
+    box.innerHTML =
+      `<div class="text-xs font-semibold text-green-700">✓ Compte créé — ${escapeHtml(r.email)}</div>
+       <div class="mt-1 text-[11px] text-slate-500">Lien d'invitation (aussi envoyé par email) :</div>
+       <div class="mt-1 flex items-center gap-1.5">
+         <input class="areq-link flex-1 min-w-0 text-[11px] px-2 py-1 rounded border border-slate-200 bg-slate-50" readonly value="${escapeHtml(r.invite_url)}">
+         <button class="areq-copy px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-[11px] font-semibold shrink-0">Copier</button>
+       </div>`;
+    box.querySelector(".areq-copy").addEventListener("click", () => {
+      const inp = box.querySelector(".areq-link");
+      inp.select();
+      navigator.clipboard?.writeText(inp.value);
+    });
+  } catch (e) {
+    box.innerHTML = `<div class="text-xs text-red-600">${escapeHtml(e.message || "Échec de la création.")}</div>`;
+  }
+}
 function setAllSpeciesChecks(v) {
   document.querySelectorAll("#species-list .sp-check").forEach((c) => { c.checked = v; });
   updateSpeciesCount();

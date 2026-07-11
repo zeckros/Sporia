@@ -61,3 +61,22 @@ def add_request(name: str, email: str, message: str) -> dict:
 def list_requests() -> list:
     """Toutes les demandes (les plus récentes en dernier)."""
     return _load()
+
+
+def get_request(req_id: str) -> dict | None:
+    """Une demande par son id, ou None."""
+    for r in _load():
+        if r.get("id") == req_id:
+            return r
+    return None
+
+
+def remove_request(req_id: str) -> bool:
+    """Retire une demande traitée. True si elle existait."""
+    with _LOCK:
+        reqs = _load()
+        kept = [r for r in reqs if r.get("id") != req_id]
+        if len(kept) == len(reqs):
+            return False
+        _save(kept)
+        return True
