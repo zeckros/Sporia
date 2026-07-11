@@ -31,3 +31,9 @@ def test_da_tokens_in_tailwind_config():
     assert "girolle" in cfg and "#f2a93b" in cfg
     assert "sousbois" in cfg and "#191510" in cfg
     assert "clash display" in cfg
+
+
+def test_da_css_variables_and_utilities():
+    css = Path("web/css/app.css").read_text(encoding="utf-8")
+    assert "#191510" in css and "#f2a93b" in css  # variables DA
+    assert ".da-grain" in css and ".da-shadow" in css

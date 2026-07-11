@@ -1,3 +1,24 @@
+/* --- Fondation DA « Girolle × Cèpe » : tokens + utilitaires --- */
+:root {
+  --sousbois: #191510;
+  --os: #efe6d3;
+  --girolle: #f2a93b;
+  --cepe: #b9793f;
+  --lactaire: #d9772e;
+  --mycene: #c6f24e;
+}
+.da-grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: .5;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.da-shadow { box-shadow: 6px 6px 0 var(--sousbois); }
+.da-card { border: 2px solid var(--sousbois); border-radius: 4px; }
+@media (prefers-reduced-motion: reduce) { .da-grain { display: none; } }
+
 html,body{height:100%;margin:0;font-family:'Inter',system-ui,sans-serif;background:#f8fafc;color:#0f172a}
 #map{position:absolute;inset:0}
 /* Positionnement garanti de la carte d'info (indépendant de Tailwind) */
