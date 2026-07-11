@@ -13,6 +13,7 @@ requests>=2.33.0
 urllib3>=2.7.0
 idna>=3.15
 matplotlib
+fonttools>=4.60.2  # CVE fix (via matplotlib)
 Pillow>=12.2.0
 
 # Modèle SDM probabiliste (scripts/train_sdm.py + scoring fruiting_live).
@@ -22,10 +23,13 @@ Pillow>=12.2.0
 # chargent sans avertissement ni résultat faussé côté serveur.
 scikit-learn>=1.7,<1.8
 
-# Application web (server.py + champi_core.py + web/)
+# Application web (sporia.web / templates Jinja2 / abonnement Stripe)
 fastapi
+starlette>=1.3.1   # CVE fix (via FastAPI)
 uvicorn[standard]
 itsdangerous
+jinja2>=3.1
 bcrypt
 PyYAML
 python-dotenv>=1.2.2
+stripe>=9,<13
