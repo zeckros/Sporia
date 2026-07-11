@@ -75,27 +75,28 @@
           </div>
           <div id="city-results" class="absolute left-0 right-0 top-full mt-1 space-y-1 bg-white rounded-xl shadow-card border border-slate-200 p-1 z-10"></div>
           </div>
-          <!-- Direction A : puces principales + « Plus » pour les calques secondaires -->
-          <div class="flex gap-1.5 items-start">
-          <div id="layer-chips" class="flex gap-1.5 overflow-x-auto lg:overflow-visible no-scrollbar min-w-0">
+          <!-- Direction A : nombre de puces affiché calculé dynamiquement (priority+) ; le reste va dans « ＋ Plus » -->
+          <div id="chips-row" class="flex gap-1.5 items-start">
+          <div id="layer-chips" class="flex gap-1.5 overflow-x-auto no-scrollbar min-w-0">
             <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-brand-500 text-white shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="radar">🍄 Radar</button>
             <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="temp">Température</button>
             <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="precip">Pluie</button>
-            <button class="layer-chip hidden lg:flex items-center shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="forest">Forêt</button>
-            <!-- Secondaires : en ligne sur desktop (place dispo), masquées sur mobile (menu « ＋ Plus ») -->
-            <button class="layer-chip hidden lg:flex items-center shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="soil">Sol</button>
-            <button class="layer-chip hidden lg:flex items-center shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="soilmoist">Humidité</button>
-            <button class="layer-chip hidden lg:flex items-center shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="altitude">Altitude</button>
-            <button class="layer-chip hidden lg:flex items-center shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="aspect">Exposition</button>
+            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="forest">Forêt</button>
+            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="soil">Sol</button>
+            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="soilmoist">Humidité</button>
+            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="altitude">Altitude</button>
+            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="aspect">Exposition</button>
           </div>
-          <div class="relative shrink-0 lg:hidden">
+          <div id="more-wrap" class="relative shrink-0 hidden">
             <button id="more-layers-btn" class="px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap">＋ Plus</button>
             <div id="more-layers" class="hidden absolute right-0 mt-1.5 w-44 bg-white rounded-xl shadow-card border border-slate-200 p-1.5 space-y-1 z-[870]">
-              <button class="layer-chip more-item w-full text-left px-3 py-1.5 rounded-lg bg-white text-slate-600 text-xs font-semibold hover:bg-slate-50" data-layer="forest">Forêt — essences</button>
-              <button class="layer-chip more-item w-full text-left px-3 py-1.5 rounded-lg bg-white text-slate-600 text-xs font-semibold hover:bg-slate-50" data-layer="soil">Type de sol</button>
-              <button class="layer-chip more-item w-full text-left px-3 py-1.5 rounded-lg bg-white text-slate-600 text-xs font-semibold hover:bg-slate-50" data-layer="soilmoist">Humidité du sol</button>
-              <button class="layer-chip more-item w-full text-left px-3 py-1.5 rounded-lg bg-white text-slate-600 text-xs font-semibold hover:bg-slate-50" data-layer="altitude">Altitude / relief</button>
-              <button class="layer-chip more-item w-full text-left px-3 py-1.5 rounded-lg bg-white text-slate-600 text-xs font-semibold hover:bg-slate-50" data-layer="aspect">Exposition</button>
+              <button class="layer-chip more-item hidden w-full text-left px-3 py-1.5 rounded-lg bg-white text-slate-600 text-xs font-semibold hover:bg-slate-50" data-layer="temp">Température</button>
+              <button class="layer-chip more-item hidden w-full text-left px-3 py-1.5 rounded-lg bg-white text-slate-600 text-xs font-semibold hover:bg-slate-50" data-layer="precip">Pluie</button>
+              <button class="layer-chip more-item hidden w-full text-left px-3 py-1.5 rounded-lg bg-white text-slate-600 text-xs font-semibold hover:bg-slate-50" data-layer="forest">Forêt — essences</button>
+              <button class="layer-chip more-item hidden w-full text-left px-3 py-1.5 rounded-lg bg-white text-slate-600 text-xs font-semibold hover:bg-slate-50" data-layer="soil">Type de sol</button>
+              <button class="layer-chip more-item hidden w-full text-left px-3 py-1.5 rounded-lg bg-white text-slate-600 text-xs font-semibold hover:bg-slate-50" data-layer="soilmoist">Humidité du sol</button>
+              <button class="layer-chip more-item hidden w-full text-left px-3 py-1.5 rounded-lg bg-white text-slate-600 text-xs font-semibold hover:bg-slate-50" data-layer="altitude">Altitude / relief</button>
+              <button class="layer-chip more-item hidden w-full text-left px-3 py-1.5 rounded-lg bg-white text-slate-600 text-xs font-semibold hover:bg-slate-50" data-layer="aspect">Exposition</button>
             </div>
           </div>
         </div>

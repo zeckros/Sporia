@@ -272,8 +272,10 @@ async function startApp() {
   const syncTabbarH = () =>
     document.documentElement.style.setProperty(
       "--tabbar-h", (document.getElementById("tabbar")?.offsetHeight || 0) + "px");
-  syncTabbarH();
-  window.addEventListener("resize", syncTabbarH);
+  const onResize = () => { syncTabbarH(); layoutChips(); };
+  onResize();
+  setTimeout(layoutChips, 250);   // recalcul après stabilisation des largeurs (police chargée)
+  window.addEventListener("resize", onResize);
   await setActiveLayer("radar");   // « Radar à champignons » par défaut
   setTab("carte");
   // contour France (léger)
@@ -555,6 +557,52 @@ function updateActiveLayerName() {
   el.classList.toggle("hidden", !el.textContent);   // titre TOUJOURS visible (sauf si vide)
 }
 
+/* Priority+ : affiche autant de puces de calques que la largeur le permet ;
+   les puces qui débordent basculent dans le menu « ＋ Plus ». Recalculé au resize. */
+function layoutChips() {
+  const row = document.getElementById("chips-row");
+  const bar = document.getElementById("layer-chips");
+  const moreWrap = document.getElementById("more-wrap");
+  if (!row || !bar || !moreWrap) return;
+  const chips = Array.from(bar.querySelectorAll(".layer-chip"));
+  if (!chips.length) return;
+  const GAP = 6;
+  chips.forEach((c) => c.classList.remove("hidden"));   // tout afficher pour mesurer
+  moreWrap.classList.remove("hidden");
+  const rowW = row.clientWidth;
+  if (!rowW) return;                                    // onglet Carte masqué → recalcul à l'affichage
+  const moreW = moreWrap.offsetWidth + GAP;
+  const w = chips.map((c) => c.offsetWidth);
+  const total = w.reduce((a, x, i) => a + x + (i ? GAP : 0), 0);
+  let fit;
+  if (total <= rowW) {
+    fit = chips.length;                                 // tout rentre → pas de « ＋ Plus »
+  } else {
+    let used = 0; fit = 0;
+    for (let i = 0; i < chips.length; i++) {
+      const need = w[i] + (i ? GAP : 0);
+      if (used + need <= rowW - moreW) { used += need; fit++; } else break;
+    }
+    fit = Math.max(1, fit);                             // au moins « Radar »
+  }
+  let overflowActive = false;
+  chips.forEach((c, i) => {
+    const inBar = i < fit;
+    c.classList.toggle("hidden", !inBar);
+    const item = document.querySelector(`.more-item[data-layer="${c.dataset.layer}"]`);
+    if (item) item.classList.toggle("hidden", inBar);   // more-item visible ⇔ puce débordée
+    if (!inBar && c.dataset.layer === state.activeLayer) overflowActive = true;
+  });
+  moreWrap.classList.toggle("hidden", fit >= chips.length);
+  const mb = document.getElementById("more-layers-btn");
+  if (mb) {   // « ＋ Plus » surligné si le calque actif est rangé dedans
+    mb.classList.toggle("bg-brand-500", overflowActive);
+    mb.classList.toggle("text-white", overflowActive);
+    mb.classList.toggle("bg-white", !overflowActive);
+    mb.classList.toggle("text-slate-600", !overflowActive);
+  }
+}
+
 /* ---------- Calques exclusifs (un seul affiché à la fois) ---------- */
 async function setActiveLayer(key) {
   state.activeLayer = key;
@@ -567,14 +615,15 @@ async function setActiveLayer(key) {
     c.classList.toggle("text-slate-600", !on);
   });
   document.querySelectorAll('input[name="layer"]').forEach((r) => { r.checked = (r.value === key); });
-  // « ＋ Plus » surligné si le calque actif est un secondaire (dans le menu déroulant)
+  // « ＋ Plus » surligné si le calque actif est rangé dans le menu (puce débordée)
   const moreB = document.getElementById("more-layers-btn");
   if (moreB) {
-    const sec = ["forest", "soil", "soilmoist", "altitude", "aspect"].includes(key);
-    moreB.classList.toggle("bg-brand-500", sec);
-    moreB.classList.toggle("text-white", sec);
-    moreB.classList.toggle("bg-white", !sec);
-    moreB.classList.toggle("text-slate-600", !sec);
+    const chip = document.querySelector(`#layer-chips .layer-chip[data-layer="${key}"]`);
+    const inMenu = !!chip && chip.classList.contains("hidden");
+    moreB.classList.toggle("bg-brand-500", inMenu);
+    moreB.classList.toggle("text-white", inMenu);
+    moreB.classList.toggle("bg-white", !inMenu);
+    moreB.classList.toggle("text-slate-600", !inMenu);
   }
   // Période : utile seulement pour les calques météo (température / précipitations) → masquée sinon
   const pb = document.getElementById("period-block");
@@ -835,6 +884,7 @@ function setTab(tab) {
   document.getElementById("view-spots").classList.toggle("hidden", tab !== "spots");
   document.getElementById("view-profil").classList.toggle("hidden", tab !== "profil");
   applySidebar(true);   // barre latérale : visible seulement sur Carte, et selon repli
+  if (tab === "carte") setTimeout(layoutChips, 60);   // la largeur des puces n'existe que la vue Carte visible
   if (tab === "guide") renderGuide();
   if (tab === "spots") renderSpots();
 }
