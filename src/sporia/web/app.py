@@ -12,6 +12,7 @@ Lancement (prod) :  PROD=1 uvicorn sporia.web.app:app --host 127.0.0.1 --port 80
 
 from __future__ import annotations
 
+import html
 import os
 import re
 from pathlib import Path
@@ -533,7 +534,25 @@ def api_access_request(body: AccessRequestIn):
     if not message or len(message) > 2000:
         raise HTTPException(status_code=400, detail="Message invalide (1–2000 caractères).")
     access_requests.add_request(name, email, message)
+    _notify_admin_access_request(name, email, message)
     return {"ok": True}
+
+
+def _notify_admin_access_request(name: str, email: str, message: str) -> None:
+    """Prévient l'admin par email d'une nouvelle demande d'accès (best-effort).
+
+    Destinataire = ADMIN_EMAIL (env). Absent (ou pas de BREVO_API_KEY) → no-op.
+    Champs échappés (contenu utilisateur) pour éviter toute injection HTML."""
+    admin_to = os.environ.get("ADMIN_EMAIL", "").strip()
+    if not admin_to:
+        return
+    body_html = (
+        "<p><strong>Nouvelle demande d'accès Sporia :</strong></p>"
+        f"<p><b>Nom :</b> {html.escape(name)}<br>"
+        f"<b>Email :</b> {html.escape(email)}</p>"
+        f"<p><b>Message :</b><br>{html.escape(message).replace(chr(10), '<br>')}</p>"
+    )
+    send_email(admin_to, "Sporia — nouvelle demande d'accès", body_html)
 
 
 @app.get("/api/access-requests")
