@@ -580,6 +580,8 @@ async function setActiveLayer(key) {
   if (pb) pb.classList.toggle("hidden", !(key === "temp" || key === "precip"));
   const dr = document.getElementById("date-range");   // curseur de dates : Température / Pluie
   if (dr) dr.classList.toggle("hidden", !(key === "temp" || key === "precip"));
+  const rs = document.getElementById("radar-species");  // masquer tout de suite hors radar (sans attendre le refresh async)
+  if (rs && key !== "radar") rs.classList.add("hidden");
   // calques exclusifs : on retire tout, puis on (ré)affiche le calque choisi
   LAYER_KEYS.forEach((k) => { if (state.layers[k]) state.map.removeLayer(state.layers[k]); });
   const def = LAYER_DEFS[key];
