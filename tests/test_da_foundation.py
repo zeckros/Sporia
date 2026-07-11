@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from starlette.testclient import TestClient
 
 from sporia.web.app import app
@@ -22,3 +24,10 @@ def test_da_fontfaces_declared():
     css = client.get("/static/css/fonts.css").text
     for family in ("Clash Display", "Fraunces", "Space Mono"):
         assert family in css, family
+
+
+def test_da_tokens_in_tailwind_config():
+    cfg = Path("tailwind.config.js").read_text(encoding="utf-8").lower()
+    assert "girolle" in cfg and "#f2a93b" in cfg
+    assert "sousbois" in cfg and "#191510" in cfg
+    assert "clash display" in cfg
