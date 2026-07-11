@@ -1,0 +1,86 @@
+  <!-- ============ MODALE « Mes champignons » ============ -->
+  <div id="species-modal" class="hidden fixed inset-0 z-[2000] flex items-center justify-center p-4">
+    <div id="species-backdrop" class="absolute inset-0 bg-slate-900/40"></div>
+    <div class="relative bg-white rounded-2xl shadow-lg2 w-full max-w-lg max-h-[85vh] flex flex-col">
+      <div class="flex items-start justify-between p-5 border-b border-slate-100">
+        <div>
+          <div class="font-black text-lg text-slate-800">Mes champignons</div>
+          <div class="text-xs text-slate-400">Choisissez les espèces recherchées — la carte des zones propices s'y adapte.</div>
+        </div>
+        <button id="species-close" class="text-slate-400 hover:text-slate-700 text-2xl leading-none -mt-1">×</button>
+      </div>
+      <div class="px-5 py-2 flex items-center gap-2 border-b border-slate-100">
+        <button id="species-all" class="text-xs font-semibold text-brand-700 hover:underline">Tout cocher</button>
+        <span class="text-slate-300">·</span>
+        <button id="species-none" class="text-xs font-semibold text-slate-500 hover:underline">Tout décocher</button>
+        <span id="species-count" class="ml-auto text-xs text-slate-400"></span>
+      </div>
+      <div id="species-list" class="flex-1 overflow-y-auto nice-scroll p-5 grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
+      <div class="p-4 border-t border-slate-100 flex justify-end gap-2">
+        <button id="species-cancel" class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-500 hover:bg-slate-50">Annuler</button>
+        <button id="species-save" class="px-5 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-bold shadow-card">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MODALE CGU ============ -->
+  <div id="cgu-modal" class="hidden fixed inset-0 z-[3000] flex items-center justify-center p-4">
+    <div class="cgu-close absolute inset-0 bg-slate-900/50"></div>
+    <div class="relative bg-white rounded-2xl shadow-lg2 w-full max-w-2xl max-h-[85vh] flex flex-col">
+      <div class="flex items-start justify-between p-5 border-b border-slate-100">
+        <div>
+          <div class="font-black text-lg text-slate-800">Conditions générales d'utilisation</div>
+          <div class="text-xs text-slate-400">Dernière mise à jour : juin 2026 — version simplifiée</div>
+        </div>
+        <button class="cgu-close text-slate-400 hover:text-slate-700 text-2xl leading-none -mt-1">×</button>
+      </div>
+      <div class="flex-1 overflow-y-auto nice-scroll p-6 text-sm text-slate-600 leading-relaxed space-y-4">
+        <div>
+          <div class="font-black text-slate-900 text-base mb-2">Conditions d'utilisation &amp; de vente (CGU/CGV)</div>
+          <p class="mb-2"><strong>Objet.</strong> Sporia est un service d'aide à la prospection de champignons : il croise
+          des données météo, forestières, pédologiques et d'occurrences d'espèces pour estimer, à titre
+          <strong>purement indicatif</strong>, les zones et moments favorables à la pousse.</p>
+          <p class="mb-2"><strong>Accès &amp; abonnement.</strong> L'accès complet requiert un <strong>abonnement annuel</strong>
+          payant, souscrit et géré via notre prestataire de paiement (Stripe). Le tarif en vigueur est affiché avant
+          paiement. L'abonnement se reconduit annuellement ; vous pouvez le résilier à tout moment depuis « Mon abonnement »
+          (l'accès reste ouvert jusqu'à la fin de la période payée).</p>
+          <p class="mb-2"><strong>Droit de rétractation.</strong> Le service numérique étant fourni immédiatement, vous
+          demandez expressément son exécution dès la souscription et <strong>renoncez à votre droit de rétractation</strong>
+          de 14 jours (art. L221-28 3° du Code de la consommation), consentement recueilli par case à cocher au paiement.</p>
+          <p class="mb-2"><strong>Sécurité — avertissement essentiel.</strong> Les estimations ne constituent <strong>en aucun
+          cas</strong> une garantie de présence ni une identification d'espèce. <strong>Ne consommez jamais</strong> un
+          champignon sans identification formelle par une personne compétente (pharmacien, société mycologique) — certaines
+          espèces sont mortelles. Respectez la réglementation de cueillette, la propriété privée et les espaces protégés.
+          L'éditeur décline toute responsabilité en cas d'intoxication, d'accident ou d'infraction.</p>
+          <p class="mb-2"><strong>Responsabilité.</strong> Service fourni « en l'état », sans garantie de disponibilité ni
+          d'exactitude. Ces conditions peuvent évoluer ; la version en vigueur est celle présentée ici.</p>
+          <p><strong>Sources de données.</strong> IGN (BD&nbsp;Forêt®, RGE&nbsp;ALTI®), Météo-France, SoilGrids® (ISRIC),
+          GBIF. Les marques et droits associés restent la propriété de leurs détenteurs respectifs.</p>
+        </div>
+        <div>
+          <div class="font-black text-slate-900 text-base mb-2">Mentions légales</div>
+          <p class="mb-1"><strong>Éditeur :</strong> [À COMPLÉTER : nom / statut juridique / SIRET / adresse / email de contact].</p>
+          <p class="mb-1"><strong>Directeur de la publication :</strong> [À COMPLÉTER].</p>
+          <p><strong>Hébergeur :</strong> [À COMPLÉTER : Oracle Cloud (Oracle Corporation) / adresse].</p>
+        </div>
+        <div>
+          <div class="font-black text-slate-900 text-base mb-2">Politique de confidentialité (RGPD)</div>
+          <p class="mb-2"><strong>Responsable de traitement :</strong> [À COMPLÉTER]. <strong>Données collectées :</strong>
+          email, nom, mot de passe (haché), préférences d'espèces, spots enregistrés, statut d'abonnement et identifiant
+          client Stripe.</p>
+          <p class="mb-2"><strong>Finalités &amp; base légale :</strong> fourniture du service et facturation — exécution du
+          contrat d'abonnement. <strong>Sous-traitants :</strong> Stripe (paiement), Brevo (emails transactionnels), Oracle
+          Cloud (hébergement). Aucune donnée n'est cédée ni revendue à des tiers à des fins commerciales.</p>
+          <p class="mb-2"><strong>Conservation :</strong> le temps de la relation contractuelle, puis suppression.
+          <strong>Vos droits :</strong> accès, rectification, effacement, portabilité, opposition — exerçables en nous
+          contactant [À COMPLÉTER : email] ou, pour l'effacement, directement via <strong>« Supprimer mon compte »</strong>
+          dans l'application.</p>
+          <p><strong>Cookies :</strong> seul un cookie de session strictement nécessaire à l'authentification est utilisé
+          (aucun traceur publicitaire).</p>
+        </div>
+      </div>
+      <div class="p-4 border-t border-slate-100 flex justify-end">
+        <button class="cgu-close px-5 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-bold">J'ai compris</button>
+      </div>
+    </div>
+  </div>

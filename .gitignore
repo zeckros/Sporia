@@ -1,3 +1,6 @@
+# Superpowers (maquettes brainstorming, non versionnées)
+.superpowers/
+
 # Python
 __pycache__/
 *.py[cod]
@@ -32,3 +35,6 @@ output/
 web/overlays/
 ssh-key-2026-06-05.key
 data/sporia.db
+
+# Tailwind CLI standalone (binaire, non versionné)
+tools/

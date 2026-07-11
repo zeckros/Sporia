@@ -1,64 +1,27 @@
 /* Sporia — frontend (Leaflet + Tailwind). Parle à l'API FastAPI (server.py). */
 "use strict";
 
-const API = {
-  async get(url) {
-    const r = await fetch(url, { credentials: "include" });
-    if (r.status === 401) throw { unauth: true };
-    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
-    return r.json();
-  },
-  async post(url, body) {
-    const r = await fetch(url, {
-      method: "POST", credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body || {}),
-    });
-    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
-    return r.json();
-  },
-  async del(url) {
-    const r = await fetch(url, { method: "DELETE", credentials: "include" });
-    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
-    return r.json();
-  },
-  async patch(url, body) {
-    const r = await fetch(url, {
-      method: "PATCH", credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body || {}),
-    });
-    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
-    return r.json();
-  },
-};
+import { API } from "./api.js";
+import {
+  state, MONTHS, CMAP, LEVEL, FACTOR_CLR, LAYER_NAMES,
+  CONF_BADGE, FOREST_TFV,
+} from "./state.js";
+import { escapeHtml, valFmt, fmtNum, pct, monthNum } from "./util.js";
 
-const MONTHS = ["J","F","M","A","M","J","J","A","S","O","N","D"];
-const CMAP = {
-  T:  ["#313695","#74add1","#fee090","#f46d43","#a50026"],   // RdYlBu_r
-  RR: ["#ffffcc","#a1dab4","#41b6c4","#2c7fb8","#253494"],   // YlGnBu
-  fav:["#ffffe5","#d9f0a3","#78c679","#238443","#004529"],   // YlGn
-  sm: ["#8c510a","#d8b365","#f6e8c3","#c7eae5","#5ab4ac","#01665e"], // BrBG (sec→humide)
-  alt:["#3a7d3a","#a6cf6a","#f1e0a0","#b08040","#8b5a2b","#ffffff"], // hypsométrique
-  fruit:["#ffffb2","#fecc5c","#fd8d3c","#f03b20","#bd0026"],         // YlOrRd (indice de pousse)
+/* Calques exclusifs (un seul affiché à la fois). def.refresh (re)construit
+   state.layers[key] ; def.weather = dépend de la période. Défini ici (et non dans
+   state.js) pour éviter un import circulaire avec les fonctions refresh*. */
+const LAYER_DEFS = {
+  radar:     { refresh: () => refreshRadar(), weather: true },  // défaut : habitat × pousse du jour
+  temp:      { refresh: () => refreshWeatherLayer("T"),  weather: true },
+  precip:    { refresh: () => refreshWeatherLayer("RR"), weather: true },
+  forest:    { refresh: null },                          // WMS construit dans initMap
+  soil:      { refresh: () => refreshSoil() },
+  soilmoist: { refresh: () => refreshSoilMoisture() },
+  altitude:  { refresh: () => refreshAltitude() },
+  aspect:    { refresh: () => refreshAspect() },
 };
-const LEVEL = {
-  good: ["Favorable", "text-green-700", "bg-green-100"],
-  mid:  ["Conditions partielles", "text-amber-700", "bg-amber-100"],
-  bad:  ["Peu probable", "text-red-700", "bg-red-100"],
-  off:  ["Hors saison", "text-slate-500", "bg-slate-100"],
-};
-
-const state = {
-  dates: [], period: "jour", selectedDates: [],
-  map: null, layers: {}, lastPoint: null, name: null,
-  species: null, allSpecies: [], godmode: false, activeLayer: "radar", legendData: {}, legendMaxH: 0,
-  spots: [], spotLayer: null, lastSpot: null,
-  radarSpecies: null,   // sous-ensemble actif sur le calque radar (null = toute la pré-sélection)
-  tab: "carte",
-  // replié par défaut sur petit écran (téléphone) pour laisser la carte en plein
-  sidebarCollapsed: !!(window.matchMedia && window.matchMedia("(max-width: 767px)").matches),
-};
+const LAYER_KEYS = Object.keys(LAYER_DEFS);
 
 /* ---------- Auth ---------- */
 async function boot() {
@@ -294,14 +257,25 @@ async function startApp() {
   document.getElementById("app-screen").classList.remove("hidden");
   document.getElementById("paywall-screen")?.classList.add("hidden");
   document.getElementById("nav-user").textContent = state.name || "";
+  const profilUser = document.getElementById("profil-user");
+  if (profilUser) profilUser.textContent = state.name ? `Connecté : ${state.name}` : "";
   document.getElementById("manage-sub")?.classList.remove("hidden");
 
   const d = await API.get("/api/dates");
   state.dates = d.dates;
   computeSelectedDates();
+  buildDateSlider();
   initMap();
   await loadPreferences();
   wireControls();
+  // Hauteur réelle de la barre d'onglets basse → le bottom-sheet se cale juste au-dessus.
+  const syncTabbarH = () =>
+    document.documentElement.style.setProperty(
+      "--tabbar-h", (document.getElementById("tabbar")?.offsetHeight || 0) + "px");
+  const onResize = () => { syncTabbarH(); layoutChips(); };
+  onResize();
+  setTimeout(layoutChips, 250);   // recalcul après stabilisation des largeurs (police chargée)
+  window.addEventListener("resize", onResize);
   await setActiveLayer("radar");   // « Radar à champignons » par défaut
   setTab("carte");
   // contour France (léger)
@@ -353,6 +327,37 @@ function computeSelectedDates() {
                     : `${fmt(sd[0])} → ${fmt(sd[sd.length-1])} · ${sd.length} j`;
 }
 
+/* Curseur de dates à deux poignées (du…au…) : écrit directement state.selectedDates.
+   oninput = MAJ live des libellés/remplissage ; onchange (relâchement) = recharge le calque. */
+function buildDateSlider() {
+  const n = (state.dates || []).length;
+  const s = document.getElementById("dr-start");
+  const e = document.getElementById("dr-end");
+  if (!n || !s || !e) return;
+  s.min = e.min = "0"; s.max = e.max = String(n - 1);
+  s.value = String(n - 1); e.value = String(n - 1);   // défaut : dernier jour
+  const fmt = (i) => { const d = state.dates[i]; return `${d.slice(6, 8)}/${d.slice(4, 6)}`; };
+  const paint = () => {
+    let a = +s.value, b = +e.value;
+    if (a > b) [a, b] = [b, a];
+    document.getElementById("dr-from").textContent = fmt(a);
+    document.getElementById("dr-to").textContent = fmt(b);
+    const pc = (v) => (n > 1 ? (v / (n - 1)) * 100 : 0);
+    const fill = document.getElementById("dr-fill");
+    fill.style.left = pc(a) + "%";
+    fill.style.right = (100 - pc(b)) + "%";
+    return [a, b];
+  };
+  const apply = () => {
+    const [a, b] = paint();
+    state.selectedDates = state.dates.slice(a, b + 1);
+    if (state.activeLayer === "temp" || state.activeLayer === "precip") setActiveLayer(state.activeLayer);
+  };
+  s.oninput = paint; e.oninput = paint;
+  s.onchange = apply; e.onchange = apply;
+  paint();
+}
+
 function _setOverlay(key, res, opacity) {
   const b = res.bounds;
   if (state.layers[key]) state.map.removeLayer(state.layers[key]);
@@ -362,9 +367,8 @@ function _setOverlay(key, res, opacity) {
 }
 
 /* Calques météo séparés : 'T' (température moyenne) et 'RR' (précipitations). */
-async function refreshWeatherLayer(varName) {
-  computeSelectedDates();
-  if (!state.selectedDates.length) return;
+export async function refreshWeatherLayer(varName) {
+  if (!state.selectedDates.length) return;   // state.selectedDates piloté par le curseur de dates
   const key = varName === "RR" ? "precip" : "temp";
   try {
     const res = await API.get(`/api/overlay?var=${varName}&dates=${state.selectedDates.join(",")}`);
@@ -381,7 +385,7 @@ function radarActiveSpecies() {
 
 // Radar à champignons : calque de TUILES (habitat × pousse du jour, clippé au contour
 // forêt exact côté serveur). Sur les espèces cochées du calque (parmi « Mes champignons »).
-async function refreshRadar() {
+export async function refreshRadar() {
   const active = radarActiveSpecies();
   if (state.layers.radar) { state.map.removeLayer(state.layers.radar); state.layers.radar = null; }
   // Aucune espèce cochée (alors qu'une pré-sélection existe) → rien à afficher.
@@ -410,7 +414,7 @@ async function refreshRadar() {
   if (state.activeLayer === "radar") updateLegend();
 }
 
-async function refreshSoil() {
+export async function refreshSoil() {
   try {
     const res = await API.get("/api/soil");
     _setOverlay("soil", res, 0.8);
@@ -418,21 +422,21 @@ async function refreshSoil() {
   } catch (e) { console.warn("soil", e); }
 }
 
-async function refreshSoilMoisture() {
+export async function refreshSoilMoisture() {
   try {
     const res = await API.get(`/api/soil-moisture?date=${state.dates[state.dates.length - 1] || ""}`);
     _setOverlay("soilmoist", res, 0.78);
   } catch (e) { console.warn("soilmoist", e); }
 }
 
-async function refreshAltitude() {
+export async function refreshAltitude() {
   try {
     const res = await API.get("/api/altitude");
     _setOverlay("altitude", res, 0.7);
   } catch (e) { console.warn("altitude", e); }
 }
 
-async function refreshAspect() {
+export async function refreshAspect() {
   try {
     const res = await API.get("/api/aspect");
     _setOverlay("aspect", res, 0.75);
@@ -440,43 +444,6 @@ async function refreshAspect() {
 }
 
 /* ---------- Légende (calque actif) ---------- */
-// BD Forêt® V2 (IGN) — 32 types de formation végétale, couleurs exactes du calque
-// (échantillonnées sur la légende officielle IGN). [couleur, libellé court, libellé complet].
-const FOREST_TFV = [
-  ["#e5c45d", "Sans couvert arboré", "Forêt fermée sans couvert arboré"],
-  ["#008c4d", "Feuillus en îlots", "Forêt fermée de feuillus purs en îlots"],
-  ["#004d2e", "Chênes décidus", "Forêt fermée de chênes décidus purs"],
-  ["#668040", "Chênes sempervirents", "Forêt fermée de chênes sempervirents purs"],
-  ["#00ff80", "Hêtre", "Forêt fermée de hêtre pur"],
-  ["#40ff1c", "Châtaignier", "Forêt fermée de châtaignier pur"],
-  ["#915633", "Robinier", "Forêt fermée de robinier pur"],
-  ["#afca59", "Autre feuillu", "Forêt fermée d'un autre feuillu pur"],
-  ["#00d92f", "Mélange feuillus", "Forêt fermée à mélange de feuillus"],
-  ["#8080ff", "Conifères en îlots", "Forêt fermée de conifères purs en îlots"],
-  ["#bf26ff", "Pin maritime", "Forêt fermée de pin maritime pur"],
-  ["#9926ff", "Pin sylvestre", "Forêt fermée de pin sylvestre pur"],
-  ["#4d33ff", "Pin laricio / noir", "Forêt fermée de pin laricio ou pin noir pur"],
-  ["#ff1aff", "Pin d'Alep", "Forêt fermée de pin d'Alep pur"],
-  ["#734de6", "Pin à crochets / cembro", "Forêt fermée de pin à crochets ou pin cembro pur"],
-  ["#a666ff", "Autre pin", "Forêt fermée d'un autre pin pur"],
-  ["#d999ff", "Mélange de pins", "Forêt fermée à mélange de pins purs"],
-  ["#1ae6e6", "Sapin / épicéa", "Forêt fermée de sapin ou épicéa"],
-  ["#4d80ff", "Mélèze", "Forêt fermée de mélèze pur"],
-  ["#3399ff", "Douglas", "Forêt fermée de douglas pur"],
-  ["#00929f", "Mélange autres conifères", "Forêt fermée à mélange d'autres conifères"],
-  ["#59ffff", "Autre conifère", "Forêt fermée d'un autre conifère pur autre que pin"],
-  ["#404dff", "Mélange conifères", "Forêt fermée à mélange de conifères"],
-  ["#ff6633", "Feuillus + conifères", "Forêt fermée à mélange de feuillus prépondérants et conifères"],
-  ["#ff4033", "Conifères + feuillus", "Forêt fermée à mélange de conifères prépondérants et feuillus"],
-  ["#b3b3b3", "Ouverte : sans couvert", "Forêt ouverte sans couvert arboré"],
-  ["#ccffbf", "Ouverte : feuillus", "Forêt ouverte de feuillus purs"],
-  ["#99b3cc", "Ouverte : conifères", "Forêt ouverte de conifères purs"],
-  ["#ffd138", "Ouverte : mixte", "Forêt ouverte à mélange de feuillus et conifères"],
-  ["#ffff00", "Peupleraie", "Peupleraie"],
-  ["#ffe6bf", "Lande", "Lande"],
-  ["#fff9a5", "Formation herbacée", "Formation herbacée"],
-];
-
 function _grad(colors) {
   return `<div class="h-2.5 rounded-full mb-1" style="background:linear-gradient(to right, ${colors.join(",")})"></div>`;
 }
@@ -564,9 +531,12 @@ function legendFor(key) {
 function updateLegend() {
   // Une seule légende, TOUJOURS en bas de la barre (volet calques ouvert comme replié).
   const html = legendFor(state.activeLayer);
+  const legEl = document.getElementById("active-legend");   // légende du volet (peut être supprimée)
+  if (legEl) legEl.innerHTML = html;
   const wrap = document.getElementById("active-legend-wrap");
-  document.getElementById("active-legend").innerHTML = html;
-  wrap.classList.toggle("hidden", !html);
+  if (wrap) wrap.classList.toggle("hidden", !html);
+  const capt = document.getElementById("map-legend");   // légende en étiquette sur la carte (direction A)
+  if (capt) { capt.innerHTML = html; capt.classList.toggle("hidden", !html); }
   updateRadarSpecies();      // liste des espèces du radar (peuple #radar-species)
   updateActiveLayerName();   // titre du calque (toujours visible)
   // Hauteur de la zone légende = la PLUS GRANDE hauteur de contenu observée (légende +
@@ -580,12 +550,6 @@ function updateLegend() {
   }
 }
 
-// Noms lisibles des calques (pour le titre affiché quand le volet est replié).
-const LAYER_NAMES = {
-  radar: "🍄 Radar à champignons", temp: "Température moyenne", precip: "Précipitations",
-  forest: "Forêts — BD Forêt® IGN", soil: "Type de sol — SoilGrids®",
-  soilmoist: "Humidité du sol", altitude: "Altitude / relief", aspect: "Exposition (versants)",
-};
 function updateActiveLayerName() {
   const el = document.getElementById("active-layer-name");
   if (!el) return;
@@ -593,25 +557,81 @@ function updateActiveLayerName() {
   el.classList.toggle("hidden", !el.textContent);   // titre TOUJOURS visible (sauf si vide)
 }
 
-/* ---------- Calques exclusifs (un seul affiché à la fois) ---------- */
-// def.refresh (re)construit state.layers[key] ; def.weather = dépend de la période.
-const LAYER_DEFS = {
-  radar:     { refresh: () => refreshRadar(), weather: true },  // défaut : habitat × pousse du jour
-  temp:      { refresh: () => refreshWeatherLayer("T"),  weather: true },
-  precip:    { refresh: () => refreshWeatherLayer("RR"), weather: true },
-  forest:    { refresh: null },                          // WMS construit dans initMap
-  soil:      { refresh: () => refreshSoil() },
-  soilmoist: { refresh: () => refreshSoilMoisture() },
-  altitude:  { refresh: () => refreshAltitude() },
-  aspect:    { refresh: () => refreshAspect() },
-};
-const LAYER_KEYS = Object.keys(LAYER_DEFS);
+/* Priority+ : affiche autant de puces de calques que la largeur le permet ;
+   les puces qui débordent basculent dans le menu « ＋ Plus ». Recalculé au resize. */
+function layoutChips() {
+  const row = document.getElementById("chips-row");
+  const bar = document.getElementById("layer-chips");
+  const moreWrap = document.getElementById("more-wrap");
+  if (!row || !bar || !moreWrap) return;
+  const chips = Array.from(bar.querySelectorAll(".layer-chip"));
+  if (!chips.length) return;
+  const GAP = 6;
+  chips.forEach((c) => c.classList.remove("hidden"));   // tout afficher pour mesurer
+  moreWrap.classList.remove("hidden");
+  const rowW = row.clientWidth;
+  if (!rowW) return;                                    // onglet Carte masqué → recalcul à l'affichage
+  const moreW = moreWrap.offsetWidth + GAP;
+  const w = chips.map((c) => c.offsetWidth);
+  const total = w.reduce((a, x, i) => a + x + (i ? GAP : 0), 0);
+  let fit;
+  if (total <= rowW) {
+    fit = chips.length;                                 // tout rentre → pas de « ＋ Plus »
+  } else {
+    let used = 0; fit = 0;
+    for (let i = 0; i < chips.length; i++) {
+      const need = w[i] + (i ? GAP : 0);
+      if (used + need <= rowW - moreW) { used += need; fit++; } else break;
+    }
+    fit = Math.max(1, fit);                             // au moins « Radar »
+  }
+  let overflowActive = false;
+  chips.forEach((c, i) => {
+    const inBar = i < fit;
+    c.classList.toggle("hidden", !inBar);
+    const item = document.querySelector(`.more-item[data-layer="${c.dataset.layer}"]`);
+    if (item) item.classList.toggle("hidden", inBar);   // more-item visible ⇔ puce débordée
+    if (!inBar && c.dataset.layer === state.activeLayer) overflowActive = true;
+  });
+  moreWrap.classList.toggle("hidden", fit >= chips.length);
+  const mb = document.getElementById("more-layers-btn");
+  if (mb) {   // « ＋ Plus » surligné si le calque actif est rangé dedans
+    mb.classList.toggle("bg-brand-500", overflowActive);
+    mb.classList.toggle("text-white", overflowActive);
+    mb.classList.toggle("bg-white", !overflowActive);
+    mb.classList.toggle("text-slate-600", !overflowActive);
+  }
+}
 
+/* ---------- Calques exclusifs (un seul affiché à la fois) ---------- */
 async function setActiveLayer(key) {
   state.activeLayer = key;
+  // Sync des contrôles : puces (carte) + radios (volet)
+  document.querySelectorAll(".layer-chip").forEach((c) => {
+    const on = c.dataset.layer === key;
+    c.classList.toggle("bg-brand-500", on);
+    c.classList.toggle("text-white", on);
+    c.classList.toggle("bg-white", !on);
+    c.classList.toggle("text-slate-600", !on);
+  });
+  document.querySelectorAll('input[name="layer"]').forEach((r) => { r.checked = (r.value === key); });
+  // « ＋ Plus » surligné si le calque actif est rangé dans le menu (puce débordée)
+  const moreB = document.getElementById("more-layers-btn");
+  if (moreB) {
+    const chip = document.querySelector(`#layer-chips .layer-chip[data-layer="${key}"]`);
+    const inMenu = !!chip && chip.classList.contains("hidden");
+    moreB.classList.toggle("bg-brand-500", inMenu);
+    moreB.classList.toggle("text-white", inMenu);
+    moreB.classList.toggle("bg-white", !inMenu);
+    moreB.classList.toggle("text-slate-600", !inMenu);
+  }
   // Période : utile seulement pour les calques météo (température / précipitations) → masquée sinon
   const pb = document.getElementById("period-block");
   if (pb) pb.classList.toggle("hidden", !(key === "temp" || key === "precip"));
+  const dr = document.getElementById("date-range");   // curseur de dates : Température / Pluie
+  if (dr) dr.classList.toggle("hidden", !(key === "temp" || key === "precip"));
+  const rs = document.getElementById("radar-species");  // masquer tout de suite hors radar (sans attendre le refresh async)
+  if (rs && key !== "radar") rs.classList.add("hidden");
   // calques exclusifs : on retire tout, puis on (ré)affiche le calque choisi
   LAYER_KEYS.forEach((k) => { if (state.layers[k]) state.map.removeLayer(state.layers[k]); });
   const def = LAYER_DEFS[key];
@@ -627,6 +647,34 @@ function wireControls() {
   // Switch de calque (radio) : un seul calque à la fois
   document.querySelectorAll('input[name="layer"]').forEach((r) =>
     r.addEventListener("change", () => { if (r.checked) setActiveLayer(r.value); }));
+  // Puces de calques (direction A) : switch rapide depuis la carte
+  document.querySelectorAll(".layer-chip").forEach((c) =>
+    c.addEventListener("click", () => setActiveLayer(c.dataset.layer)));
+  // « ＋ Plus » : menu des calques secondaires
+  const moreBtn = document.getElementById("more-layers-btn");
+  const morePop = document.getElementById("more-layers");
+  moreBtn?.addEventListener("click", (e) => { e.stopPropagation(); morePop.classList.toggle("hidden"); });
+  document.querySelectorAll(".more-item").forEach((b) =>
+    b.addEventListener("click", () => morePop.classList.add("hidden")));
+  document.addEventListener("click", (e) => {
+    if (morePop && !morePop.classList.contains("hidden") && !morePop.contains(e.target) && e.target !== moreBtn)
+      morePop.classList.add("hidden");
+  });
+  // Espèces du radar : popover depuis le bouton « 🍄 Espèces »
+  const rsBtn = document.getElementById("radar-species-btn");
+  const rsPop = document.getElementById("radar-species-pop");
+  rsBtn?.addEventListener("click", (e) => { e.stopPropagation(); rsPop.classList.toggle("hidden"); });
+  document.addEventListener("click", (e) => {
+    if (rsPop && !rsPop.classList.contains("hidden") && !rsPop.contains(e.target) && !rsBtn.contains(e.target))
+      rsPop.classList.add("hidden");
+  });
+  // « Tout / Aucun » : coche/décoche toutes les espèces du radar
+  document.getElementById("radar-all-toggle")?.addEventListener("click", () => {
+    const boxes = Array.from(document.querySelectorAll("#radar-species-list .radar-check"));
+    const allChecked = boxes.length > 0 && boxes.every((b) => b.checked);
+    state.radarSpecies = allChecked ? [] : null;   // tout coché → tout décocher (sous-ensemble vide) ; sinon tout cocher (null)
+    refreshRadar();   // updateLegend rappelle updateRadarSpecies → cases resynchronisées
+  });
 
   // Période → recharge le calque météo actif
   document.querySelectorAll(".period-btn").forEach((b) =>
@@ -638,8 +686,8 @@ function wireControls() {
       if (state.activeLayer === "temp" || state.activeLayer === "precip") setActiveLayer(state.activeLayer);
     }));
 
-  // Bouton « Fou des champignons » : déplie/replie le panneau calques
-  document.getElementById("godmode-btn").addEventListener("click", () => {
+  // Bouton « Fou des champignons » (volet, si présent) : déplie/replie le panneau calques
+  document.getElementById("godmode-btn")?.addEventListener("click", () => {
     state.godmode = !state.godmode;
     document.getElementById("layers-panel").classList.toggle("hidden", !state.godmode);
     document.getElementById("godmode-label").textContent =
@@ -665,9 +713,11 @@ function wireControls() {
   document.getElementById("species-all").addEventListener("click", () => setAllSpeciesChecks(true));
   document.getElementById("species-none").addEventListener("click", () => setAllSpeciesChecks(false));
 
-  document.querySelectorAll(".tab-btn").forEach((b) =>
+  document.querySelectorAll(".tab-btn, .tabbar-btn").forEach((b) =>
     b.addEventListener("click", () => setTab(b.dataset.tab)));
-
+  // Onglet Profil (mobile) : chaque bouton relaie vers l'action correspondante du top-nav.
+  document.querySelectorAll(".profil-act").forEach((b) =>
+    b.addEventListener("click", () => document.getElementById(b.dataset.target)?.click()));
   // Menu sandwich (mobile) : ouvre/ferme le tiroir de navigation
   const navToggle = document.getElementById("nav-toggle");
   const navMenu = document.getElementById("nav-menu");
@@ -686,8 +736,18 @@ function wireControls() {
     if (navMenu.classList.contains("mobile-open") && !navMenu.contains(e.target) && !navToggle.contains(e.target)) closeNavMenu();
   });
 
-  // Replier / déployer la barre latérale (pratique sur téléphone)
-  document.getElementById("sidebar-toggle").addEventListener("click", toggleSidebar);
+  // Replier / déployer la barre latérale (si le volet existe encore)
+  document.getElementById("sidebar-toggle")?.addEventListener("click", toggleSidebar);
+
+  // Menu compte (desktop) : ouvre/ferme le dropdown ; referme après une action ou clic extérieur.
+  const accBtn = document.getElementById("account-btn");
+  const accMenu = document.getElementById("account-menu");
+  accBtn?.addEventListener("click", (e) => { e.stopPropagation(); accMenu.classList.toggle("hidden"); });
+  accMenu?.addEventListener("click", () => accMenu.classList.add("hidden"));
+  document.addEventListener("click", (e) => {
+    if (accMenu && !accMenu.classList.contains("hidden") && !accMenu.contains(e.target) && !accBtn.contains(e.target))
+      accMenu.classList.add("hidden");
+  });
 
   // Cloche de notifications (spots propices)
   document.getElementById("notif-btn").addEventListener("click", (e) => { e.stopPropagation(); toggleNotifPanel(); });
@@ -747,11 +807,6 @@ async function loadPreferences() {
   } catch (e) { state.allSpecies = []; state.species = null; }
 }
 
-const CONF_BADGE = {
-  "élevée": "bg-green-100 text-green-700",
-  "bonne": "bg-amber-100 text-amber-700",
-  "modérée": "bg-slate-100 text-slate-500",
-};
 function confidenceBadge(conf) {
   const cls = CONF_BADGE[conf] || CONF_BADGE["modérée"];
   return `<span class="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${cls}" title="Fiabilité de la carte d'habitat">${conf || "modérée"}</span>`;
@@ -828,11 +883,18 @@ function setTab(tab) {
     b.classList.toggle("text-white", active);
     b.classList.toggle("text-slate-600", !active);
   });
+  document.querySelectorAll(".tabbar-btn").forEach((b) => {
+    const active = b.dataset.tab === tab;
+    b.classList.toggle("text-brand-500", active);
+    b.classList.toggle("text-slate-400", !active);
+  });
   state.tab = tab;
   document.getElementById("view-carte").classList.toggle("hidden", tab !== "carte");
   document.getElementById("view-guide").classList.toggle("hidden", tab !== "guide");
   document.getElementById("view-spots").classList.toggle("hidden", tab !== "spots");
+  document.getElementById("view-profil").classList.toggle("hidden", tab !== "profil");
   applySidebar(true);   // barre latérale : visible seulement sur Carte, et selon repli
+  if (tab === "carte") setTimeout(layoutChips, 60);   // la largeur des puces n'existe que la vue Carte visible
   if (tab === "guide") renderGuide();
   if (tab === "spots") renderSpots();
 }
@@ -841,13 +903,15 @@ function setTab(tab) {
    et si non repliée. Le bouton de bascule n'apparaît que sur Carte. */
 function applySidebar(resize) {
   const onMap = state.tab === "carte";
-  const sb = document.getElementById("sidebar");
-  sb.classList.toggle("hidden", !onMap);                          // pas de barre hors Carte
-  sb.classList.toggle("-translate-x-full", state.sidebarCollapsed); // repli = glissement CSS
-  const icon = document.getElementById("sidebar-toggle-icon");
-  if (icon) icon.textContent = state.sidebarCollapsed ? "»" : "«";
-  // Tiroir absolu : la carte ne change plus de taille au repli → invalidateSize
-  // seulement au changement d'onglet (la carte (ré)apparaît).
+  const sb = document.getElementById("sidebar");   // volet (peut être supprimé)
+  if (sb) {
+    sb.classList.toggle("hidden", !onMap);                          // pas de barre hors Carte
+    if (!onMap) sb.classList.remove("sheet-open");                  // referme la feuille Calques (mobile)
+    sb.classList.toggle("-translate-x-full", state.sidebarCollapsed); // repli = glissement CSS
+    const icon = document.getElementById("sidebar-toggle-icon");
+    if (icon) icon.textContent = state.sidebarCollapsed ? "»" : "«";
+  }
+  // invalidateSize au changement d'onglet (la carte (ré)apparaît).
   if (resize && state.map && onMap) setTimeout(() => state.map.invalidateSize(), 60);
 }
 
@@ -872,18 +936,6 @@ async function loadPoint(lat, lon, spot) {
   } catch (e) { console.warn("point", e); }
 }
 
-function valFmt(v, u) { return v === null || v === undefined ? "n.d." : `${v.toFixed(1)} ${u}`; }
-function fmtNum(v) { return v === null || v === undefined ? "—" : v.toFixed(1); }
-function pct(v) { return v === null || v === undefined ? "n.d." : `${Math.round(v * 100)} %`; }
-
-// Coloration des facteurs météo de la fiche : vert = favorable, orange = limite,
-// rouge = défavorable (atténue). Seuils « grand public » (pas par espèce).
-const FACTOR_CLR = {
-  good: "bg-green-50 border-green-200 text-green-800",
-  mid:  "bg-amber-50 border-amber-200 text-amber-800",
-  bad:  "bg-red-50 border-red-200 text-red-800",
-  off:  "bg-slate-50 border-slate-200 text-slate-800",
-};
 function factorLevel(key, v) {
   if (v === null || v === undefined) return key === "days_since_rain" ? "bad" : "off";
   switch (key) {
@@ -965,37 +1017,60 @@ function showPointCard(lat, lon, r) {
   const titleHtml = spot
     ? `<input class="pc-title font-bold text-slate-800 leading-tight bg-transparent w-full border-b border-dashed border-slate-300 focus:border-solid focus:border-brand-500 outline-none" value="${escapeHtml(spot.name)}" title="Cliquez pour renommer">`
     : `<div class="font-bold text-slate-800 leading-tight">${r.commune || "Point sélectionné"}</div>`;
+  // Aperçu (P2) : espèces favorables (level « good ») → badge + pastilles ; repli du détail sur mobile.
+  const favs = r.mushrooms.filter((m) => m.level === "good" && m.selected !== false);
+  const chipList = (favs.length ? favs : top).slice(0, 4);
+  const chips = chipList.length
+    ? chipList.map((m) => {
+        const [, fg, bg] = LEVEL[m.level];
+        return `<span class="inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded-full ${fg} ${bg}">${m.nom}</span>`;
+      }).join("")
+    : '<span class="text-xs text-slate-400">Aucune espèce en saison ici.</span>';
+  const peekBadge = favs.length
+    ? `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full text-green-700 bg-green-100">${favs.length} favorable${favs.length > 1 ? "s" : ""}</span>`
+    : "";
   const card = document.getElementById("point-card");
+  card.classList.remove("expanded");
   card.innerHTML = `
+    <div class="pc-handle"></div>
     <div class="flex items-start justify-between gap-2">
-      ${titleHtml}
+      <div class="min-w-0">${titleHtml}<div class="mt-1">${peekBadge}</div></div>
       <button class="pc-close text-slate-400 hover:text-slate-700 -mt-1 -mr-1 text-lg leading-none shrink-0">×</button>
     </div>
-    <div class="text-[11px] text-slate-400 mb-2">${r.lat.toFixed(3)}°N · ${r.lon.toFixed(3)}°E · dalle 1 km</div>
-    <div class="grid grid-cols-2 gap-2 mb-2">
-      ${miniStat(valFmt(r.t, "°C"), "température air", factorLevel("temp", r.t))}
-      ${miniStat(valFmt(r.rr, "mm"), "pluie / jour")}
-      ${miniStat(pct(r.soil_moisture), "humidité du sol", factorLevel("soil_moisture", r.soil_moisture))}
-      ${miniStat(valFmt(r.soil_temp, "°C"), "T° du sol", factorLevel("temp", r.soil_temp))}
-    </div>
-    <div class="text-xs mb-1.5 pc-forest">${forestLine}</div>
-    ${soilLine ? `<div class="text-xs mb-1.5 text-slate-600">${soilLine}</div>` : ""}
-    ${terrainLine ? `<div class="text-xs mb-2 text-slate-600">${terrainLine}</div>` : ""}
-    <div class="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-1">Probables ici</div>
-    <div class="space-y-1 mb-1">
-      ${top.length ? top.map((m) => {
-        const [, fg, bg] = LEVEL[m.level];
-        return `<div class="flex items-center gap-2 text-sm">
-          <span class="flex-1 truncate">${m.nom} ${hostDot(m.host)}</span>
-          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${fg} ${bg}">${m.label}${m.score_pct != null ? " · " + m.score_pct + "%" : ""}</span></div>`;
-      }).join("") : '<div class="text-xs text-slate-400">Aucune espèce en saison.</div>'}
-    </div>
-    <button class="pc-guide mt-2 w-full py-1.5 rounded-lg bg-brand-50 text-brand-700 text-sm font-semibold hover:bg-brand-100">Voir le guide complet</button>
-    ${spot
-      ? `<button class="pc-delete mt-1.5 w-full py-1.5 rounded-lg border border-red-200 text-red-600 text-sm font-semibold hover:bg-red-50">🗑 Supprimer ce spot</button>`
-      : `<button class="pc-save mt-1.5 w-full py-1.5 rounded-lg border border-brand-200 text-brand-700 text-sm font-semibold hover:bg-brand-50">📍 Enregistrer ce spot</button>`}`;
+    <div class="mt-1.5 flex flex-wrap gap-1.5">${chips}</div>
+    <button class="pc-expand mt-2 w-full py-1.5 rounded-lg bg-slate-50 text-slate-600 text-sm font-semibold hover:bg-slate-100">Voir le détail ▾</button>
+    <div class="pc-detail mt-2">
+      <div class="text-[11px] text-slate-400 mb-2">${r.lat.toFixed(3)}°N · ${r.lon.toFixed(3)}°E · dalle 1 km</div>
+      <div class="grid grid-cols-2 gap-2 mb-2">
+        ${miniStat(valFmt(r.t, "°C"), "température air", factorLevel("temp", r.t))}
+        ${miniStat(valFmt(r.rr, "mm"), "pluie / jour")}
+        ${miniStat(pct(r.soil_moisture), "humidité du sol", factorLevel("soil_moisture", r.soil_moisture))}
+        ${miniStat(valFmt(r.soil_temp, "°C"), "T° du sol", factorLevel("temp", r.soil_temp))}
+      </div>
+      <div class="text-xs mb-1.5 pc-forest">${forestLine}</div>
+      ${soilLine ? `<div class="text-xs mb-1.5 text-slate-600">${soilLine}</div>` : ""}
+      ${terrainLine ? `<div class="text-xs mb-2 text-slate-600">${terrainLine}</div>` : ""}
+      <div class="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-1">Probables ici</div>
+      <div class="space-y-1 mb-1">
+        ${top.length ? top.map((m) => {
+          const [, fg, bg] = LEVEL[m.level];
+          return `<div class="flex items-center gap-2 text-sm">
+            <span class="flex-1 truncate">${m.nom} ${hostDot(m.host)}</span>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${fg} ${bg}">${m.label}${m.score_pct != null ? " · " + m.score_pct + "%" : ""}</span></div>`;
+        }).join("") : '<div class="text-xs text-slate-400">Aucune espèce en saison.</div>'}
+      </div>
+      <button class="pc-guide mt-2 w-full py-1.5 rounded-lg bg-brand-50 text-brand-700 text-sm font-semibold hover:bg-brand-100">Voir le guide complet</button>
+      ${spot
+        ? `<button class="pc-delete mt-1.5 w-full py-1.5 rounded-lg border border-red-200 text-red-600 text-sm font-semibold hover:bg-red-50">🗑 Supprimer ce spot</button>`
+        : `<button class="pc-save mt-1.5 w-full py-1.5 rounded-lg border border-brand-200 text-brand-700 text-sm font-semibold hover:bg-brand-50">📍 Enregistrer ce spot</button>`}
+    </div>`;
   card.classList.remove("hidden");
   positionPointCard();
+  const expandBtn = card.querySelector(".pc-expand");
+  if (expandBtn) expandBtn.onclick = () => {
+    const exp = card.classList.toggle("expanded");
+    expandBtn.textContent = exp ? "Réduire ▴" : "Voir le détail ▾";
+  };
   card.querySelector(".pc-close").onclick = () => hidePointCard();
   card.querySelector(".pc-guide").onclick = () => setTab("guide");
   if (spot) {
@@ -1015,6 +1090,8 @@ function showPointCard(lat, lon, r) {
 function positionPointCard() {
   const card = document.getElementById("point-card");
   if (!state.cardLatLng || card.classList.contains("hidden")) return;
+  // Mobile : bottom-sheet ancré en bas (CSS) → pas de positionnement au pixel.
+  if (window.matchMedia("(max-width: 1023px)").matches) { card.style.left = ""; card.style.top = ""; return; }
   const p = state.map.latLngToContainerPoint(state.cardLatLng);
   const cont = state.map.getContainer();
   const cw = card.offsetWidth || 256, ch = card.offsetHeight || 220;
@@ -1138,15 +1215,7 @@ function chip(big, small, level) {
   return `<div class="${c} rounded-xl px-3 py-2 text-center shadow-soft">
     <div class="font-extrabold">${big}</div><div class="text-[11px] opacity-70">${small}</div></div>`;
 }
-const FR_MONTHS = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
-function monthNum(frName) { const i = FR_MONTHS.indexOf((frName || "").toLowerCase()); return i >= 0 ? i + 1 : 0; }
-
 /* ---------- Spots enregistrés + notifications « propice » ---------- */
-function escapeHtml(s) {
-  return (s || "").replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-}
-
 async function loadSpots() {
   try {
     const res = await API.get("/api/spots");
@@ -1294,3 +1363,29 @@ function renderSpots() {
 }
 
 boot();
+
+/* ---------- PWA (coquille seule) ---------- */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
+}
+// Prompt d'installation (Android/Chrome) → bouton « Installer » dans Profil
+let deferredInstall = null;
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredInstall = e;
+  document.getElementById("install-btn")?.classList.remove("hidden");
+});
+document.getElementById("install-btn")?.addEventListener("click", async () => {
+  if (!deferredInstall) return;
+  deferredInstall.prompt();
+  await deferredInstall.userChoice;
+  deferredInstall = null;
+  document.getElementById("install-btn")?.classList.add("hidden");
+});
+// Bandeau hors-ligne
+function updateOnline() {
+  document.getElementById("offline-banner")?.classList.toggle("hidden", navigator.onLine);
+}
+window.addEventListener("online", updateOnline);
+window.addEventListener("offline", updateOnline);
+updateOnline();
