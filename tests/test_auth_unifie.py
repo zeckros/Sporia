@@ -23,3 +23,10 @@ def test_auth_screen_has_toggle_and_both_forms():
     ):
         assert marker in html, f"marqueur auth manquant: {marker}"
     assert "font-display" in html
+
+
+def test_register_form_moved_not_duplicated():
+    """L'inscription est retirée de la landing → une seule occurrence dans le rendu."""
+    html = client.get("/").text
+    assert html.count('id="register-form"') == 1
+    assert 'id="access-form"' in html  # la bêta reste (dans la landing)

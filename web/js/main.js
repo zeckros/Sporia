@@ -141,8 +141,30 @@ function showLoginPage() {
   document.getElementById("landing-screen").classList.add("hidden");
   document.getElementById("login-screen").classList.remove("hidden");
   document.getElementById("app-screen").classList.add("hidden");
+  setAuthMode("login");
   setTimeout(() => document.getElementById("login-user").focus(), 50);
 }
+
+// Bascule Connexion / Créer un compte sur l'écran d'auth unifié
+function setAuthMode(mode) {
+  const login = mode !== "register";
+  document.getElementById("login-form").classList.toggle("hidden", !login);
+  document.getElementById("register-form").classList.toggle("hidden", login);
+  document.querySelectorAll(".auth-tab").forEach((t) => {
+    const on = t.dataset.authMode === mode;
+    t.classList.toggle("bg-girolle", on);
+    t.classList.toggle("text-sousbois", on);
+    t.classList.toggle("text-os/60", !on);
+  });
+}
+document.querySelectorAll(".auth-tab").forEach((t) =>
+  t.addEventListener("click", () => setAuthMode(t.dataset.authMode)));
+// Lien « Devenir bêta-testeur » depuis l'écran d'auth → retour landing, section contact
+document.querySelectorAll(".goto-beta").forEach((b) =>
+  b.addEventListener("click", () => {
+    showLanding();
+    setTimeout(() => document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" }), 60);
+  }));
 
 document.getElementById("login-form").addEventListener("submit", async (ev) => {
   ev.preventDefault();
