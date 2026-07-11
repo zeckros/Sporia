@@ -742,7 +742,7 @@ function wireControls() {
   // Menu compte (desktop) : ouvre/ferme le dropdown ; referme après une action ou clic extérieur.
   const accBtn = document.getElementById("account-btn");
   const accMenu = document.getElementById("account-menu");
-  accBtn?.addEventListener("click", (e) => { e.stopPropagation(); accMenu.classList.toggle("hidden"); });
+  accBtn?.addEventListener("click", (e) => { e.stopPropagation(); toggleNotifPanel(false); accMenu.classList.toggle("hidden"); });
   accMenu?.addEventListener("click", () => accMenu.classList.add("hidden"));
   document.addEventListener("click", (e) => {
     if (accMenu && !accMenu.classList.contains("hidden") && !accMenu.contains(e.target) && !accBtn.contains(e.target))
@@ -750,7 +750,7 @@ function wireControls() {
   });
 
   // Cloche de notifications (spots propices)
-  document.getElementById("notif-btn").addEventListener("click", (e) => { e.stopPropagation(); toggleNotifPanel(); });
+  document.getElementById("notif-btn").addEventListener("click", (e) => { e.stopPropagation(); accMenu?.classList.add("hidden"); toggleNotifPanel(); });
   document.addEventListener("click", (e) => {
     const panel = document.getElementById("notif-panel");
     const btn = document.getElementById("notif-btn");
