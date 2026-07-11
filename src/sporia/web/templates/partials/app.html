@@ -37,24 +37,20 @@
           <button data-tab="guide" class="tab-btn px-4 py-2 lg:py-1.5 rounded-lg font-semibold text-sm text-slate-600 hover:bg-brand-50 transition text-left lg:text-center">Guide champignons</button>
           <button data-tab="spots" class="tab-btn px-4 py-2 lg:py-1.5 rounded-lg font-semibold text-sm text-slate-600 hover:bg-brand-50 transition text-left lg:text-center">Mes spots</button>
         </nav>
-        <div class="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-3 lg:ml-auto mt-1 lg:mt-0 pt-2 lg:pt-0 border-t lg:border-0 border-slate-100">
-          <button id="species-btn"
-                  class="px-3 py-2 lg:py-1.5 rounded-lg text-sm font-semibold text-brand-700 border border-brand-200 bg-brand-50 hover:bg-brand-100 transition text-left lg:text-center">
-             Mes champignons
+        <!-- Menu compte (desktop) : regroupe les actions pour alléger la barre -->
+        <div class="relative lg:ml-auto">
+          <button id="account-btn" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-100 transition">
+            <svg class="w-5 h-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/></svg>
+            <span id="nav-user"></span>
+            <svg class="w-4 h-4 text-slate-400" viewBox="0 0 20 20" fill="currentColor"><path d="M5.2 7.5a1 1 0 011.4 0L10 10.9l3.4-3.4a1 1 0 111.4 1.4l-4.1 4.1a1 1 0 01-1.4 0L5.2 8.9a1 1 0 010-1.4z"/></svg>
           </button>
-          <span id="nav-user" class="text-sm text-slate-500 px-1"></span>
-          <button id="manage-sub"
-                  class="hidden px-3 py-2 lg:py-1.5 rounded-lg text-sm font-semibold text-brand-700 border border-brand-200 bg-brand-50 hover:bg-brand-100 transition text-left lg:text-center">
-            Mon abonnement
-          </button>
-          <button id="logout-btn"
-                  class="px-3 py-2 lg:py-1.5 rounded-lg text-sm font-semibold text-slate-500 border border-slate-200 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition text-left lg:text-center">
-            Déconnexion
-          </button>
-          <button id="delete-account"
-                  class="px-3 py-2 lg:py-1.5 rounded-lg text-sm font-semibold text-slate-400 border border-slate-200 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition text-left lg:text-center">
-            Supprimer mon compte
-          </button>
+          <div id="account-menu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-card border border-slate-200 p-1.5 z-[1100]">
+            <button id="species-btn" class="w-full text-left px-3 py-2 rounded-lg text-sm font-semibold text-brand-700 hover:bg-brand-50 transition">🍄 Mes champignons</button>
+            <button id="manage-sub" class="hidden w-full text-left px-3 py-2 rounded-lg text-sm font-semibold text-brand-700 hover:bg-brand-50 transition">Mon abonnement</button>
+            <div class="my-1 border-t border-slate-100"></div>
+            <button id="logout-btn" class="w-full text-left px-3 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">Déconnexion</button>
+            <button id="delete-account" class="w-full text-left px-3 py-2 rounded-lg text-sm font-semibold text-slate-400 hover:text-red-600 hover:bg-red-50 transition">Supprimer mon compte</button>
+          </div>
         </div>
       </div>
     </header>

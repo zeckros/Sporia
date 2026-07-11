@@ -739,6 +739,16 @@ function wireControls() {
   // Replier / déployer la barre latérale (si le volet existe encore)
   document.getElementById("sidebar-toggle")?.addEventListener("click", toggleSidebar);
 
+  // Menu compte (desktop) : ouvre/ferme le dropdown ; referme après une action ou clic extérieur.
+  const accBtn = document.getElementById("account-btn");
+  const accMenu = document.getElementById("account-menu");
+  accBtn?.addEventListener("click", (e) => { e.stopPropagation(); accMenu.classList.toggle("hidden"); });
+  accMenu?.addEventListener("click", () => accMenu.classList.add("hidden"));
+  document.addEventListener("click", (e) => {
+    if (accMenu && !accMenu.classList.contains("hidden") && !accMenu.contains(e.target) && !accBtn.contains(e.target))
+      accMenu.classList.add("hidden");
+  });
+
   // Cloche de notifications (spots propices)
   document.getElementById("notif-btn").addEventListener("click", (e) => { e.stopPropagation(); toggleNotifPanel(); });
   document.addEventListener("click", (e) => {
