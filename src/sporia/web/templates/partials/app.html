@@ -21,7 +21,7 @@
       <button id="nav-toggle" class="hidden" aria-label="Menu" aria-expanded="false"></button>
 
       <!-- Cloche : alerte « spots propices » — toujours visible (haut-droite), mobile et desktop -->
-      <div class="relative order-last ml-auto md:ml-0">
+      <div class="relative order-last ml-auto lg:ml-0">
         <button id="notif-btn" title="Mes spots propices"
                 class="relative p-2 rounded-lg text-slate-500 hover:bg-slate-100 transition">
           <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a5 5 0 00-5 5v2.6c0 .47-.18.92-.5 1.27L3 12.5V14h14v-1.5l-1.5-1.63a1.9 1.9 0 01-.5-1.27V7a5 5 0 00-5-5zM8 16a2 2 0 104 0H8z"/></svg>
@@ -31,28 +31,28 @@
       </div>
 
       <!-- Navigation : en ligne sur desktop, masquée sur mobile (barre d'onglets basse) -->
-      <div id="nav-menu" class="hidden md:flex md:flex-1 md:items-center md:gap-2">
-        <nav class="flex flex-col md:flex-row md:items-center gap-1">
-          <button data-tab="carte" class="tab-btn px-4 py-2 md:py-1.5 rounded-lg font-semibold text-sm text-slate-600 hover:bg-brand-50 transition text-left md:text-center">Carte</button>
-          <button data-tab="guide" class="tab-btn px-4 py-2 md:py-1.5 rounded-lg font-semibold text-sm text-slate-600 hover:bg-brand-50 transition text-left md:text-center">Guide champignons</button>
-          <button data-tab="spots" class="tab-btn px-4 py-2 md:py-1.5 rounded-lg font-semibold text-sm text-slate-600 hover:bg-brand-50 transition text-left md:text-center">Mes spots</button>
+      <div id="nav-menu" class="hidden lg:flex lg:flex-1 lg:items-center lg:gap-2">
+        <nav class="flex flex-col lg:flex-row lg:items-center gap-1">
+          <button data-tab="carte" class="tab-btn px-4 py-2 lg:py-1.5 rounded-lg font-semibold text-sm text-slate-600 hover:bg-brand-50 transition text-left lg:text-center">Carte</button>
+          <button data-tab="guide" class="tab-btn px-4 py-2 lg:py-1.5 rounded-lg font-semibold text-sm text-slate-600 hover:bg-brand-50 transition text-left lg:text-center">Guide champignons</button>
+          <button data-tab="spots" class="tab-btn px-4 py-2 lg:py-1.5 rounded-lg font-semibold text-sm text-slate-600 hover:bg-brand-50 transition text-left lg:text-center">Mes spots</button>
         </nav>
-        <div class="flex flex-col md:flex-row md:items-center gap-2 md:gap-3 md:ml-auto mt-1 md:mt-0 pt-2 md:pt-0 border-t md:border-0 border-slate-100">
+        <div class="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-3 lg:ml-auto mt-1 lg:mt-0 pt-2 lg:pt-0 border-t lg:border-0 border-slate-100">
           <button id="species-btn"
-                  class="px-3 py-2 md:py-1.5 rounded-lg text-sm font-semibold text-brand-700 border border-brand-200 bg-brand-50 hover:bg-brand-100 transition text-left md:text-center">
+                  class="px-3 py-2 lg:py-1.5 rounded-lg text-sm font-semibold text-brand-700 border border-brand-200 bg-brand-50 hover:bg-brand-100 transition text-left lg:text-center">
              Mes champignons
           </button>
           <span id="nav-user" class="text-sm text-slate-500 px-1"></span>
           <button id="manage-sub"
-                  class="hidden px-3 py-2 md:py-1.5 rounded-lg text-sm font-semibold text-brand-700 border border-brand-200 bg-brand-50 hover:bg-brand-100 transition text-left md:text-center">
+                  class="hidden px-3 py-2 lg:py-1.5 rounded-lg text-sm font-semibold text-brand-700 border border-brand-200 bg-brand-50 hover:bg-brand-100 transition text-left lg:text-center">
             Mon abonnement
           </button>
           <button id="logout-btn"
-                  class="px-3 py-2 md:py-1.5 rounded-lg text-sm font-semibold text-slate-500 border border-slate-200 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition text-left md:text-center">
+                  class="px-3 py-2 lg:py-1.5 rounded-lg text-sm font-semibold text-slate-500 border border-slate-200 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition text-left lg:text-center">
             Déconnexion
           </button>
           <button id="delete-account"
-                  class="px-3 py-2 md:py-1.5 rounded-lg text-sm font-semibold text-slate-400 border border-slate-200 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition text-left md:text-center">
+                  class="px-3 py-2 lg:py-1.5 rounded-lg text-sm font-semibold text-slate-400 border border-slate-200 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition text-left lg:text-center">
             Supprimer mon compte
           </button>
         </div>
@@ -65,7 +65,7 @@
       <main id="view-carte" class="flex-1 relative min-h-0">
         <div id="map"></div>
         <!-- Recherche + puces empilées : même largeur (= largeur des puces sur desktop) -->
-        <div class="absolute top-3 left-3 right-14 md:right-auto md:w-fit md:max-w-[calc(100%-4.5rem)] z-[865] flex flex-col gap-1.5">
+        <div class="absolute top-3 left-3 right-14 lg:right-auto lg:w-fit lg:max-w-[calc(100%-4.5rem)] z-[865] flex flex-col gap-1.5">
           <div id="search-pill" class="relative w-full">
           <div class="flex items-center gap-1 bg-white rounded-full shadow-card border border-slate-200 pl-1 pr-2 py-1">
             <button id="geolocate-btn" type="button" title="Me localiser" class="shrink-0 w-8 h-8 rounded-full text-brand-600 hover:bg-brand-50 flex items-center justify-center">
@@ -77,18 +77,18 @@
           </div>
           <!-- Direction A : puces principales + « Plus » pour les calques secondaires -->
           <div class="flex gap-1.5 items-start">
-          <div id="layer-chips" class="flex gap-1.5 overflow-x-auto md:overflow-visible no-scrollbar min-w-0">
+          <div id="layer-chips" class="flex gap-1.5 overflow-x-auto lg:overflow-visible no-scrollbar min-w-0">
             <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-brand-500 text-white shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="radar">🍄 Radar</button>
             <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="temp">Température</button>
             <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="precip">Pluie</button>
-            <button class="layer-chip hidden md:flex items-center shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="forest">Forêt</button>
+            <button class="layer-chip hidden lg:flex items-center shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="forest">Forêt</button>
             <!-- Secondaires : en ligne sur desktop (place dispo), masquées sur mobile (menu « ＋ Plus ») -->
-            <button class="layer-chip hidden md:flex items-center shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="soil">Sol</button>
-            <button class="layer-chip hidden md:flex items-center shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="soilmoist">Humidité</button>
-            <button class="layer-chip hidden md:flex items-center shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="altitude">Altitude</button>
-            <button class="layer-chip hidden md:flex items-center shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="aspect">Exposition</button>
+            <button class="layer-chip hidden lg:flex items-center shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="soil">Sol</button>
+            <button class="layer-chip hidden lg:flex items-center shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="soilmoist">Humidité</button>
+            <button class="layer-chip hidden lg:flex items-center shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="altitude">Altitude</button>
+            <button class="layer-chip hidden lg:flex items-center shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="aspect">Exposition</button>
           </div>
-          <div class="relative shrink-0 md:hidden">
+          <div class="relative shrink-0 lg:hidden">
             <button id="more-layers-btn" class="px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap">＋ Plus</button>
             <div id="more-layers" class="hidden absolute right-0 mt-1.5 w-44 bg-white rounded-xl shadow-card border border-slate-200 p-1.5 space-y-1 z-[870]">
               <button class="layer-chip more-item w-full text-left px-3 py-1.5 rounded-lg bg-white text-slate-600 text-xs font-semibold hover:bg-slate-50" data-layer="forest">Forêt — essences</button>
@@ -111,7 +111,7 @@
             </div>
           </div>
           <!-- Curseur de dates (du…au…) : Température / Pluie -->
-          <div id="date-range" class="hidden w-full md:w-80 bg-white/95 backdrop-blur rounded-xl shadow-card border border-slate-200 px-3 py-2.5">
+          <div id="date-range" class="hidden w-full lg:w-80 bg-white/95 backdrop-blur rounded-xl shadow-card border border-slate-200 px-3 py-2.5">
             <div class="text-[11px] font-semibold text-slate-600 mb-2.5">Période : du <span id="dr-from" class="text-brand-700 font-bold"></span> au <span id="dr-to" class="text-brand-700 font-bold"></span></div>
             <div class="dr-slider relative h-5">
               <div class="dr-track"></div>
@@ -122,14 +122,14 @@
           </div>
         </div>
         <!-- Légende en étiquette (bas-gauche de la carte) -->
-        <div id="map-legend" class="hidden absolute left-3 bottom-16 md:bottom-3 z-[850] w-64 max-w-[calc(100vw-1.5rem)] max-h-[45vh] overflow-y-auto nice-scroll bg-white/95 backdrop-blur rounded-xl shadow-card border border-slate-200 px-3 py-2 text-xs text-slate-500"></div>
+        <div id="map-legend" class="hidden absolute left-3 bottom-16 lg:bottom-3 z-[850] w-64 max-w-[calc(100vw-1.5rem)] max-h-[45vh] overflow-y-auto nice-scroll bg-white/95 backdrop-blur rounded-xl shadow-card border border-slate-200 px-3 py-2 text-xs text-slate-500"></div>
         <!-- Carte d'info, positionnée au pixel du point cliqué (suit la carte) -->
         <div id="point-card" class="hidden absolute z-[800] w-64 bg-white rounded-2xl shadow-card border border-slate-200 p-3.5 fade-in"></div>
       </main>
 
       <!-- Vue Guide -->
       <main id="view-guide" class="hidden flex-1 overflow-y-auto nice-scroll min-h-0 bg-slate-50">
-        <div class="max-w-5xl mx-auto px-6 pt-7 pb-24 md:pb-7">
+        <div class="max-w-5xl mx-auto px-6 pt-7 pb-24 lg:pb-7">
           <h1 class="text-2xl font-black">Guide cueillette</h1>
           <p class="text-sm text-slate-500 mt-1 mb-5 max-w-2xl">
             Conditions estimées pour le point sélectionné (saison, température, pluie) + essence
@@ -141,7 +141,7 @@
 
       <!-- Vue Mes spots -->
       <main id="view-spots" class="hidden flex-1 overflow-y-auto nice-scroll min-h-0 bg-slate-50">
-        <div class="max-w-4xl mx-auto px-6 pt-7 pb-24 md:pb-7">
+        <div class="max-w-4xl mx-auto px-6 pt-7 pb-24 lg:pb-7">
           <h1 class="text-2xl font-black">Mes spots</h1>
           <p class="text-sm text-slate-500 mt-1 mb-5 max-w-2xl">
             Vos coins enregistrés. Cliquez sur le nom pour le renommer ; le statut « propice »
@@ -153,7 +153,7 @@
 
       <!-- Vue Profil (mobile) : actions du compte au pouce (relaient vers le top-nav) -->
       <main id="view-profil" class="hidden flex-1 overflow-y-auto nice-scroll min-h-0 bg-slate-50">
-        <div class="max-w-xl mx-auto px-6 pt-7 pb-24 md:pb-7 space-y-3">
+        <div class="max-w-xl mx-auto px-6 pt-7 pb-24 lg:pb-7 space-y-3">
           <h1 class="text-2xl font-black">Profil</h1>
           <p id="profil-user" class="text-sm text-slate-500 mb-2"></p>
           <button id="install-btn" class="hidden w-full text-left px-4 py-3 rounded-xl bg-brand-500 text-white font-semibold hover:bg-brand-600 transition">📲 Installer l'application</button>
@@ -166,7 +166,7 @@
     </div>
 
     <!-- Barre d'onglets basse (mobile) — navigation au pouce ; masquée sur desktop (top-nav) -->
-    <nav id="tabbar" class="md:hidden fixed bottom-0 inset-x-0 z-[1000] bg-white border-t border-slate-200 flex" style="padding-bottom:env(safe-area-inset-bottom)">
+    <nav id="tabbar" class="lg:hidden fixed bottom-0 inset-x-0 z-[1000] bg-white border-t border-slate-200 flex" style="padding-bottom:env(safe-area-inset-bottom)">
       <button data-tab="carte" class="tabbar-btn flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 text-[10px] font-semibold text-brand-500">
         <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg>
         <span>Carte</span>

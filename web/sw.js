@@ -2,7 +2,7 @@
    Met en cache l'app (HTML/CSS/JS/vendor/icônes) pour un démarrage instantané et
    une ouverture hors-ligne. Ne met JAMAIS en cache les données (/api) ni les
    tuiles carto → pas de péremption trompeuse. */
-const CACHE = "sporia-shell-v1";
+const CACHE = "sporia-shell-v2";
 const PRECACHE = [
   "/",
   "/static/vendor/leaflet/leaflet.js",

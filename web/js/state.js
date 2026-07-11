@@ -22,7 +22,7 @@ export const state = {
   radarSpecies: null,   // sous-ensemble actif sur le calque radar (null = toute la pré-sélection)
   tab: "carte",
   // replié par défaut sur petit écran (téléphone) pour laisser la carte en plein
-  sidebarCollapsed: !!(window.matchMedia && window.matchMedia("(max-width: 767px)").matches),
+  sidebarCollapsed: !!(window.matchMedia && window.matchMedia("(max-width: 1023px)").matches),
 };
 
 // Coloration des facteurs météo de la fiche : vert = favorable, orange = limite,

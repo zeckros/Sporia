@@ -1031,7 +1031,7 @@ function positionPointCard() {
   const card = document.getElementById("point-card");
   if (!state.cardLatLng || card.classList.contains("hidden")) return;
   // Mobile : bottom-sheet ancré en bas (CSS) → pas de positionnement au pixel.
-  if (window.matchMedia("(max-width: 767px)").matches) { card.style.left = ""; card.style.top = ""; return; }
+  if (window.matchMedia("(max-width: 1023px)").matches) { card.style.left = ""; card.style.top = ""; return; }
   const p = state.map.latLngToContainerPoint(state.cardLatLng);
   const cont = state.map.getContainer();
   const cw = card.offsetWidth || 256, ch = card.offsetHeight || 220;
