@@ -994,14 +994,14 @@ function searchCity(q) {
 function setTab(tab) {
   document.querySelectorAll(".tab-btn").forEach((b) => {
     const active = b.dataset.tab === tab;
-    b.classList.toggle("bg-brand-500", active);
-    b.classList.toggle("text-white", active);
-    b.classList.toggle("text-slate-600", !active);
+    b.classList.toggle("bg-girolle", active);
+    b.classList.toggle("text-sousbois", active);
+    b.classList.toggle("text-os/70", !active);
   });
   document.querySelectorAll(".tabbar-btn").forEach((b) => {
     const active = b.dataset.tab === tab;
-    b.classList.toggle("text-brand-500", active);
-    b.classList.toggle("text-slate-400", !active);
+    b.classList.toggle("text-girolle", active);
+    b.classList.toggle("text-os/50", !active);
   });
   state.tab = tab;
   document.getElementById("view-carte").classList.toggle("hidden", tab !== "carte");
