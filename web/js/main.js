@@ -974,7 +974,7 @@ async function doCitySearch(q, box, inputEl) {
   try {
     const res = await API.get(`/api/cities?q=${encodeURIComponent(q)}`);
     box.innerHTML = res.results.map((r, i) =>
-      `<button data-i="${i}" class="city-pick w-full text-left text-sm px-3 py-1.5 rounded-lg hover:bg-brand-50 border border-transparent hover:border-brand-100">${r.label}</button>`
+      `<button data-i="${i}" class="city-pick w-full text-left text-sm px-3 py-1.5 rounded-lg hover:bg-os/10 border border-transparent hover:border-os/20">${r.label}</button>`
     ).join("");
     box.querySelectorAll(".city-pick").forEach((btn) =>
       btn.addEventListener("click", () => {
@@ -1076,8 +1076,8 @@ function phBadge(soilPh) {
 }
 
 function hostDot(host) {
-  if (host === "ok") return '<span class="text-[10px] font-bold text-green-700">· hôte présent</span>';
-  if (host === "no") return '<span class="text-[10px] font-bold text-red-600">· hôte absent</span>';
+  if (host === "ok") return '<span class="text-[10px] font-bold text-green-400">· hôte présent</span>';
+  if (host === "no") return '<span class="text-[10px] font-bold text-red-400">· hôte absent</span>';
   return "";
 }
 
@@ -1229,8 +1229,8 @@ function monthStrip(months, color, current) {
   return `<div class="flex gap-0.5 my-2">` + MONTHS.map((mn, i) => {
     const m = i + 1, active = set.has(m), cur = m === current;
     return `<div class="flex-1 text-center text-[9px] font-bold py-0.5 rounded"
-      style="background:${active ? color : "#f1f5f9"};color:${active ? "#fff" : "#cbd5e1"};
-      ${cur ? "box-shadow:inset 0 0 0 2px #0f172a;" : ""}">${mn}</div>`;
+      style="background:${active ? color : "rgba(239,230,211,.08)"};color:${active ? "#fff" : "rgba(239,230,211,.4)"};
+      ${cur ? "box-shadow:inset 0 0 0 2px #efe6d3;" : ""}">${mn}</div>`;
   }).join("") + `</div>`;
 }
 
@@ -1238,10 +1238,10 @@ function renderGuide() {
   const box = document.getElementById("guide-content");
   const r = state.lastPoint;
   if (!r) {
-    box.innerHTML = `<div class="bg-white border border-slate-200 rounded-2xl p-6 text-slate-500 max-w-xl">
+    box.innerHTML = `<div class="bg-os/5 border border-os/10 rounded-2xl p-6 text-os/70 max-w-xl">
       <div class="mb-3">Aucun point sélectionné. Cliquez sur la carte (onglet Carte) ou cherchez une ville.</div>
       <input id="guide-city-input" type="text" placeholder="Ville ou code postal…"
-             class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 outline-none text-sm" />
+             class="w-full px-3 py-2 rounded-xl bg-transparent text-os placeholder:text-os/40 border border-os/20 focus:border-girolle focus:ring-2 focus:ring-girolle/30 outline-none text-sm" />
       <div id="guide-city-results" class="mt-1 space-y-1"></div></div>`;
     const gi = document.getElementById("guide-city-input");
     const gr = document.getElementById("guide-city-results");
@@ -1255,32 +1255,32 @@ function renderGuide() {
   const fam = { feuillus: "feuillus", coniferes: "conifères", mixte: "mixte", peupleraie: "peupleraie", ouvert: "milieu ouvert" };
   const famTitle = r.forest && familyLabel(r.forest.family);
   const banner = r.forest && r.forest.tfv
-    ? `<div class="bg-white border-l-4 border-green-600 border border-slate-200 rounded-xl p-4 mb-4 shadow-soft">
+    ? `<div class="bg-os/5 border-l-4 border-green-600 border border-os/10 rounded-xl p-4 mb-4 shadow-soft">
          <div class="font-bold">${r.forest.tfv}</div>
-         <div class="text-sm text-slate-500 mt-0.5">Essence dominante : <strong>${r.forest.essence || "—"}</strong> ·
+         <div class="text-sm text-os/70 mt-0.5">Essence dominante : <strong>${r.forest.essence || "—"}</strong> ·
          famille d'hôte : <strong>${fam[r.family] || r.family || "?"}</strong> — les espèces dont l'arbre-hôte
          est présent sont mises en avant (BD&nbsp;Forêt® V2, IGN).</div></div>`
     : (famTitle
-      ? `<div class="bg-white border-l-4 border-green-600 border border-slate-200 rounded-xl p-4 mb-4 shadow-soft">
+      ? `<div class="bg-os/5 border-l-4 border-green-600 border border-os/10 rounded-xl p-4 mb-4 shadow-soft">
            <div class="font-bold">${famTitle}</div>
-           <div class="text-sm text-slate-500 mt-0.5">Famille d'hôte : <strong>${fam[r.family] || r.family || "?"}</strong> —
+           <div class="text-sm text-os/70 mt-0.5">Famille d'hôte : <strong>${fam[r.family] || r.family || "?"}</strong> —
            les espèces dont l'arbre-hôte est présent sont mises en avant (BD&nbsp;Forêt® V2, IGN).</div></div>`
-      : `<div class="bg-white border-l-4 border-slate-400 border border-slate-200 rounded-xl p-4 mb-4 shadow-soft">
+      : `<div class="bg-os/5 border-l-4 border-os/40 border border-os/10 rounded-xl p-4 mb-4 shadow-soft">
            <div class="font-bold">Hors forêt cartographiée</div>
-           <div class="text-sm text-slate-500 mt-0.5">Privilégiez les espèces de prés/lisières, ou cliquez sur une forêt voisine.</div></div>`);
+           <div class="text-sm text-os/70 mt-0.5">Privilégiez les espèces de prés/lisières, ou cliquez sur une forêt voisine.</div></div>`);
 
   const soil = r.soil || {};
   const texSeg = (label, v, color) => (v == null ? "" :
     `<div style="width:${v}%;background:${color}" title="${label} ${fmtNum(v)} %"></div>`);
   const soilBanner = soil.texture_fr
-    ? `<div class="bg-white border-l-4 border-amber-700 border border-slate-200 rounded-xl p-4 mb-4 shadow-soft">
+    ? `<div class="bg-os/5 border-l-4 border-amber-700 border border-os/10 rounded-xl p-4 mb-4 shadow-soft">
          <div class="font-bold">Sol : ${soil.texture_fr}
-           ${soil.ph != null ? `<span class="text-sm font-normal text-slate-400">· pH ${fmtNum(soil.ph)} (${soil.ph_class || ""})</span>` : ""}</div>
-         <div class="flex h-2.5 rounded-full overflow-hidden my-2 border border-slate-200">
+           ${soil.ph != null ? `<span class="text-sm font-normal text-os/50">· pH ${fmtNum(soil.ph)} (${soil.ph_class || ""})</span>` : ""}</div>
+         <div class="flex h-2.5 rounded-full overflow-hidden my-2 border border-os/20">
            ${texSeg("Sable", soil.sand, "#eab308")}${texSeg("Limon", soil.silt, "#84cc16")}${texSeg("Argile", soil.clay, "#b45309")}</div>
-         <div class="text-sm text-slate-500">Sable ${fmtNum(soil.sand)} % · Limon ${fmtNum(soil.silt)} % · Argile ${fmtNum(soil.clay)} %
+         <div class="text-sm text-os/70">Sable ${fmtNum(soil.sand)} % · Limon ${fmtNum(soil.silt)} % · Argile ${fmtNum(soil.clay)} %
            — humidité <strong>${pct(r.soil_moisture)}</strong>, T° du sol <strong>${valFmt(r.soil_temp, "°C")}</strong>.
-           <span class="text-slate-400">(SoilGrids® ISRIC + Open-Meteo)</span></div></div>`
+           <span class="text-os/50">(SoilGrids® ISRIC + Open-Meteo)</span></div></div>`
     : "";
 
   const summary = `<div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-5">
@@ -1301,25 +1301,25 @@ function renderGuide() {
     const hostBadge = m.host === "ok"
       ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full text-green-700 bg-green-100">hôte présent</span>`
       : (m.host === "no" ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full text-red-700 bg-red-100">hôte absent ici</span>` : "");
-    return `<div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-soft">
+    return `<div class="bg-os/5 border border-os/10 rounded-2xl p-4 shadow-soft">
       <div class="flex items-center gap-2">
         <span class="font-bold flex-1">${m.nom}</span>
         <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${fg} ${bg}">${m.label}${m.score_pct != null ? " · " + m.score_pct + "%" : ""}</span>
         ${hostBadge}
       </div>
-      <div class="text-xs italic text-slate-400">${m.latin}</div>
+      <div class="text-xs italic text-os/50">${m.latin}</div>
       ${monthStrip(m.months, m.color, monthNum(r.month))}
-      <div class="text-xs text-slate-600">T° ${m.t_min}–${m.t_max} °C&nbsp;&nbsp;·&nbsp;&nbsp;pluie ${m.rain_lag[0]}–${m.rain_lag[1]} j après</div>
-      <div class="text-xs text-slate-400 mt-1.5">${m.habitat}</div>
-      ${(m.soil_pref || phBadge(m.soil_ph)) ? `<div class="flex items-center gap-1.5 flex-wrap mt-1.5 pt-1.5 border-t border-slate-100">
-        ${phBadge(m.soil_ph)}<span class="text-xs text-slate-500">${m.soil_pref || ""}</span></div>` : ""}
+      <div class="text-xs text-os/70">T° ${m.t_min}–${m.t_max} °C&nbsp;&nbsp;·&nbsp;&nbsp;pluie ${m.rain_lag[0]}–${m.rain_lag[1]} j après</div>
+      <div class="text-xs text-os/50 mt-1.5">${m.habitat}</div>
+      ${(m.soil_pref || phBadge(m.soil_ph)) ? `<div class="flex items-center gap-1.5 flex-wrap mt-1.5 pt-1.5 border-t border-os/10">
+        ${phBadge(m.soil_ph)}<span class="text-xs text-os/60">${m.soil_pref || ""}</span></div>` : ""}
     </div>`;
   }).join("");
 
   box.innerHTML = `
-    <div class="bg-white border border-slate-200 rounded-xl p-4 mb-4 shadow-soft">
+    <div class="bg-os/5 border border-os/10 rounded-xl p-4 mb-4 shadow-soft">
       <div class="font-bold">${r.commune || "Point sélectionné"}
-        <span class="text-xs font-normal text-slate-400">${r.lat.toFixed(3)}°N · ${r.lon.toFixed(3)}°E · dalle 1 km</span></div>
+        <span class="text-xs font-normal text-os/50">${r.lat.toFixed(3)}°N · ${r.lon.toFixed(3)}°E · dalle 1 km</span></div>
     </div>
     ${banner}${soilBanner}${summary}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">${cards}</div>`;
@@ -1411,21 +1411,21 @@ function updateNotifications() {
 
   const panel = document.getElementById("notif-panel");
   if (!state.spots.length) {
-    panel.innerHTML = `<div class="p-3 text-sm text-slate-500">Aucun spot enregistré.<br>Cliquez sur la carte puis « Enregistrer ce spot ».</div>`;
+    panel.innerHTML = `<div class="p-3 text-sm text-os/60">Aucun spot enregistré.<br>Cliquez sur la carte puis « Enregistrer ce spot ».</div>`;
     return;
   }
   if (!propices.length) {
-    panel.innerHTML = `<div class="p-3 text-sm text-slate-500">Aucun de vos ${state.spots.length} spot(s) n'est particulièrement propice aujourd'hui.</div>`;
+    panel.innerHTML = `<div class="p-3 text-sm text-os/60">Aucun de vos ${state.spots.length} spot(s) n'est particulièrement propice aujourd'hui.</div>`;
     return;
   }
   panel.innerHTML =
-    `<div class="px-3 pt-2 pb-1 text-[11px] font-bold uppercase tracking-wide text-slate-400">Propices en ce moment</div>` +
+    `<div class="px-3 pt-2 pb-1 text-[11px] font-bold uppercase tracking-wide text-os/50">Propices en ce moment</div>` +
     propices.map((s) =>
-      `<button class="notif-item w-full text-left px-3 py-2 rounded-xl hover:bg-green-50 flex items-center gap-2" data-id="${s.id}">
+      `<button class="notif-item w-full text-left px-3 py-2 rounded-xl hover:bg-os/10 flex items-center gap-2" data-id="${s.id}">
          <span class="text-lg leading-none">🍄</span>
          <span class="flex-1 min-w-0">
-           <span class="block font-semibold text-slate-800 truncate">${escapeHtml(s.name)}</span>
-           <span class="block text-[11px] text-green-700 font-semibold">Très propice · indice ${s.score_pct} %</span>
+           <span class="block font-semibold text-os truncate">${escapeHtml(s.name)}</span>
+           <span class="block text-[11px] text-green-400 font-semibold">Très propice · indice ${s.score_pct} %</span>
          </span>
        </button>`).join("");
   panel.querySelectorAll(".notif-item").forEach((b) => b.onclick = () => {
@@ -1443,23 +1443,23 @@ function renderSpots() {
   const box = document.getElementById("spots-content");
   if (!box) return;
   if (!state.spots.length) {
-    box.innerHTML = `<div class="bg-white border border-slate-200 rounded-2xl p-6 text-slate-500 max-w-xl shadow-soft">
+    box.innerHTML = `<div class="bg-os/5 border border-os/10 rounded-2xl p-6 text-os/70 max-w-xl shadow-soft">
       Aucun spot enregistré. Sur l'onglet <strong>Carte</strong>, cliquez sur un endroit puis « 📍 Enregistrer ce spot ».</div>`;
     return;
   }
   box.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">` + state.spots.map((s) => {
     const status = s.propice
-      ? `<span class="text-green-700 font-semibold">🟢 Très propice · indice ${s.score_pct} %</span>`
+      ? `<span class="text-green-400 font-semibold">🟢 Très propice · indice ${s.score_pct} %</span>`
       : (s.score_pct != null
-          ? `<span class="text-slate-500">Indice du jour : <strong>${s.score_pct} %</strong></span>`
-          : `<span class="text-slate-400">Hors zone modélisée</span>`);
-    return `<div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-soft">
-      <input class="spot-name w-full font-bold text-slate-800 bg-transparent border-b border-dashed border-slate-300 hover:border-slate-400 focus:border-solid focus:border-brand-500 outline-none" value="${escapeHtml(s.name)}" data-id="${s.id}" title="Cliquez pour renommer">
-      <div class="text-[11px] text-slate-400 mt-0.5">${s.lat.toFixed(3)}°N · ${s.lon.toFixed(3)}°E</div>
+          ? `<span class="text-os/60">Indice du jour : <strong>${s.score_pct} %</strong></span>`
+          : `<span class="text-os/50">Hors zone modélisée</span>`);
+    return `<div class="bg-os/5 border border-os/10 rounded-2xl p-4 shadow-soft">
+      <input class="spot-name w-full font-bold text-os bg-transparent border-b border-dashed border-os/30 hover:border-os/50 focus:border-solid focus:border-girolle outline-none" value="${escapeHtml(s.name)}" data-id="${s.id}" title="Cliquez pour renommer">
+      <div class="text-[11px] text-os/50 mt-0.5">${s.lat.toFixed(3)}°N · ${s.lon.toFixed(3)}°E</div>
       <div class="text-sm mt-2">${status}</div>
       <div class="flex gap-2 mt-3">
-        <button class="spot-map flex-1 py-1.5 rounded-lg bg-brand-50 text-brand-700 text-sm font-semibold hover:bg-brand-100" data-id="${s.id}">Voir sur la carte</button>
-        <button class="spot-del py-1.5 px-3 rounded-lg text-red-600 text-sm font-semibold hover:bg-red-50" data-id="${s.id}">Supprimer</button>
+        <button class="spot-map flex-1 py-1.5 rounded-lg bg-girolle text-sousbois text-sm font-bold hover:bg-lactaire transition" data-id="${s.id}">Voir sur la carte</button>
+        <button class="spot-del py-1.5 px-3 rounded-lg text-red-400 text-sm font-semibold hover:bg-red-500/10 transition" data-id="${s.id}">Supprimer</button>
       </div></div>`;
   }).join("") + `</div>`;
 

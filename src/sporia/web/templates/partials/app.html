@@ -126,10 +126,10 @@
       </main>
 
       <!-- Vue Guide -->
-      <main id="view-guide" class="hidden flex-1 overflow-y-auto nice-scroll min-h-0 bg-slate-50">
+      <main id="view-guide" class="hidden flex-1 overflow-y-auto nice-scroll min-h-0 bg-sousbois text-os">
         <div class="max-w-5xl mx-auto px-6 pt-7 pb-24 lg:pb-7">
           <h1 class="text-2xl font-black">Guide cueillette</h1>
-          <p class="text-sm text-slate-500 mt-1 mb-5 max-w-2xl">
+          <p class="text-sm text-os/60 mt-1 mb-5 max-w-2xl">
             Conditions estimées pour le point sélectionné (saison, température, pluie) + essence
             forestière détectée. Indicatif — ne dispense jamais d'une identification formelle.
           </p>
@@ -138,10 +138,10 @@
       </main>
 
       <!-- Vue Mes spots -->
-      <main id="view-spots" class="hidden flex-1 overflow-y-auto nice-scroll min-h-0 bg-slate-50">
+      <main id="view-spots" class="hidden flex-1 overflow-y-auto nice-scroll min-h-0 bg-sousbois text-os">
         <div class="max-w-4xl mx-auto px-6 pt-7 pb-24 lg:pb-7">
           <h1 class="text-2xl font-black">Mes spots</h1>
-          <p class="text-sm text-slate-500 mt-1 mb-5 max-w-2xl">
+          <p class="text-sm text-os/60 mt-1 mb-5 max-w-2xl">
             Vos coins enregistrés. Cliquez sur le nom pour le renommer ; le statut « propice »
             suit la météo du jour (radar habitat × pousse).
           </p>
@@ -150,16 +150,16 @@
       </main>
 
       <!-- Vue Profil (mobile) : actions du compte au pouce (relaient vers le top-nav) -->
-      <main id="view-profil" class="hidden flex-1 overflow-y-auto nice-scroll min-h-0 bg-slate-50">
+      <main id="view-profil" class="hidden flex-1 overflow-y-auto nice-scroll min-h-0 bg-sousbois text-os">
         <div class="max-w-xl mx-auto px-6 pt-7 pb-24 lg:pb-7 space-y-3">
           <h1 class="text-2xl font-black">Profil</h1>
-          <p id="profil-user" class="text-sm text-slate-500 mb-2"></p>
-          <button id="install-btn" class="hidden w-full text-left px-4 py-3 rounded-xl bg-brand-500 text-white font-semibold hover:bg-brand-600 transition">📲 Installer l'application</button>
-          <button class="profil-act w-full text-left px-4 py-3 rounded-xl bg-white border border-slate-200 font-semibold text-brand-700 hover:bg-brand-50 transition" data-target="species-btn">🍄 Mes champignons</button>
-          <button class="profil-act admin-only hidden w-full text-left px-4 py-3 rounded-xl bg-white border border-slate-200 font-semibold text-brand-700 hover:bg-brand-50 transition" data-target="admin-requests-btn">📥 Demandes d'accès</button>
-          <button class="profil-act w-full text-left px-4 py-3 rounded-xl bg-white border border-slate-200 font-semibold text-brand-700 hover:bg-brand-50 transition" data-target="manage-sub">Mon abonnement</button>
-          <button class="profil-act w-full text-left px-4 py-3 rounded-xl bg-white border border-slate-200 font-semibold text-slate-600 hover:bg-slate-50 transition" data-target="logout-btn">Déconnexion</button>
-          <button class="profil-act w-full text-left px-4 py-3 rounded-xl bg-white border border-slate-200 font-semibold text-slate-400 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition" data-target="delete-account">Supprimer mon compte</button>
+          <p id="profil-user" class="text-sm text-os/60 mb-2"></p>
+          <button id="install-btn" class="hidden w-full text-left px-4 py-3 rounded-xl bg-girolle text-sousbois font-bold hover:bg-lactaire transition">📲 Installer l'application</button>
+          <button class="profil-act w-full text-left px-4 py-3 rounded-xl bg-os/5 border border-os/10 font-semibold text-girolle hover:bg-os/10 transition" data-target="species-btn">🍄 Mes champignons</button>
+          <button class="profil-act admin-only hidden w-full text-left px-4 py-3 rounded-xl bg-os/5 border border-os/10 font-semibold text-girolle hover:bg-os/10 transition" data-target="admin-requests-btn">📥 Demandes d'accès</button>
+          <button class="profil-act w-full text-left px-4 py-3 rounded-xl bg-os/5 border border-os/10 font-semibold text-girolle hover:bg-os/10 transition" data-target="manage-sub">Mon abonnement</button>
+          <button class="profil-act w-full text-left px-4 py-3 rounded-xl bg-os/5 border border-os/10 font-semibold text-os/70 hover:bg-os/10 transition" data-target="logout-btn">Déconnexion</button>
+          <button class="profil-act w-full text-left px-4 py-3 rounded-xl bg-os/5 border border-os/10 font-semibold text-os/40 hover:text-red-400 hover:border-red-400/40 hover:bg-red-500/10 transition" data-target="delete-account">Supprimer mon compte</button>
         </div>
       </main>
     </div>
