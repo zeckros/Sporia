@@ -317,10 +317,29 @@ function initMap() {
   // jamais, même ouverte (et sur mobile le bandeau droit reste visible).
   state.map = L.map("map", { zoomControl: false, preferCanvas: true }).setView([46.6, 2.5], 6);
   L.control.zoom({ position: "topright" }).addTo(state.map);
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-    attribution: "&copy; OpenStreetMap, &copy; CARTO", subdomains: "abcd", maxZoom: 19,
-  }).addTo(state.map);
+  // Deux fonds CARTO (même hôte → aucun ajout CSP) : clair par défaut, sombre en option.
+  const baseOpts = { attribution: "&copy; OpenStreetMap, &copy; CARTO", subdomains: "abcd", maxZoom: 19 };
+  state.baseLight = L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", baseOpts);
+  state.baseDark = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", baseOpts);
+  try { state.darkMap = localStorage.getItem("sporia:darkmap") === "1"; } catch (e) { state.darkMap = false; }
+  (state.darkMap ? state.baseDark : state.baseLight).addTo(state.map);
+  document.body.classList.toggle("map-dark", state.darkMap);
   L.control.scale({ metric: true, imperial: false, position: "bottomright" }).addTo(state.map);
+
+  // Bouton bascule fond clair / sombre (contrôle Leaflet → s'empile sous le zoom).
+  const BasemapCtl = L.control({ position: "topright" });
+  BasemapCtl.onAdd = () => {
+    const b = L.DomUtil.create("button", "basemap-toggle-btn");
+    b.id = "basemap-toggle";
+    b.type = "button";
+    b.innerHTML = state.darkMap ? "☀" : "☾";
+    b.setAttribute("aria-label", "Basculer le fond de carte clair / sombre");
+    b.title = state.darkMap ? "Fond clair" : "Fond sombre";
+    L.DomEvent.disableClickPropagation(b);
+    L.DomEvent.on(b, "click", () => setBasemap(!state.darkMap));
+    return b;
+  };
+  BasemapCtl.addTo(state.map);
 
   // WMTS (tuiles pré-calculées en cache) plutôt que WMS (rendu à la volée, lent aux
   // zooms serrés). Le cache BD Forêt® va jusqu'à z16 → au-delà, Leaflet sur-échantillonne
@@ -335,6 +354,20 @@ function initMap() {
   state.map.on("click", (e) => loadPoint(e.latlng.lat, e.latlng.lng));
   // La carte d'info reste ancrée au point cliqué quand on déplace/zoome la carte.
   state.map.on("move zoom resize", positionPointCard);
+}
+
+/* Bascule du fond de carte clair ↔ sombre (CARTO). Persiste le choix. */
+function setBasemap(dark) {
+  state.darkMap = dark;
+  const add = dark ? state.baseDark : state.baseLight;
+  const rem = dark ? state.baseLight : state.baseDark;
+  if (state.map.hasLayer(rem)) state.map.removeLayer(rem);
+  if (!state.map.hasLayer(add)) add.addTo(state.map);
+  add.bringToBack();                                  // le fond reste sous les calques de données
+  document.body.classList.toggle("map-dark", dark);   // hook overlays (lisibilité sur fond sombre)
+  try { localStorage.setItem("sporia:darkmap", dark ? "1" : "0"); } catch (e) { /* mode privé */ }
+  const btn = document.getElementById("basemap-toggle");
+  if (btn) { btn.innerHTML = dark ? "☀" : "☾"; btn.title = dark ? "Fond clair" : "Fond sombre"; }
 }
 
 function computeSelectedDates() {

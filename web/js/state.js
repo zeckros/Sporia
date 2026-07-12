@@ -21,6 +21,8 @@ export const state = {
   spots: [], spotLayer: null, lastSpot: null,
   radarSpecies: null,   // sous-ensemble actif sur le calque radar (null = toute la pré-sélection)
   tab: "carte",
+  darkMap: false,       // fond de carte sombre (CARTO dark) ; persisté en localStorage
+  baseLight: null, baseDark: null,
   // replié par défaut sur petit écran (téléphone) pour laisser la carte en plein
   sidebarCollapsed: !!(window.matchMedia && window.matchMedia("(max-width: 1023px)").matches),
 };

@@ -24,6 +24,16 @@ html,body{height:100%;margin:0;font-family:'Inter',system-ui,sans-serif;backgrou
 /* Positionnement garanti de la carte d'info (indépendant de Tailwind) */
 #view-carte{position:relative}
 #point-card{position:absolute;z-index:800}
+/* Bouton bascule fond clair/sombre (contrôle Leaflet, empilé sous le zoom) */
+.basemap-toggle-btn{width:34px;height:34px;display:flex;align-items:center;justify-content:center;
+  font-size:16px;line-height:1;cursor:pointer;background:var(--sousbois);color:var(--os);
+  border:1px solid rgba(239,230,211,.15);border-radius:9px;box-shadow:0 8px 28px rgba(15,23,42,.18)}
+.basemap-toggle-btn:hover{background:#221c14}
+/* Fond de carte sombre : les overlays sous-bois se détachent moins → liseré + ombre renforcés */
+body.map-dark #search-pill>div,body.map-dark #city-input~*,body.map-dark .layer-chip,
+body.map-dark #more-layers-btn,body.map-dark #map-legend,body.map-dark #point-card,
+body.map-dark #date-range,body.map-dark #radar-species-btn{
+  box-shadow:0 0 0 1px rgba(239,230,211,.22),0 8px 28px rgba(0,0,0,.5)}
 /* Fiche au clic — desktop : détail toujours visible, poignée/toggle masqués */
 #point-card .pc-handle,#point-card .pc-expand{display:none}
 #point-card .pc-detail{display:block}
