@@ -1326,7 +1326,7 @@ function renderGuide() {
 }
 
 function chip(big, small, level) {
-  const c = level ? FACTOR_CLR[level] + " border" : "bg-white border border-slate-200 text-slate-800";
+  const c = level ? FACTOR_CLR[level] + " border" : "bg-os/5 border border-os/10 text-os";
   return `<div class="${c} rounded-xl px-3 py-2 text-center shadow-soft">
     <div class="font-extrabold">${big}</div><div class="text-[11px] opacity-70">${small}</div></div>`;
 }
