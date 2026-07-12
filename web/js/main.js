@@ -845,10 +845,10 @@ function confidenceBadge(conf) {
 
 function openSpeciesModal() {
   const sel = new Set(state.species || state.allSpecies.map((s) => s.latin));
-  const legend = `<p class="text-[11px] text-slate-400 mb-1 px-1">Badge = fiabilité de la carte d'habitat (<span class="text-green-700 font-semibold">élevée</span> · <span class="text-amber-700 font-semibold">bonne</span> · <span class="text-slate-500 font-semibold">modérée</span>).</p>`;
+  const legend = `<p class="text-[11px] text-os/50 mb-1 px-1">Badge = fiabilité de la carte d'habitat (<span class="text-green-400 font-semibold">élevée</span> · <span class="text-amber-400 font-semibold">bonne</span> · <span class="text-os/60 font-semibold">modérée</span>).</p>`;
   document.getElementById("species-list").innerHTML = legend + state.allSpecies.map((s) =>
-    `<label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
-       <input type="checkbox" class="sp-check accent-brand-500" value="${s.latin}" ${sel.has(s.latin) ? "checked" : ""}>
+    `<label class="flex items-center gap-2 p-2 rounded-lg border border-os/10 hover:bg-os/10 cursor-pointer">
+       <input type="checkbox" class="sp-check accent-girolle" value="${s.latin}" ${sel.has(s.latin) ? "checked" : ""}>
        <span class="inline-block w-3 h-3 rounded-full shrink-0" style="background:${s.color}"></span>
        <span class="text-sm truncate flex-1">${s.nom}</span>
        ${confidenceBadge(s.confidence)}
@@ -864,13 +864,13 @@ function closeSpeciesModal() { document.getElementById("species-modal").classLis
 /* ---------- Demandes d'accès (admin) ---------- */
 async function openAccessRequests() {
   const list = document.getElementById("areq-list");
-  list.innerHTML = `<div class="text-sm text-slate-400 text-center py-6">Chargement…</div>`;
+  list.innerHTML = `<div class="text-sm text-os/50 text-center py-6">Chargement…</div>`;
   document.getElementById("access-requests-modal").classList.remove("hidden");
   try {
     const r = await API.get("/api/access-requests");
     renderAccessRequests(r.requests || []);
   } catch (e) {
-    list.innerHTML = `<div class="text-sm text-red-600 text-center py-6">Erreur de chargement.</div>`;
+    list.innerHTML = `<div class="text-sm text-red-400 text-center py-6">Erreur de chargement.</div>`;
   }
 }
 
@@ -881,24 +881,24 @@ function closeAccessRequests() {
 function renderAccessRequests(reqs) {
   const list = document.getElementById("areq-list");
   if (!reqs.length) {
-    list.innerHTML = `<div class="text-sm text-slate-400 text-center py-6">Aucune demande pour le moment.</div>`;
+    list.innerHTML = `<div class="text-sm text-os/50 text-center py-6">Aucune demande pour le moment.</div>`;
     return;
   }
   // list_requests() renvoie les plus anciennes d'abord → on affiche les plus récentes en haut.
   list.innerHTML = reqs.slice().reverse().map((r) => {
     const date = r.created ? new Date(r.created * 1000).toLocaleDateString("fr-FR") : "";
-    return `<div class="rounded-xl border border-slate-200 p-3" data-id="${escapeHtml(r.id)}">
+    return `<div class="rounded-xl border border-os/10 bg-os/5 p-3" data-id="${escapeHtml(r.id)}">
       <div class="flex items-start justify-between gap-2">
         <div class="min-w-0">
-          <div class="font-semibold text-sm text-slate-800 truncate">${escapeHtml(r.name)}</div>
-          <div class="text-xs text-slate-500 truncate">${escapeHtml(r.email)}</div>
+          <div class="font-semibold text-sm text-os truncate">${escapeHtml(r.name)}</div>
+          <div class="text-xs text-os/60 truncate">${escapeHtml(r.email)}</div>
         </div>
-        <span class="text-[11px] text-slate-400 shrink-0">${date}</span>
+        <span class="text-[11px] text-os/50 shrink-0">${date}</span>
       </div>
-      <div class="mt-2 text-sm text-slate-600 whitespace-pre-line break-words">${escapeHtml(r.message)}</div>
+      <div class="mt-2 text-sm text-os/70 whitespace-pre-line break-words">${escapeHtml(r.message)}</div>
       <div class="areq-action mt-3 flex gap-2">
-        <button class="areq-create px-3 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold shadow-card">Créer le compte</button>
-        <button class="areq-reject px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-red-600 hover:border-red-200 text-xs font-bold transition">Refuser</button>
+        <button class="areq-create px-3 py-1.5 rounded-lg bg-girolle hover:bg-lactaire text-sousbois text-xs font-bold shadow-card transition">Créer le compte</button>
+        <button class="areq-reject px-3 py-1.5 rounded-lg bg-transparent border border-os/20 text-os/60 hover:text-red-400 hover:border-red-400/40 text-xs font-bold transition">Refuser</button>
       </div>
     </div>`;
   }).join("");
@@ -910,16 +910,16 @@ function renderAccessRequests(reqs) {
 
 async function createFromRequest(card) {
   const box = card.querySelector(".areq-action");
-  box.innerHTML = `<span class="text-xs text-slate-400">Création…</span>`;
+  box.innerHTML = `<span class="text-xs text-os/50">Création…</span>`;
   try {
     const r = await API.post("/api/admin/accounts/from-request", { request_id: card.dataset.id });
     card.classList.add("opacity-70");
     box.innerHTML =
-      `<div class="text-xs font-semibold text-green-700">✓ Compte créé — ${escapeHtml(r.email)}</div>
-       <div class="mt-1 text-[11px] text-slate-500">Lien d'invitation (aussi envoyé par email) :</div>
+      `<div class="text-xs font-semibold text-green-400">✓ Compte créé — ${escapeHtml(r.email)}</div>
+       <div class="mt-1 text-[11px] text-os/60">Lien d'invitation (aussi envoyé par email) :</div>
        <div class="mt-1 flex items-center gap-1.5">
-         <input class="areq-link flex-1 min-w-0 text-[11px] px-2 py-1 rounded border border-slate-200 bg-slate-50" readonly value="${escapeHtml(r.invite_url)}">
-         <button class="areq-copy px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-[11px] font-semibold shrink-0">Copier</button>
+         <input class="areq-link flex-1 min-w-0 text-[11px] px-2 py-1 rounded border border-os/20 bg-os/10 text-os" readonly value="${escapeHtml(r.invite_url)}">
+         <button class="areq-copy px-2 py-1 rounded bg-os/10 hover:bg-os/20 text-os text-[11px] font-semibold shrink-0">Copier</button>
        </div>`;
     box.querySelector(".areq-copy").addEventListener("click", () => {
       const inp = box.querySelector(".areq-link");
@@ -927,21 +927,21 @@ async function createFromRequest(card) {
       navigator.clipboard?.writeText(inp.value);
     });
   } catch (e) {
-    box.innerHTML = `<div class="text-xs text-red-600">${escapeHtml(e.message || "Échec de la création.")}</div>`;
+    box.innerHTML = `<div class="text-xs text-red-400">${escapeHtml(e.message || "Échec de la création.")}</div>`;
   }
 }
 
 async function rejectRequest(card) {
   const box = card.querySelector(".areq-action");
-  box.innerHTML = `<span class="text-xs text-slate-400">Suppression…</span>`;
+  box.innerHTML = `<span class="text-xs text-os/50">Suppression…</span>`;
   try {
     await API.del(`/api/access-requests/${encodeURIComponent(card.dataset.id)}`);
     const list = card.parentElement;
     card.remove();
     if (!list.querySelector("[data-id]"))
-      list.innerHTML = `<div class="text-sm text-slate-400 text-center py-6">Aucune demande pour le moment.</div>`;
+      list.innerHTML = `<div class="text-sm text-os/50 text-center py-6">Aucune demande pour le moment.</div>`;
   } catch (e) {
-    box.innerHTML = `<div class="text-xs text-red-600">${escapeHtml(e.message || "Échec de la suppression.")}</div>`;
+    box.innerHTML = `<div class="text-xs text-red-400">${escapeHtml(e.message || "Échec de la suppression.")}</div>`;
   }
 }
 function setAllSpeciesChecks(v) {
