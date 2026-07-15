@@ -21,17 +21,21 @@ export const state = {
   spots: [], spotLayer: null, lastSpot: null,
   radarSpecies: null,   // sous-ensemble actif sur le calque radar (null = toute la pré-sélection)
   tab: "carte",
+  darkMap: false,       // fond de carte sombre (CARTO dark) ; persisté en localStorage
+  baseLight: null, baseDark: null,
   // replié par défaut sur petit écran (téléphone) pour laisser la carte en plein
   sidebarCollapsed: !!(window.matchMedia && window.matchMedia("(max-width: 1023px)").matches),
 };
 
 // Coloration des facteurs météo de la fiche : vert = favorable, orange = limite,
 // rouge = défavorable (atténue). Seuils « grand public » (pas par espèce).
+// Tuiles sur fiches sombres (DA) : fond os/5 relevé, code couleur porté par
+// le texte + le liseré (vert/ambre/rouge) ; neutre = os.
 export const FACTOR_CLR = {
-  good: "bg-green-50 border-green-200 text-green-800",
-  mid:  "bg-amber-50 border-amber-200 text-amber-800",
-  bad:  "bg-red-50 border-red-200 text-red-800",
-  off:  "bg-slate-50 border-slate-200 text-slate-800",
+  good: "bg-green-500/10 border-green-500/30 text-green-300",
+  mid:  "bg-amber-500/10 border-amber-500/30 text-amber-300",
+  bad:  "bg-red-500/10 border-red-500/30 text-red-300",
+  off:  "bg-os/5 border-os/10 text-os",
 };
 
 // Noms lisibles des calques (pour le titre affiché quand le volet est replié).

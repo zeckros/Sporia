@@ -141,8 +141,30 @@ function showLoginPage() {
   document.getElementById("landing-screen").classList.add("hidden");
   document.getElementById("login-screen").classList.remove("hidden");
   document.getElementById("app-screen").classList.add("hidden");
+  setAuthMode("login");
   setTimeout(() => document.getElementById("login-user").focus(), 50);
 }
+
+// Bascule Connexion / Créer un compte sur l'écran d'auth unifié
+function setAuthMode(mode) {
+  const login = mode !== "register";
+  document.getElementById("login-form").classList.toggle("hidden", !login);
+  document.getElementById("register-form").classList.toggle("hidden", login);
+  document.querySelectorAll(".auth-tab").forEach((t) => {
+    const on = t.dataset.authMode === mode;
+    t.classList.toggle("bg-girolle", on);
+    t.classList.toggle("text-sousbois", on);
+    t.classList.toggle("text-os/60", !on);
+  });
+}
+document.querySelectorAll(".auth-tab").forEach((t) =>
+  t.addEventListener("click", () => setAuthMode(t.dataset.authMode)));
+// Lien « Devenir bêta-testeur » depuis l'écran d'auth → retour landing, section contact
+document.querySelectorAll(".goto-beta").forEach((b) =>
+  b.addEventListener("click", () => {
+    showLanding();
+    setTimeout(() => document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" }), 60);
+  }));
 
 document.getElementById("login-form").addEventListener("submit", async (ev) => {
   ev.preventDefault();
@@ -295,10 +317,29 @@ function initMap() {
   // jamais, même ouverte (et sur mobile le bandeau droit reste visible).
   state.map = L.map("map", { zoomControl: false, preferCanvas: true }).setView([46.6, 2.5], 6);
   L.control.zoom({ position: "topright" }).addTo(state.map);
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-    attribution: "&copy; OpenStreetMap, &copy; CARTO", subdomains: "abcd", maxZoom: 19,
-  }).addTo(state.map);
+  // Deux fonds CARTO (même hôte → aucun ajout CSP) : clair par défaut, sombre en option.
+  const baseOpts = { attribution: "&copy; OpenStreetMap, &copy; CARTO", subdomains: "abcd", maxZoom: 19 };
+  state.baseLight = L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", baseOpts);
+  state.baseDark = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", baseOpts);
+  try { state.darkMap = localStorage.getItem("sporia:darkmap") === "1"; } catch (e) { state.darkMap = false; }
+  (state.darkMap ? state.baseDark : state.baseLight).addTo(state.map);
+  document.body.classList.toggle("map-dark", state.darkMap);
   L.control.scale({ metric: true, imperial: false, position: "bottomright" }).addTo(state.map);
+
+  // Bouton bascule fond clair / sombre (contrôle Leaflet → s'empile sous le zoom).
+  const BasemapCtl = L.control({ position: "topright" });
+  BasemapCtl.onAdd = () => {
+    const b = L.DomUtil.create("button", "basemap-toggle-btn");
+    b.id = "basemap-toggle";
+    b.type = "button";
+    b.innerHTML = state.darkMap ? "☀" : "☾";
+    b.setAttribute("aria-label", "Basculer le fond de carte clair / sombre");
+    b.title = state.darkMap ? "Fond clair" : "Fond sombre";
+    L.DomEvent.disableClickPropagation(b);
+    L.DomEvent.on(b, "click", () => setBasemap(!state.darkMap));
+    return b;
+  };
+  BasemapCtl.addTo(state.map);
 
   // WMTS (tuiles pré-calculées en cache) plutôt que WMS (rendu à la volée, lent aux
   // zooms serrés). Le cache BD Forêt® va jusqu'à z16 → au-delà, Leaflet sur-échantillonne
@@ -313,6 +354,20 @@ function initMap() {
   state.map.on("click", (e) => loadPoint(e.latlng.lat, e.latlng.lng));
   // La carte d'info reste ancrée au point cliqué quand on déplace/zoome la carte.
   state.map.on("move zoom resize", positionPointCard);
+}
+
+/* Bascule du fond de carte clair ↔ sombre (CARTO). Persiste le choix. */
+function setBasemap(dark) {
+  state.darkMap = dark;
+  const add = dark ? state.baseDark : state.baseLight;
+  const rem = dark ? state.baseLight : state.baseDark;
+  if (state.map.hasLayer(rem)) state.map.removeLayer(rem);
+  if (!state.map.hasLayer(add)) add.addTo(state.map);
+  add.bringToBack();                                  // le fond reste sous les calques de données
+  document.body.classList.toggle("map-dark", dark);   // hook overlays (lisibilité sur fond sombre)
+  try { localStorage.setItem("sporia:darkmap", dark ? "1" : "0"); } catch (e) { /* mode privé */ }
+  const btn = document.getElementById("basemap-toggle");
+  if (btn) { btn.innerHTML = dark ? "☀" : "☾"; btn.title = dark ? "Fond clair" : "Fond sombre"; }
 }
 
 function computeSelectedDates() {
@@ -600,10 +655,10 @@ function layoutChips() {
   moreWrap.classList.toggle("hidden", fit >= chips.length);
   const mb = document.getElementById("more-layers-btn");
   if (mb) {   // « ＋ Plus » surligné si le calque actif est rangé dedans
-    mb.classList.toggle("bg-brand-500", overflowActive);
-    mb.classList.toggle("text-white", overflowActive);
-    mb.classList.toggle("bg-white", !overflowActive);
-    mb.classList.toggle("text-slate-600", !overflowActive);
+    mb.classList.toggle("bg-girolle", overflowActive);
+    mb.classList.toggle("text-sousbois", overflowActive);
+    mb.classList.toggle("bg-sousbois", !overflowActive);
+    mb.classList.toggle("text-os", !overflowActive);
   }
 }
 
@@ -613,10 +668,10 @@ async function setActiveLayer(key) {
   // Sync des contrôles : puces (carte) + radios (volet)
   document.querySelectorAll(".layer-chip").forEach((c) => {
     const on = c.dataset.layer === key;
-    c.classList.toggle("bg-brand-500", on);
-    c.classList.toggle("text-white", on);
-    c.classList.toggle("bg-white", !on);
-    c.classList.toggle("text-slate-600", !on);
+    c.classList.toggle("bg-girolle", on);
+    c.classList.toggle("text-sousbois", on);
+    c.classList.toggle("bg-sousbois", !on);
+    c.classList.toggle("text-os", !on);
   });
   document.querySelectorAll('input[name="layer"]').forEach((r) => { r.checked = (r.value === key); });
   // « ＋ Plus » surligné si le calque actif est rangé dans le menu (puce débordée)
@@ -624,10 +679,10 @@ async function setActiveLayer(key) {
   if (moreB) {
     const chip = document.querySelector(`#layer-chips .layer-chip[data-layer="${key}"]`);
     const inMenu = !!chip && chip.classList.contains("hidden");
-    moreB.classList.toggle("bg-brand-500", inMenu);
-    moreB.classList.toggle("text-white", inMenu);
-    moreB.classList.toggle("bg-white", !inMenu);
-    moreB.classList.toggle("text-slate-600", !inMenu);
+    moreB.classList.toggle("bg-girolle", inMenu);
+    moreB.classList.toggle("text-sousbois", inMenu);
+    moreB.classList.toggle("bg-sousbois", !inMenu);
+    moreB.classList.toggle("text-os", !inMenu);
   }
   // Période : utile seulement pour les calques météo (température / précipitations) → masquée sinon
   const pb = document.getElementById("period-block");
@@ -823,10 +878,10 @@ function confidenceBadge(conf) {
 
 function openSpeciesModal() {
   const sel = new Set(state.species || state.allSpecies.map((s) => s.latin));
-  const legend = `<p class="text-[11px] text-slate-400 mb-1 px-1">Badge = fiabilité de la carte d'habitat (<span class="text-green-700 font-semibold">élevée</span> · <span class="text-amber-700 font-semibold">bonne</span> · <span class="text-slate-500 font-semibold">modérée</span>).</p>`;
+  const legend = `<p class="text-[11px] text-os/50 mb-1 px-1">Badge = fiabilité de la carte d'habitat (<span class="text-green-400 font-semibold">élevée</span> · <span class="text-amber-400 font-semibold">bonne</span> · <span class="text-os/60 font-semibold">modérée</span>).</p>`;
   document.getElementById("species-list").innerHTML = legend + state.allSpecies.map((s) =>
-    `<label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
-       <input type="checkbox" class="sp-check accent-brand-500" value="${s.latin}" ${sel.has(s.latin) ? "checked" : ""}>
+    `<label class="flex items-center gap-2 p-2 rounded-lg border border-os/10 hover:bg-os/10 cursor-pointer">
+       <input type="checkbox" class="sp-check accent-girolle" value="${s.latin}" ${sel.has(s.latin) ? "checked" : ""}>
        <span class="inline-block w-3 h-3 rounded-full shrink-0" style="background:${s.color}"></span>
        <span class="text-sm truncate flex-1">${s.nom}</span>
        ${confidenceBadge(s.confidence)}
@@ -842,13 +897,13 @@ function closeSpeciesModal() { document.getElementById("species-modal").classLis
 /* ---------- Demandes d'accès (admin) ---------- */
 async function openAccessRequests() {
   const list = document.getElementById("areq-list");
-  list.innerHTML = `<div class="text-sm text-slate-400 text-center py-6">Chargement…</div>`;
+  list.innerHTML = `<div class="text-sm text-os/50 text-center py-6">Chargement…</div>`;
   document.getElementById("access-requests-modal").classList.remove("hidden");
   try {
     const r = await API.get("/api/access-requests");
     renderAccessRequests(r.requests || []);
   } catch (e) {
-    list.innerHTML = `<div class="text-sm text-red-600 text-center py-6">Erreur de chargement.</div>`;
+    list.innerHTML = `<div class="text-sm text-red-400 text-center py-6">Erreur de chargement.</div>`;
   }
 }
 
@@ -859,24 +914,24 @@ function closeAccessRequests() {
 function renderAccessRequests(reqs) {
   const list = document.getElementById("areq-list");
   if (!reqs.length) {
-    list.innerHTML = `<div class="text-sm text-slate-400 text-center py-6">Aucune demande pour le moment.</div>`;
+    list.innerHTML = `<div class="text-sm text-os/50 text-center py-6">Aucune demande pour le moment.</div>`;
     return;
   }
   // list_requests() renvoie les plus anciennes d'abord → on affiche les plus récentes en haut.
   list.innerHTML = reqs.slice().reverse().map((r) => {
     const date = r.created ? new Date(r.created * 1000).toLocaleDateString("fr-FR") : "";
-    return `<div class="rounded-xl border border-slate-200 p-3" data-id="${escapeHtml(r.id)}">
+    return `<div class="rounded-xl border border-os/10 bg-os/5 p-3" data-id="${escapeHtml(r.id)}">
       <div class="flex items-start justify-between gap-2">
         <div class="min-w-0">
-          <div class="font-semibold text-sm text-slate-800 truncate">${escapeHtml(r.name)}</div>
-          <div class="text-xs text-slate-500 truncate">${escapeHtml(r.email)}</div>
+          <div class="font-semibold text-sm text-os truncate">${escapeHtml(r.name)}</div>
+          <div class="text-xs text-os/60 truncate">${escapeHtml(r.email)}</div>
         </div>
-        <span class="text-[11px] text-slate-400 shrink-0">${date}</span>
+        <span class="text-[11px] text-os/50 shrink-0">${date}</span>
       </div>
-      <div class="mt-2 text-sm text-slate-600 whitespace-pre-line break-words">${escapeHtml(r.message)}</div>
+      <div class="mt-2 text-sm text-os/70 whitespace-pre-line break-words">${escapeHtml(r.message)}</div>
       <div class="areq-action mt-3 flex gap-2">
-        <button class="areq-create px-3 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold shadow-card">Créer le compte</button>
-        <button class="areq-reject px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-red-600 hover:border-red-200 text-xs font-bold transition">Refuser</button>
+        <button class="areq-create px-3 py-1.5 rounded-lg bg-girolle hover:bg-lactaire text-sousbois text-xs font-bold shadow-card transition">Créer le compte</button>
+        <button class="areq-reject px-3 py-1.5 rounded-lg bg-transparent border border-os/20 text-os/60 hover:text-red-400 hover:border-red-400/40 text-xs font-bold transition">Refuser</button>
       </div>
     </div>`;
   }).join("");
@@ -888,16 +943,16 @@ function renderAccessRequests(reqs) {
 
 async function createFromRequest(card) {
   const box = card.querySelector(".areq-action");
-  box.innerHTML = `<span class="text-xs text-slate-400">Création…</span>`;
+  box.innerHTML = `<span class="text-xs text-os/50">Création…</span>`;
   try {
     const r = await API.post("/api/admin/accounts/from-request", { request_id: card.dataset.id });
     card.classList.add("opacity-70");
     box.innerHTML =
-      `<div class="text-xs font-semibold text-green-700">✓ Compte créé — ${escapeHtml(r.email)}</div>
-       <div class="mt-1 text-[11px] text-slate-500">Lien d'invitation (aussi envoyé par email) :</div>
+      `<div class="text-xs font-semibold text-green-400">✓ Compte créé — ${escapeHtml(r.email)}</div>
+       <div class="mt-1 text-[11px] text-os/60">Lien d'invitation (aussi envoyé par email) :</div>
        <div class="mt-1 flex items-center gap-1.5">
-         <input class="areq-link flex-1 min-w-0 text-[11px] px-2 py-1 rounded border border-slate-200 bg-slate-50" readonly value="${escapeHtml(r.invite_url)}">
-         <button class="areq-copy px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-[11px] font-semibold shrink-0">Copier</button>
+         <input class="areq-link flex-1 min-w-0 text-[11px] px-2 py-1 rounded border border-os/20 bg-os/10 text-os" readonly value="${escapeHtml(r.invite_url)}">
+         <button class="areq-copy px-2 py-1 rounded bg-os/10 hover:bg-os/20 text-os text-[11px] font-semibold shrink-0">Copier</button>
        </div>`;
     box.querySelector(".areq-copy").addEventListener("click", () => {
       const inp = box.querySelector(".areq-link");
@@ -905,21 +960,21 @@ async function createFromRequest(card) {
       navigator.clipboard?.writeText(inp.value);
     });
   } catch (e) {
-    box.innerHTML = `<div class="text-xs text-red-600">${escapeHtml(e.message || "Échec de la création.")}</div>`;
+    box.innerHTML = `<div class="text-xs text-red-400">${escapeHtml(e.message || "Échec de la création.")}</div>`;
   }
 }
 
 async function rejectRequest(card) {
   const box = card.querySelector(".areq-action");
-  box.innerHTML = `<span class="text-xs text-slate-400">Suppression…</span>`;
+  box.innerHTML = `<span class="text-xs text-os/50">Suppression…</span>`;
   try {
     await API.del(`/api/access-requests/${encodeURIComponent(card.dataset.id)}`);
     const list = card.parentElement;
     card.remove();
     if (!list.querySelector("[data-id]"))
-      list.innerHTML = `<div class="text-sm text-slate-400 text-center py-6">Aucune demande pour le moment.</div>`;
+      list.innerHTML = `<div class="text-sm text-os/50 text-center py-6">Aucune demande pour le moment.</div>`;
   } catch (e) {
-    box.innerHTML = `<div class="text-xs text-red-600">${escapeHtml(e.message || "Échec de la suppression.")}</div>`;
+    box.innerHTML = `<div class="text-xs text-red-400">${escapeHtml(e.message || "Échec de la suppression.")}</div>`;
   }
 }
 function setAllSpeciesChecks(v) {
@@ -952,7 +1007,7 @@ async function doCitySearch(q, box, inputEl) {
   try {
     const res = await API.get(`/api/cities?q=${encodeURIComponent(q)}`);
     box.innerHTML = res.results.map((r, i) =>
-      `<button data-i="${i}" class="city-pick w-full text-left text-sm px-3 py-1.5 rounded-lg hover:bg-brand-50 border border-transparent hover:border-brand-100">${r.label}</button>`
+      `<button data-i="${i}" class="city-pick w-full text-left text-sm px-3 py-1.5 rounded-lg hover:bg-os/10 border border-transparent hover:border-os/20">${r.label}</button>`
     ).join("");
     box.querySelectorAll(".city-pick").forEach((btn) =>
       btn.addEventListener("click", () => {
@@ -972,14 +1027,14 @@ function searchCity(q) {
 function setTab(tab) {
   document.querySelectorAll(".tab-btn").forEach((b) => {
     const active = b.dataset.tab === tab;
-    b.classList.toggle("bg-brand-500", active);
-    b.classList.toggle("text-white", active);
-    b.classList.toggle("text-slate-600", !active);
+    b.classList.toggle("bg-girolle", active);
+    b.classList.toggle("text-sousbois", active);
+    b.classList.toggle("text-os/70", !active);
   });
   document.querySelectorAll(".tabbar-btn").forEach((b) => {
     const active = b.dataset.tab === tab;
-    b.classList.toggle("text-brand-500", active);
-    b.classList.toggle("text-slate-400", !active);
+    b.classList.toggle("text-girolle", active);
+    b.classList.toggle("text-os/50", !active);
   });
   state.tab = tab;
   document.getElementById("view-carte").classList.toggle("hidden", tab !== "carte");
@@ -1054,8 +1109,8 @@ function phBadge(soilPh) {
 }
 
 function hostDot(host) {
-  if (host === "ok") return '<span class="text-[10px] font-bold text-green-700">· hôte présent</span>';
-  if (host === "no") return '<span class="text-[10px] font-bold text-red-600">· hôte absent</span>';
+  if (host === "ok") return '<span class="text-[10px] font-bold text-green-400">· hôte présent</span>';
+  if (host === "no") return '<span class="text-[10px] font-bold text-red-400">· hôte absent</span>';
   return "";
 }
 
@@ -1101,15 +1156,15 @@ function showPointCard(lat, lon, r) {
   const top = r.mushrooms.filter((m) => m.level !== "off" && m.selected !== false).slice(0, 3);
   const forestLine = forestLineHtml(r.forest);
   const soilLine = r.soil && r.soil.texture_fr
-    ? `<span class="font-semibold">${r.soil.texture_fr}</span> <span class="text-slate-400">· pH ${fmtNum(r.soil.ph)}${r.soil.ph_class ? " (" + r.soil.ph_class + ")" : ""}</span>`
+    ? `<span class="font-semibold">${r.soil.texture_fr}</span> <span class="text-os/50">· pH ${fmtNum(r.soil.ph)}${r.soil.ph_class ? " (" + r.soil.ph_class + ")" : ""}</span>`
     : "";
   const terrainLine = r.terrain && r.terrain.altitude != null
-    ? `<span class="font-semibold">${Math.round(r.terrain.altitude)} m</span> <span class="text-slate-400">· ${r.terrain.exposition || ""}</span>`
+    ? `<span class="font-semibold">${Math.round(r.terrain.altitude)} m</span> <span class="text-os/50">· ${r.terrain.exposition || ""}</span>`
     : "";
   const spot = state.lastSpot;
   const titleHtml = spot
-    ? `<input class="pc-title font-bold text-slate-800 leading-tight bg-transparent w-full border-b border-dashed border-slate-300 focus:border-solid focus:border-brand-500 outline-none" value="${escapeHtml(spot.name)}" title="Cliquez pour renommer">`
-    : `<div class="font-bold text-slate-800 leading-tight">${r.commune || "Point sélectionné"}</div>`;
+    ? `<input class="pc-title font-bold text-os leading-tight bg-transparent w-full border-b border-dashed border-os/30 focus:border-solid focus:border-girolle outline-none" value="${escapeHtml(spot.name)}" title="Cliquez pour renommer">`
+    : `<div class="font-bold text-os leading-tight">${r.commune || "Point sélectionné"}</div>`;
   // Aperçu (P2) : espèces favorables (level « good ») → badge + pastilles ; repli du détail sur mobile.
   const favs = r.mushrooms.filter((m) => m.level === "good" && m.selected !== false);
   const chipList = (favs.length ? favs : top).slice(0, 4);
@@ -1118,7 +1173,7 @@ function showPointCard(lat, lon, r) {
         const [, fg, bg] = LEVEL[m.level];
         return `<span class="inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded-full ${fg} ${bg}">${m.nom}</span>`;
       }).join("")
-    : '<span class="text-xs text-slate-400">Aucune espèce en saison ici.</span>';
+    : '<span class="text-xs text-os/50">Aucune espèce en saison ici.</span>';
   const peekBadge = favs.length
     ? `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full text-green-700 bg-green-100">${favs.length} favorable${favs.length > 1 ? "s" : ""}</span>`
     : "";
@@ -1128,12 +1183,12 @@ function showPointCard(lat, lon, r) {
     <div class="pc-handle"></div>
     <div class="flex items-start justify-between gap-2">
       <div class="min-w-0">${titleHtml}<div class="mt-1">${peekBadge}</div></div>
-      <button class="pc-close text-slate-400 hover:text-slate-700 -mt-1 -mr-1 text-lg leading-none shrink-0">×</button>
+      <button class="pc-close text-os/50 hover:text-os -mt-1 -mr-1 text-lg leading-none shrink-0">×</button>
     </div>
     <div class="mt-1.5 flex flex-wrap gap-1.5">${chips}</div>
-    <button class="pc-expand mt-2 w-full py-1.5 rounded-lg bg-slate-50 text-slate-600 text-sm font-semibold hover:bg-slate-100">Voir le détail ▾</button>
+    <button class="pc-expand mt-2 w-full py-1.5 rounded-lg bg-os/10 text-os/80 text-sm font-semibold hover:bg-os/20">Voir le détail ▾</button>
     <div class="pc-detail mt-2">
-      <div class="text-[11px] text-slate-400 mb-2">${r.lat.toFixed(3)}°N · ${r.lon.toFixed(3)}°E · dalle 1 km</div>
+      <div class="text-[11px] text-os/50 mb-2">${r.lat.toFixed(3)}°N · ${r.lon.toFixed(3)}°E · dalle 1 km</div>
       <div class="grid grid-cols-2 gap-2 mb-2">
         ${miniStat(valFmt(r.t, "°C"), "température air", factorLevel("temp", r.t))}
         ${miniStat(valFmt(r.rr, "mm"), "pluie / jour")}
@@ -1141,21 +1196,21 @@ function showPointCard(lat, lon, r) {
         ${miniStat(valFmt(r.soil_temp, "°C"), "T° du sol", factorLevel("temp", r.soil_temp))}
       </div>
       <div class="text-xs mb-1.5 pc-forest">${forestLine}</div>
-      ${soilLine ? `<div class="text-xs mb-1.5 text-slate-600">${soilLine}</div>` : ""}
-      ${terrainLine ? `<div class="text-xs mb-2 text-slate-600">${terrainLine}</div>` : ""}
-      <div class="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-1">Probables ici</div>
+      ${soilLine ? `<div class="text-xs mb-1.5 text-os/70">${soilLine}</div>` : ""}
+      ${terrainLine ? `<div class="text-xs mb-2 text-os/70">${terrainLine}</div>` : ""}
+      <div class="text-[11px] font-bold uppercase tracking-wide text-os/50 mb-1">Probables ici</div>
       <div class="space-y-1 mb-1">
         ${top.length ? top.map((m) => {
           const [, fg, bg] = LEVEL[m.level];
           return `<div class="flex items-center gap-2 text-sm">
             <span class="flex-1 truncate">${m.nom} ${hostDot(m.host)}</span>
             <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${fg} ${bg}">${m.label}${m.score_pct != null ? " · " + m.score_pct + "%" : ""}</span></div>`;
-        }).join("") : '<div class="text-xs text-slate-400">Aucune espèce en saison.</div>'}
+        }).join("") : '<div class="text-xs text-os/50">Aucune espèce en saison.</div>'}
       </div>
-      <button class="pc-guide mt-2 w-full py-1.5 rounded-lg bg-brand-50 text-brand-700 text-sm font-semibold hover:bg-brand-100">Voir le guide complet</button>
+      <button class="pc-guide mt-2 w-full py-1.5 rounded-lg bg-girolle text-sousbois text-sm font-bold hover:bg-lactaire transition">Voir le guide complet</button>
       ${spot
-        ? `<button class="pc-delete mt-1.5 w-full py-1.5 rounded-lg border border-red-200 text-red-600 text-sm font-semibold hover:bg-red-50">🗑 Supprimer ce spot</button>`
-        : `<button class="pc-save mt-1.5 w-full py-1.5 rounded-lg border border-brand-200 text-brand-700 text-sm font-semibold hover:bg-brand-50">📍 Enregistrer ce spot</button>`}
+        ? `<button class="pc-delete mt-1.5 w-full py-1.5 rounded-lg border border-red-400/40 text-red-400 text-sm font-semibold hover:bg-red-500/10 transition">🗑 Supprimer ce spot</button>`
+        : `<button class="pc-save mt-1.5 w-full py-1.5 rounded-lg border border-girolle/50 text-girolle text-sm font-semibold hover:bg-os/10 transition">📍 Enregistrer ce spot</button>`}
     </div>`;
   card.classList.remove("hidden");
   positionPointCard();
@@ -1207,8 +1262,8 @@ function monthStrip(months, color, current) {
   return `<div class="flex gap-0.5 my-2">` + MONTHS.map((mn, i) => {
     const m = i + 1, active = set.has(m), cur = m === current;
     return `<div class="flex-1 text-center text-[9px] font-bold py-0.5 rounded"
-      style="background:${active ? color : "#f1f5f9"};color:${active ? "#fff" : "#cbd5e1"};
-      ${cur ? "box-shadow:inset 0 0 0 2px #0f172a;" : ""}">${mn}</div>`;
+      style="background:${active ? color : "rgba(239,230,211,.08)"};color:${active ? "#fff" : "rgba(239,230,211,.4)"};
+      ${cur ? "box-shadow:inset 0 0 0 2px #efe6d3;" : ""}">${mn}</div>`;
   }).join("") + `</div>`;
 }
 
@@ -1216,10 +1271,10 @@ function renderGuide() {
   const box = document.getElementById("guide-content");
   const r = state.lastPoint;
   if (!r) {
-    box.innerHTML = `<div class="bg-white border border-slate-200 rounded-2xl p-6 text-slate-500 max-w-xl">
+    box.innerHTML = `<div class="bg-os/5 border border-os/10 rounded-2xl p-6 text-os/70 max-w-xl">
       <div class="mb-3">Aucun point sélectionné. Cliquez sur la carte (onglet Carte) ou cherchez une ville.</div>
       <input id="guide-city-input" type="text" placeholder="Ville ou code postal…"
-             class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 outline-none text-sm" />
+             class="w-full px-3 py-2 rounded-xl bg-transparent text-os placeholder:text-os/40 border border-os/20 focus:border-girolle focus:ring-2 focus:ring-girolle/30 outline-none text-sm" />
       <div id="guide-city-results" class="mt-1 space-y-1"></div></div>`;
     const gi = document.getElementById("guide-city-input");
     const gr = document.getElementById("guide-city-results");
@@ -1233,32 +1288,32 @@ function renderGuide() {
   const fam = { feuillus: "feuillus", coniferes: "conifères", mixte: "mixte", peupleraie: "peupleraie", ouvert: "milieu ouvert" };
   const famTitle = r.forest && familyLabel(r.forest.family);
   const banner = r.forest && r.forest.tfv
-    ? `<div class="bg-white border-l-4 border-green-600 border border-slate-200 rounded-xl p-4 mb-4 shadow-soft">
+    ? `<div class="bg-os/5 border-l-4 border-green-600 border border-os/10 rounded-xl p-4 mb-4 shadow-soft">
          <div class="font-bold">${r.forest.tfv}</div>
-         <div class="text-sm text-slate-500 mt-0.5">Essence dominante : <strong>${r.forest.essence || "—"}</strong> ·
+         <div class="text-sm text-os/70 mt-0.5">Essence dominante : <strong>${r.forest.essence || "—"}</strong> ·
          famille d'hôte : <strong>${fam[r.family] || r.family || "?"}</strong> — les espèces dont l'arbre-hôte
          est présent sont mises en avant (BD&nbsp;Forêt® V2, IGN).</div></div>`
     : (famTitle
-      ? `<div class="bg-white border-l-4 border-green-600 border border-slate-200 rounded-xl p-4 mb-4 shadow-soft">
+      ? `<div class="bg-os/5 border-l-4 border-green-600 border border-os/10 rounded-xl p-4 mb-4 shadow-soft">
            <div class="font-bold">${famTitle}</div>
-           <div class="text-sm text-slate-500 mt-0.5">Famille d'hôte : <strong>${fam[r.family] || r.family || "?"}</strong> —
+           <div class="text-sm text-os/70 mt-0.5">Famille d'hôte : <strong>${fam[r.family] || r.family || "?"}</strong> —
            les espèces dont l'arbre-hôte est présent sont mises en avant (BD&nbsp;Forêt® V2, IGN).</div></div>`
-      : `<div class="bg-white border-l-4 border-slate-400 border border-slate-200 rounded-xl p-4 mb-4 shadow-soft">
+      : `<div class="bg-os/5 border-l-4 border-os/40 border border-os/10 rounded-xl p-4 mb-4 shadow-soft">
            <div class="font-bold">Hors forêt cartographiée</div>
-           <div class="text-sm text-slate-500 mt-0.5">Privilégiez les espèces de prés/lisières, ou cliquez sur une forêt voisine.</div></div>`);
+           <div class="text-sm text-os/70 mt-0.5">Privilégiez les espèces de prés/lisières, ou cliquez sur une forêt voisine.</div></div>`);
 
   const soil = r.soil || {};
   const texSeg = (label, v, color) => (v == null ? "" :
     `<div style="width:${v}%;background:${color}" title="${label} ${fmtNum(v)} %"></div>`);
   const soilBanner = soil.texture_fr
-    ? `<div class="bg-white border-l-4 border-amber-700 border border-slate-200 rounded-xl p-4 mb-4 shadow-soft">
+    ? `<div class="bg-os/5 border-l-4 border-amber-700 border border-os/10 rounded-xl p-4 mb-4 shadow-soft">
          <div class="font-bold">Sol : ${soil.texture_fr}
-           ${soil.ph != null ? `<span class="text-sm font-normal text-slate-400">· pH ${fmtNum(soil.ph)} (${soil.ph_class || ""})</span>` : ""}</div>
-         <div class="flex h-2.5 rounded-full overflow-hidden my-2 border border-slate-200">
+           ${soil.ph != null ? `<span class="text-sm font-normal text-os/50">· pH ${fmtNum(soil.ph)} (${soil.ph_class || ""})</span>` : ""}</div>
+         <div class="flex h-2.5 rounded-full overflow-hidden my-2 border border-os/20">
            ${texSeg("Sable", soil.sand, "#eab308")}${texSeg("Limon", soil.silt, "#84cc16")}${texSeg("Argile", soil.clay, "#b45309")}</div>
-         <div class="text-sm text-slate-500">Sable ${fmtNum(soil.sand)} % · Limon ${fmtNum(soil.silt)} % · Argile ${fmtNum(soil.clay)} %
+         <div class="text-sm text-os/70">Sable ${fmtNum(soil.sand)} % · Limon ${fmtNum(soil.silt)} % · Argile ${fmtNum(soil.clay)} %
            — humidité <strong>${pct(r.soil_moisture)}</strong>, T° du sol <strong>${valFmt(r.soil_temp, "°C")}</strong>.
-           <span class="text-slate-400">(SoilGrids® ISRIC + Open-Meteo)</span></div></div>`
+           <span class="text-os/50">(SoilGrids® ISRIC + Open-Meteo)</span></div></div>`
     : "";
 
   const summary = `<div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-5">
@@ -1279,32 +1334,32 @@ function renderGuide() {
     const hostBadge = m.host === "ok"
       ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full text-green-700 bg-green-100">hôte présent</span>`
       : (m.host === "no" ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full text-red-700 bg-red-100">hôte absent ici</span>` : "");
-    return `<div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-soft">
+    return `<div class="bg-os/5 border border-os/10 rounded-2xl p-4 shadow-soft">
       <div class="flex items-center gap-2">
         <span class="font-bold flex-1">${m.nom}</span>
         <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${fg} ${bg}">${m.label}${m.score_pct != null ? " · " + m.score_pct + "%" : ""}</span>
         ${hostBadge}
       </div>
-      <div class="text-xs italic text-slate-400">${m.latin}</div>
+      <div class="text-xs italic text-os/50">${m.latin}</div>
       ${monthStrip(m.months, m.color, monthNum(r.month))}
-      <div class="text-xs text-slate-600">T° ${m.t_min}–${m.t_max} °C&nbsp;&nbsp;·&nbsp;&nbsp;pluie ${m.rain_lag[0]}–${m.rain_lag[1]} j après</div>
-      <div class="text-xs text-slate-400 mt-1.5">${m.habitat}</div>
-      ${(m.soil_pref || phBadge(m.soil_ph)) ? `<div class="flex items-center gap-1.5 flex-wrap mt-1.5 pt-1.5 border-t border-slate-100">
-        ${phBadge(m.soil_ph)}<span class="text-xs text-slate-500">${m.soil_pref || ""}</span></div>` : ""}
+      <div class="text-xs text-os/70">T° ${m.t_min}–${m.t_max} °C&nbsp;&nbsp;·&nbsp;&nbsp;pluie ${m.rain_lag[0]}–${m.rain_lag[1]} j après</div>
+      <div class="text-xs text-os/50 mt-1.5">${m.habitat}</div>
+      ${(m.soil_pref || phBadge(m.soil_ph)) ? `<div class="flex items-center gap-1.5 flex-wrap mt-1.5 pt-1.5 border-t border-os/10">
+        ${phBadge(m.soil_ph)}<span class="text-xs text-os/60">${m.soil_pref || ""}</span></div>` : ""}
     </div>`;
   }).join("");
 
   box.innerHTML = `
-    <div class="bg-white border border-slate-200 rounded-xl p-4 mb-4 shadow-soft">
+    <div class="bg-os/5 border border-os/10 rounded-xl p-4 mb-4 shadow-soft">
       <div class="font-bold">${r.commune || "Point sélectionné"}
-        <span class="text-xs font-normal text-slate-400">${r.lat.toFixed(3)}°N · ${r.lon.toFixed(3)}°E · dalle 1 km</span></div>
+        <span class="text-xs font-normal text-os/50">${r.lat.toFixed(3)}°N · ${r.lon.toFixed(3)}°E · dalle 1 km</span></div>
     </div>
     ${banner}${soilBanner}${summary}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">${cards}</div>`;
 }
 
 function chip(big, small, level) {
-  const c = level ? FACTOR_CLR[level] + " border" : "bg-white border border-slate-200 text-slate-800";
+  const c = level ? FACTOR_CLR[level] + " border" : "bg-os/5 border border-os/10 text-os";
   return `<div class="${c} rounded-xl px-3 py-2 text-center shadow-soft">
     <div class="font-extrabold">${big}</div><div class="text-[11px] opacity-70">${small}</div></div>`;
 }
@@ -1389,21 +1444,21 @@ function updateNotifications() {
 
   const panel = document.getElementById("notif-panel");
   if (!state.spots.length) {
-    panel.innerHTML = `<div class="p-3 text-sm text-slate-500">Aucun spot enregistré.<br>Cliquez sur la carte puis « Enregistrer ce spot ».</div>`;
+    panel.innerHTML = `<div class="p-3 text-sm text-os/60">Aucun spot enregistré.<br>Cliquez sur la carte puis « Enregistrer ce spot ».</div>`;
     return;
   }
   if (!propices.length) {
-    panel.innerHTML = `<div class="p-3 text-sm text-slate-500">Aucun de vos ${state.spots.length} spot(s) n'est particulièrement propice aujourd'hui.</div>`;
+    panel.innerHTML = `<div class="p-3 text-sm text-os/60">Aucun de vos ${state.spots.length} spot(s) n'est particulièrement propice aujourd'hui.</div>`;
     return;
   }
   panel.innerHTML =
-    `<div class="px-3 pt-2 pb-1 text-[11px] font-bold uppercase tracking-wide text-slate-400">Propices en ce moment</div>` +
+    `<div class="px-3 pt-2 pb-1 text-[11px] font-bold uppercase tracking-wide text-os/50">Propices en ce moment</div>` +
     propices.map((s) =>
-      `<button class="notif-item w-full text-left px-3 py-2 rounded-xl hover:bg-green-50 flex items-center gap-2" data-id="${s.id}">
+      `<button class="notif-item w-full text-left px-3 py-2 rounded-xl hover:bg-os/10 flex items-center gap-2" data-id="${s.id}">
          <span class="text-lg leading-none">🍄</span>
          <span class="flex-1 min-w-0">
-           <span class="block font-semibold text-slate-800 truncate">${escapeHtml(s.name)}</span>
-           <span class="block text-[11px] text-green-700 font-semibold">Très propice · indice ${s.score_pct} %</span>
+           <span class="block font-semibold text-os truncate">${escapeHtml(s.name)}</span>
+           <span class="block text-[11px] text-green-400 font-semibold">Très propice · indice ${s.score_pct} %</span>
          </span>
        </button>`).join("");
   panel.querySelectorAll(".notif-item").forEach((b) => b.onclick = () => {
@@ -1421,23 +1476,23 @@ function renderSpots() {
   const box = document.getElementById("spots-content");
   if (!box) return;
   if (!state.spots.length) {
-    box.innerHTML = `<div class="bg-white border border-slate-200 rounded-2xl p-6 text-slate-500 max-w-xl shadow-soft">
+    box.innerHTML = `<div class="bg-os/5 border border-os/10 rounded-2xl p-6 text-os/70 max-w-xl shadow-soft">
       Aucun spot enregistré. Sur l'onglet <strong>Carte</strong>, cliquez sur un endroit puis « 📍 Enregistrer ce spot ».</div>`;
     return;
   }
   box.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">` + state.spots.map((s) => {
     const status = s.propice
-      ? `<span class="text-green-700 font-semibold">🟢 Très propice · indice ${s.score_pct} %</span>`
+      ? `<span class="text-green-400 font-semibold">🟢 Très propice · indice ${s.score_pct} %</span>`
       : (s.score_pct != null
-          ? `<span class="text-slate-500">Indice du jour : <strong>${s.score_pct} %</strong></span>`
-          : `<span class="text-slate-400">Hors zone modélisée</span>`);
-    return `<div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-soft">
-      <input class="spot-name w-full font-bold text-slate-800 bg-transparent border-b border-dashed border-slate-300 hover:border-slate-400 focus:border-solid focus:border-brand-500 outline-none" value="${escapeHtml(s.name)}" data-id="${s.id}" title="Cliquez pour renommer">
-      <div class="text-[11px] text-slate-400 mt-0.5">${s.lat.toFixed(3)}°N · ${s.lon.toFixed(3)}°E</div>
+          ? `<span class="text-os/60">Indice du jour : <strong>${s.score_pct} %</strong></span>`
+          : `<span class="text-os/50">Hors zone modélisée</span>`);
+    return `<div class="bg-os/5 border border-os/10 rounded-2xl p-4 shadow-soft">
+      <input class="spot-name w-full font-bold text-os bg-transparent border-b border-dashed border-os/30 hover:border-os/50 focus:border-solid focus:border-girolle outline-none" value="${escapeHtml(s.name)}" data-id="${s.id}" title="Cliquez pour renommer">
+      <div class="text-[11px] text-os/50 mt-0.5">${s.lat.toFixed(3)}°N · ${s.lon.toFixed(3)}°E</div>
       <div class="text-sm mt-2">${status}</div>
       <div class="flex gap-2 mt-3">
-        <button class="spot-map flex-1 py-1.5 rounded-lg bg-brand-50 text-brand-700 text-sm font-semibold hover:bg-brand-100" data-id="${s.id}">Voir sur la carte</button>
-        <button class="spot-del py-1.5 px-3 rounded-lg text-red-600 text-sm font-semibold hover:bg-red-50" data-id="${s.id}">Supprimer</button>
+        <button class="spot-map flex-1 py-1.5 rounded-lg bg-girolle text-sousbois text-sm font-bold hover:bg-lactaire transition" data-id="${s.id}">Voir sur la carte</button>
+        <button class="spot-del py-1.5 px-3 rounded-lg text-red-400 text-sm font-semibold hover:bg-red-500/10 transition" data-id="${s.id}">Supprimer</button>
       </div></div>`;
   }).join("") + `</div>`;
 

@@ -1,8 +1,39 @@
+/* --- Fondation DA « Girolle × Cèpe » : tokens + utilitaires --- */
+:root {
+  --sousbois: #191510;
+  --os: #efe6d3;
+  --girolle: #f2a93b;
+  --cepe: #b9793f;
+  --lactaire: #d9772e;
+  --mycene: #c6f24e;
+}
+.da-grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: .5;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.da-shadow { box-shadow: 6px 6px 0 var(--sousbois); }
+.da-card { border: 2px solid var(--sousbois); border-radius: 4px; }
+@media (prefers-reduced-motion: reduce) { .da-grain { display: none; } }
+
 html,body{height:100%;margin:0;font-family:'Inter',system-ui,sans-serif;background:#f8fafc;color:#0f172a}
 #map{position:absolute;inset:0}
 /* Positionnement garanti de la carte d'info (indépendant de Tailwind) */
 #view-carte{position:relative}
 #point-card{position:absolute;z-index:800}
+/* Bouton bascule fond clair/sombre (contrôle Leaflet, empilé sous le zoom) */
+.basemap-toggle-btn{width:34px;height:34px;display:flex;align-items:center;justify-content:center;
+  font-size:16px;line-height:1;cursor:pointer;background:var(--sousbois);color:var(--os);
+  border:1px solid rgba(239,230,211,.15);border-radius:9px;box-shadow:0 8px 28px rgba(15,23,42,.18)}
+.basemap-toggle-btn:hover{background:#221c14}
+/* Fond de carte sombre : les overlays sous-bois se détachent moins → liseré + ombre renforcés */
+body.map-dark #search-pill>div,body.map-dark #city-input~*,body.map-dark .layer-chip,
+body.map-dark #more-layers-btn,body.map-dark #map-legend,body.map-dark #point-card,
+body.map-dark #date-range,body.map-dark #radar-species-btn{
+  box-shadow:0 0 0 1px rgba(239,230,211,.22),0 8px 28px rgba(0,0,0,.5)}
 /* Fiche au clic — desktop : détail toujours visible, poignée/toggle masqués */
 #point-card .pc-handle,#point-card .pc-expand{display:none}
 #point-card .pc-detail{display:block}
@@ -11,7 +42,7 @@ html,body{height:100%;margin:0;font-family:'Inter',system-ui,sans-serif;backgrou
   #point-card{position:fixed!important;left:0!important;right:0!important;bottom:var(--tabbar-h,3.25rem)!important;top:auto!important;
     width:100%!important;max-width:100%!important;border-radius:18px 18px 0 0;max-height:calc(85vh - var(--tabbar-h,3.25rem));overflow-y:auto;
     z-index:1200;box-shadow:0 -8px 28px rgba(15,23,42,.18)}
-  #point-card .pc-handle{display:block;width:38px;height:4px;background:#cbd5e1;border-radius:4px;margin:0 auto .5rem}
+  #point-card .pc-handle{display:block;width:38px;height:4px;background:rgba(239,230,211,.3);border-radius:4px;margin:0 auto .5rem}
   #point-card .pc-expand{display:block}
   #point-card .pc-detail{display:none}
   #point-card.expanded .pc-detail{display:block}

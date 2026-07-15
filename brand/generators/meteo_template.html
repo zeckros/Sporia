@@ -1,0 +1,235 @@
+<style>
+  @font-face{font-family:'Clash Display';font-weight:700;font-display:swap;src:url(data:font/woff2;base64,__FONT_CLASH__) format('woff2')}
+  @font-face{font-family:'Fraunces';font-style:italic;font-weight:400 600;font-display:swap;src:url(data:font/woff2;base64,__FONT_FRAUNCES__) format('woff2')}
+  @font-face{font-family:'Space Mono';font-weight:400;font-display:swap;src:url(data:font/woff2;base64,__FONT_MONO__) format('woff2')}
+
+  :root{--sousbois:#191510;--os:#efe6d3;--girolle:#f2a93b;--cepe:#b9793f;--lactaire:#d9772e;--mycene:#c6f24e;--paper:#12100b}
+  *{box-sizing:border-box}
+  body{margin:0;background:#0f0c08;color:var(--os);font-family:system-ui,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased}
+
+  .page{max-width:1160px;margin:0 auto;padding:48px 24px 96px}
+  .masthead{border-bottom:1px solid rgba(239,230,211,.14);padding-bottom:28px;margin-bottom:36px}
+  .masthead .kicker{font-family:'Space Mono';font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:var(--mycene);margin:0 0 12px}
+  .masthead h1{font-family:'Clash Display';font-weight:700;text-transform:uppercase;font-size:clamp(30px,5vw,52px);line-height:.98;margin:0;text-wrap:balance}
+  .masthead h1 em{font-family:'Fraunces';font-style:italic;font-weight:500;text-transform:none;color:var(--mycene)}
+  .masthead p{max-width:64ch;color:rgba(239,230,211,.74);font-size:15px;line-height:1.55;margin:14px 0 0}
+
+  /* mode d'emploi */
+  .guide{background:#151109;border:1px solid rgba(239,230,211,.12);border-radius:12px;padding:24px;margin-bottom:40px;
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:24px}
+  .guide h2{font-family:'Clash Display';font-weight:700;text-transform:uppercase;font-size:16px;letter-spacing:.02em;margin:0 0 12px;color:var(--os)}
+  .guide h2 .dot{color:var(--mycene)}
+  .guide ul{margin:0;padding-left:0;list-style:none;font-size:13.5px;line-height:1.6;color:rgba(239,230,211,.78)}
+  .guide li{margin-bottom:8px}
+  .guide code{font-family:'Space Mono';font-size:12px;color:var(--mycene);background:rgba(198,242,78,.08);
+    border:1px dashed rgba(198,242,78,.5);border-radius:5px;padding:1px 6px}
+  .guide .rule{color:#f0b24b}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:34px;align-items:start}
+  .shot{display:flex;flex-direction:column;gap:14px}
+
+  .card{position:relative;overflow:hidden;background:var(--sousbois);border-radius:8px;container-type:inline-size;box-shadow:0 20px 50px rgba(0,0,0,.5)}
+  .sq{aspect-ratio:1/1}
+  .story{aspect-ratio:9/16}
+  .grain{position:absolute;inset:0;pointer-events:none;opacity:.5;mix-blend-mode:soft-light;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+  .rain{position:absolute;inset:0;z-index:0;opacity:.5;background:repeating-linear-gradient(112deg,transparent 0 6cqw,rgba(198,242,78,.12) 6cqw 6.4cqw)}
+  .rain.warm{background:repeating-linear-gradient(112deg,transparent 0 7cqw,rgba(242,169,59,.10) 7cqw 7.4cqw)}
+
+  .comp{position:absolute;inset:0;display:flex;flex-direction:column;padding:7.5cqw;gap:3cqw;z-index:1}
+  .eyebrow{font-family:'Space Mono';font-size:3cqw;letter-spacing:.22em;text-transform:uppercase;color:var(--accent,var(--mycene));margin:0}
+  .head{font-family:'Clash Display';font-weight:700;font-size:11cqw;line-height:.9;text-transform:uppercase;text-wrap:balance;margin:0;letter-spacing:-.01em}
+  .story .head{font-size:12.5cqw}
+  .head em{font-family:'Fraunces';font-style:italic;font-weight:500;text-transform:none;color:var(--accent,var(--mycene))}
+  .sub{font-family:system-ui,sans-serif;font-size:3.7cqw;line-height:1.34;color:rgba(239,230,211,.82);margin:0;max-width:92%}
+
+  /* champ à remplir : surligné pour crier « remplace-moi » */
+  .fill{font-family:'Space Mono';color:var(--mycene);border:.35cqw dashed rgba(198,242,78,.6);
+    border-radius:1cqw;padding:0 1.2cqw;background:rgba(198,242,78,.09);white-space:nowrap}
+  .stat{display:flex;flex-wrap:wrap;gap:2cqw;align-items:center}
+  .bigfill{font-family:'Clash Display';font-weight:700;font-size:15cqw;line-height:.85;color:var(--mycene);
+    border:.5cqw dashed rgba(198,242,78,.55);border-radius:2.4cqw;background:rgba(198,242,78,.08);padding:1cqw 3cqw}
+  .bigfill.warm{color:var(--girolle);border-color:rgba(242,169,59,.55);background:rgba(242,169,59,.08)}
+  .unit{font-family:'Space Mono';font-size:3.4cqw;color:rgba(239,230,211,.7)}
+  .source{font-family:'Space Mono';font-size:2.5cqw;color:rgba(239,230,211,.5);margin-top:auto}
+
+  footer{display:flex;align-items:center;gap:2.4cqw;z-index:2;margin-top:2cqw}
+  .mark{width:8.5cqw;height:8.5cqw;flex:none}
+  .word{font-family:'Clash Display';font-weight:700;font-size:5cqw;letter-spacing:.01em;text-transform:uppercase}
+  .handle{font-family:'Space Mono';font-size:2.7cqw;color:rgba(239,230,211,.55);margin-left:auto}
+
+  /* légende + modèle de caption */
+  figcaption{display:flex;flex-direction:column;gap:8px}
+  .cap-title{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px}
+  .cap-title .ttl{font-family:system-ui,sans-serif;font-weight:600;font-size:14px;color:var(--os)}
+  .cap-title .fmt{font-family:'Space Mono';font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:rgba(239,230,211,.5);border:1px solid rgba(239,230,211,.18);border-radius:20px;padding:2px 8px}
+  .cap{font-family:'Space Mono';font-size:11.5px;line-height:1.55;color:rgba(239,230,211,.7);
+    background:#151109;border:1px solid rgba(239,230,211,.1);border-radius:8px;padding:12px 14px;white-space:pre-wrap}
+  .cap b{color:var(--mycene);font-weight:400}
+</style>
+
+<div class="page">
+  <header class="masthead">
+    <p class="kicker">Sporia · gabarit réactif météo</p>
+    <h1>Réactif <em>météo</em> — prêt à remplir</h1>
+    <p>Le contenu le plus stratégique de la saison : quand un vrai épisode météo arrive, on remplit
+      un gabarit et on poste dans les 24–48 h. Les champs à compléter sont <span style="font-family:'Space Mono';color:var(--mycene);border:1px dashed rgba(198,242,78,.6);border-radius:5px;padding:0 6px;background:rgba(198,242,78,.09)">surlignés</span>.</p>
+  </header>
+
+  <section class="guide">
+    <div>
+      <h2><span class="dot">◆</span> Champs à remplir</h2>
+      <ul>
+        <li><code>__ mm</code> — cumul relevé (réel)</li>
+        <li><code>__ h</code> — sur combien de temps (24 / 48 h)</li>
+        <li><code>[secteur]</code> — région / massif visé</li>
+        <li><code>[espèces]</code> — ce qu'on peut guetter</li>
+        <li><code>source</code> — Météo-France, relevé perso…</li>
+      </ul>
+    </div>
+    <div>
+      <h2><span class="dot">✓</span> Règles d'or</h2>
+      <ul>
+        <li class="rule">Uniquement une <b style="color:#f0b24b">donnée réelle et sourcée</b>. Jamais de chiffre inventé.</li>
+        <li class="rule">Pas de délai pluie→poussée « universel » : ça dépend de l'espèce et des conditions → rester au conditionnel.</li>
+        <li class="rule">Toujours la ligne sécurité (estimation indicative, jamais d'identification).</li>
+      </ul>
+    </div>
+    <div>
+      <h2><span class="dot">→</span> Le réflexe</h2>
+      <ul>
+        <li>1. Un épisode météo notable arrive.</li>
+        <li>2. Je remplis le gabarit adapté (ci-dessous).</li>
+        <li>3. Je poste sous 24–48 h, tant que c'est d'actualité.</li>
+        <li>4. Idéal le <b style="color:var(--os)">vendredi/samedi</b> (weekend = cueillette).</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="grid">
+
+    <!-- A carré : pluie → fenêtre de pousse -->
+    <figure class="shot">
+      <div class="card sq" style="--accent:var(--mycene)">
+        <div class="rain"></div>
+        <div class="comp">
+          <p class="eyebrow">Après la pluie</p>
+          <h2 class="head">Il a plu.<br>La forêt se<br><em>réveille</em></h2>
+          <div class="stat"><span class="bigfill">__ mm</span><span class="unit">en&nbsp;<span class="fill">__ h</span></span></div>
+          <p class="sub">Sur <span class="fill">[secteur]</span>. Une fenêtre de pousse pourrait s'ouvrir dans les prochains jours — guettez <span class="fill">[espèces]</span>.</p>
+          <div class="source">Source : <span class="fill">[Météo-France / relevé]</span> · estimation indicative</div>
+          <footer>__MARK__<span class="word">Sporia</span><span class="handle">sporia.duckdns.org</span></footer>
+        </div>
+        <div class="grain"></div>
+      </div>
+      <figcaption>
+        <div class="cap-title"><span class="ttl">A · Pluie → fenêtre de pousse</span><span class="fmt">Carré 1080²</span></div>
+        <div class="cap">☔ <b>__ mm</b> en <b>__ h</b> sur <b>[secteur]</b> : la forêt se réveille.
+
+Après un bon épisode pluvieux, plusieurs espèces peuvent fructifier les jours suivants (selon température et sol). On surveille <b>[espèces]</b>.
+
+Le radar Sporia estime les zones propices → sporia.duckdns.org
+⚠️ Estimation indicative, jamais une identification.
+—
+#champignons #cueillette #météo #<b>[région]</b></div>
+      </figcaption>
+    </figure>
+
+    <!-- A' story : même scénario, vertical -->
+    <figure class="shot">
+      <div class="card story" style="--accent:var(--mycene)">
+        <div class="rain"></div>
+        <div class="comp">
+          <p class="eyebrow">Après la pluie</p>
+          <h2 class="head">Il a plu.<br>Ça va <em>pousser</em> ?</h2>
+          <div class="stat"><span class="bigfill">__ mm</span><span class="unit"><span class="fill">__ h</span></span></div>
+          <p class="sub">Sur <span class="fill">[secteur]</span>. Fenêtre possible dans les prochains jours — on guette <span class="fill">[espèces]</span>.</p>
+          <div class="source">Source : <span class="fill">[…]</span> · indicatif</div>
+          <footer>__MARK__<span class="word">Sporia</span><span class="handle">swipe → l'appli</span></footer>
+        </div>
+        <div class="grain"></div>
+      </div>
+      <figcaption>
+        <div class="cap-title"><span class="ttl">A' · Même scénario en story</span><span class="fmt">Story 1080×1920</span></div>
+        <div class="cap">Story : ajoute un sticker sondage « Tu sors ce weekend ? » + le lien appli.</div>
+      </figcaption>
+    </figure>
+
+    <!-- B carré : conditions idéales weekend -->
+    <figure class="shot">
+      <div class="card sq" style="--accent:var(--girolle)">
+        <div class="rain warm"></div>
+        <div class="comp">
+          <p class="eyebrow">Météo cueillette</p>
+          <h2 class="head">Week-end<br><em>propice</em><br>en forêt ?</h2>
+          <p class="sub" style="margin-bottom:1cqw">Pluie récente <span class="fill">__ mm</span> · T° <span class="fill">__ °C</span> · sol <span class="fill">__ %</span> d'humidité.</p>
+          <p class="sub">Les conditions s'alignent sur <span class="fill">[secteur]</span>. Bonne fenêtre pour <span class="fill">[espèces]</span>.</p>
+          <div class="source">Source : <span class="fill">[…]</span> · estimation indicative</div>
+          <footer>__MARK__<span class="word">Sporia</span><span class="handle">sporia.duckdns.org</span></footer>
+        </div>
+        <div class="grain"></div>
+      </div>
+      <figcaption>
+        <div class="cap-title"><span class="ttl">B · Conditions idéales ce weekend</span><span class="fmt">Carré 1080²</span></div>
+        <div class="cap">🍂 Conditions qui s'alignent sur <b>[secteur]</b> : pluie <b>__ mm</b>, <b>__ °C</b>, sol humide.
+
+Beau weekend en perspective pour <b>[espèces]</b>. On prépare le panier.
+
+Zones propices, jour par jour → sporia.duckdns.org
+⚠️ Estimation indicative, jamais une identification.
+—
+#cueillette #champignons #<b>[région]</b> #automne</div>
+      </figcaption>
+    </figure>
+
+    <!-- C carré : trop sec, patience -->
+    <figure class="shot">
+      <div class="card sq" style="--accent:var(--cepe)">
+        <div class="comp">
+          <p class="eyebrow">Patience</p>
+          <h2 class="head">Encore<br>trop <em>sec</em></h2>
+          <div class="stat"><span class="bigfill" style="color:var(--cepe);border-color:rgba(185,121,63,.55);background:rgba(185,121,63,.1)">__ mm</span><span class="unit">depuis <span class="fill">__ j</span></span></div>
+          <p class="sub">Sans pluie, pas de poussée. On patiente jusqu'au prochain épisode — et on garde ses spots au chaud.</p>
+          <div class="source">Source : <span class="fill">[…]</span> · estimation indicative</div>
+          <footer>__MARK__<span class="word">Sporia</span><span class="handle">sporia.duckdns.org</span></footer>
+        </div>
+        <div class="grain"></div>
+      </div>
+      <figcaption>
+        <div class="cap-title"><span class="ttl">C · Trop sec → gérer l'attente</span><span class="fmt">Carré 1080²</span></div>
+        <div class="cap">🌵 <b>__ mm</b> seulement depuis <b>__ jours</b> sur <b>[secteur]</b>.
+
+Sans eau, le mycélium reste en pause. Pas la peine de s'épuiser en forêt cette semaine — on attend le prochain épisode pluvieux.
+
+Sporia suit l'humidité pour vous → sporia.duckdns.org
+—
+#champignons #cueillette #patience #<b>[région]</b></div>
+      </figcaption>
+    </figure>
+
+    <!-- D carré : fin de saison / gel -->
+    <figure class="shot">
+      <div class="card sq" style="--accent:var(--lactaire)">
+        <div class="comp">
+          <p class="eyebrow">Fin de saison</p>
+          <h2 class="head">Les premières<br><em>gelées</em><br>approchent</h2>
+          <p class="sub">Encore quelques jours sur <span class="fill">[secteur]</span> pour les dernières <span class="fill">[espèces]</span> avant que le sol ne gèle et referme la saison.</p>
+          <div class="source">Prévision : <span class="fill">[…]</span> · estimation indicative</div>
+          <footer>__MARK__<span class="word">Sporia</span><span class="handle">sporia.duckdns.org</span></footer>
+        </div>
+        <div class="grain"></div>
+      </div>
+      <figcaption>
+        <div class="cap-title"><span class="ttl">D · Fin de saison (gel)</span><span class="fmt">Carré 1080²</span></div>
+        <div class="cap">❄️ Le gel arrive sur <b>[secteur]</b>.
+
+Dernière ligne droite pour <b>[espèces]</b> avant que le sol ne gèle. Après, le mycélium hiverne et la saison se referme.
+
+On profite des derniers jours → sporia.duckdns.org
+⚠️ Estimation indicative, jamais une identification.
+—
+#champignons #findesaison #cueillette #<b>[région]</b></div>
+      </figcaption>
+    </figure>
+
+  </div>
+</div>

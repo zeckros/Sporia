@@ -2,19 +2,19 @@
   <div id="app-screen" class="hidden h-[100dvh] overflow-hidden flex flex-col">
     <!-- Bandeau hors-ligne (PWA coquille seule : données indisponibles sans réseau) -->
     <div id="offline-banner" class="hidden shrink-0 bg-amber-500 text-white text-center text-xs font-semibold py-1">Hors-ligne — les données ne se mettent pas à jour</div>
-    <!-- Navbar (classique, blanche) -->
-    <header class="relative h-14 shrink-0 bg-white border-b border-slate-200 shadow-soft flex items-center px-4 gap-2 z-[1000]">
+    <!-- Navbar DA (sous-bois) -->
+    <header class="relative h-14 shrink-0 bg-sousbois border-b border-os/10 flex items-center px-4 gap-2 z-[1000]">
       <div class="flex items-center gap-2 mr-3 select-none">
         <svg class="mush-logo w-9 h-9" viewBox="0 0 32 32" role="img" aria-label="champignon">
           <rect x="13" y="16" width="6" height="12" rx="3" fill="#f3e6cf"/>
           <rect x="13" y="16" width="2.5" height="12" rx="1.25" fill="#e4cfa6"/>
-          <path d="M4 17 Q16 3 28 17 Q22 21.5 16 21.5 Q10 21.5 4 17 Z" fill="#c2620e"/>
+          <path d="M4 17 Q16 3 28 17 Q22 21.5 16 21.5 Q10 21.5 4 17 Z" fill="#f2a93b"/>
           <ellipse cx="16" cy="17" rx="12" ry="2.6" fill="#7c3d09" opacity=".25"/>
-          <circle cx="12" cy="12" r="1.7" fill="#fff7ed"/>
-          <circle cx="19.5" cy="10.5" r="2.1" fill="#fff7ed"/>
-          <circle cx="22" cy="14.5" r="1.3" fill="#fff7ed"/>
+          <circle cx="12" cy="12" r="1.7" fill="#191510"/>
+          <circle cx="19.5" cy="10.5" r="2.1" fill="#191510"/>
+          <circle cx="22" cy="14.5" r="1.3" fill="#191510"/>
         </svg>
-        <span class="font-black text-brand-500 text-lg">Sporia</span>
+        <span class="font-display font-extrabold text-os text-lg uppercase tracking-tight">Sporia</span>
       </div>
       <!-- Menu hamburger retiré sur mobile (remplacé par la barre d'onglets basse) ;
            conservé masqué pour ne pas casser le câblage JS existant. -->
@@ -23,34 +23,34 @@
       <!-- Cloche : alerte « spots propices » — toujours visible (haut-droite), mobile et desktop -->
       <div class="relative order-last ml-auto lg:ml-0">
         <button id="notif-btn" title="Mes spots propices"
-                class="relative p-2 rounded-lg text-slate-500 hover:bg-slate-100 transition">
+                class="relative p-2 rounded-lg text-os/60 hover:bg-os/10 transition">
           <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a5 5 0 00-5 5v2.6c0 .47-.18.92-.5 1.27L3 12.5V14h14v-1.5l-1.5-1.63a1.9 1.9 0 01-.5-1.27V7a5 5 0 00-5-5zM8 16a2 2 0 104 0H8z"/></svg>
           <span id="notif-badge" class="hidden absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold leading-4 text-center"></span>
         </button>
-        <div id="notif-panel" class="hidden absolute right-0 mt-2 w-72 max-w-[calc(100vw-2rem)] max-h-[60vh] overflow-y-auto nice-scroll bg-white rounded-2xl shadow-card border border-slate-200 p-2 z-[2100]"></div>
+        <div id="notif-panel" class="hidden absolute right-0 mt-2 w-72 max-w-[calc(100vw-2rem)] max-h-[60vh] overflow-y-auto nice-scroll bg-sousbois text-os rounded-2xl shadow-card border border-os/10 p-2 z-[2100]"></div>
       </div>
 
       <!-- Navigation : en ligne sur desktop, masquée sur mobile (barre d'onglets basse) -->
       <div id="nav-menu" class="hidden lg:flex lg:flex-1 lg:items-center lg:gap-2">
         <nav class="flex flex-col lg:flex-row lg:items-center gap-1">
-          <button data-tab="carte" class="tab-btn px-4 py-2 lg:py-1.5 rounded-lg font-semibold text-sm text-slate-600 hover:bg-brand-50 transition text-left lg:text-center">Carte</button>
-          <button data-tab="guide" class="tab-btn px-4 py-2 lg:py-1.5 rounded-lg font-semibold text-sm text-slate-600 hover:bg-brand-50 transition text-left lg:text-center">Guide champignons</button>
-          <button data-tab="spots" class="tab-btn px-4 py-2 lg:py-1.5 rounded-lg font-semibold text-sm text-slate-600 hover:bg-brand-50 transition text-left lg:text-center">Mes spots</button>
+          <button data-tab="carte" class="tab-btn px-4 py-2 lg:py-1.5 rounded-lg font-semibold text-sm text-os/70 hover:bg-os/10 transition text-left lg:text-center">Carte</button>
+          <button data-tab="guide" class="tab-btn px-4 py-2 lg:py-1.5 rounded-lg font-semibold text-sm text-os/70 hover:bg-os/10 transition text-left lg:text-center">Guide champignons</button>
+          <button data-tab="spots" class="tab-btn px-4 py-2 lg:py-1.5 rounded-lg font-semibold text-sm text-os/70 hover:bg-os/10 transition text-left lg:text-center">Mes spots</button>
         </nav>
         <!-- Menu compte (desktop) : regroupe les actions pour alléger la barre -->
         <div class="relative lg:ml-auto">
-          <button id="account-btn" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-100 transition">
-            <svg class="w-5 h-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/></svg>
+          <button id="account-btn" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-os/70 hover:bg-os/10 transition">
+            <svg class="w-5 h-5 text-os/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/></svg>
             <span id="nav-user"></span>
-            <svg class="w-4 h-4 text-slate-400" viewBox="0 0 20 20" fill="currentColor"><path d="M5.2 7.5a1 1 0 011.4 0L10 10.9l3.4-3.4a1 1 0 111.4 1.4l-4.1 4.1a1 1 0 01-1.4 0L5.2 8.9a1 1 0 010-1.4z"/></svg>
+            <svg class="w-4 h-4 text-os/40" viewBox="0 0 20 20" fill="currentColor"><path d="M5.2 7.5a1 1 0 011.4 0L10 10.9l3.4-3.4a1 1 0 111.4 1.4l-4.1 4.1a1 1 0 01-1.4 0L5.2 8.9a1 1 0 010-1.4z"/></svg>
           </button>
-          <div id="account-menu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-card border border-slate-200 p-1.5 z-[1100]">
-            <button id="species-btn" class="w-full text-left px-3 py-2 rounded-lg text-sm font-semibold text-brand-700 hover:bg-brand-50 transition">🍄 Mes champignons</button>
-            <button id="manage-sub" class="hidden w-full text-left px-3 py-2 rounded-lg text-sm font-semibold text-brand-700 hover:bg-brand-50 transition">Mon abonnement</button>
-            <button id="admin-requests-btn" class="admin-only hidden w-full text-left px-3 py-2 rounded-lg text-sm font-semibold text-brand-700 hover:bg-brand-50 transition">📥 Demandes d'accès</button>
-            <div class="my-1 border-t border-slate-100"></div>
-            <button id="logout-btn" class="w-full text-left px-3 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">Déconnexion</button>
-            <button id="delete-account" class="w-full text-left px-3 py-2 rounded-lg text-sm font-semibold text-slate-400 hover:text-red-600 hover:bg-red-50 transition">Supprimer mon compte</button>
+          <div id="account-menu" class="hidden absolute right-0 mt-2 w-56 bg-sousbois rounded-2xl shadow-card border border-os/10 p-1.5 z-[1100]">
+            <button id="species-btn" class="w-full text-left px-3 py-2 rounded-lg text-sm font-semibold text-girolle hover:bg-os/10 transition">🍄 Mes champignons</button>
+            <button id="manage-sub" class="hidden w-full text-left px-3 py-2 rounded-lg text-sm font-semibold text-girolle hover:bg-os/10 transition">Mon abonnement</button>
+            <button id="admin-requests-btn" class="admin-only hidden w-full text-left px-3 py-2 rounded-lg text-sm font-semibold text-girolle hover:bg-os/10 transition">📥 Demandes d'accès</button>
+            <div class="my-1 border-t border-os/10"></div>
+            <button id="logout-btn" class="w-full text-left px-3 py-2 rounded-lg text-sm font-semibold text-os/70 hover:bg-os/10 transition">Déconnexion</button>
+            <button id="delete-account" class="w-full text-left px-3 py-2 rounded-lg text-sm font-semibold text-os/40 hover:text-red-400 hover:bg-red-500/10 transition">Supprimer mon compte</button>
           </div>
         </div>
       </div>
@@ -64,53 +64,53 @@
         <!-- Recherche + puces empilées : même largeur (= largeur des puces sur desktop) -->
         <div class="absolute top-3 left-3 right-14 lg:right-auto lg:w-fit lg:max-w-[calc(100%-4.5rem)] z-[865] flex flex-col gap-1.5">
           <div id="search-pill" class="relative w-full">
-          <div class="flex items-center gap-1 bg-white rounded-full shadow-card border border-slate-200 pl-1 pr-2 py-1">
-            <button id="geolocate-btn" type="button" title="Me localiser" class="shrink-0 w-8 h-8 rounded-full text-brand-600 hover:bg-brand-50 flex items-center justify-center">
+          <div class="flex items-center gap-1 bg-sousbois rounded-full shadow-card border border-os/10 pl-1 pr-2 py-1">
+            <button id="geolocate-btn" type="button" title="Me localiser" class="shrink-0 w-8 h-8 rounded-full text-girolle hover:bg-os/10 flex items-center justify-center">
               <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a1 1 0 011 1v1.06A6 6 0 0115.94 9H17a1 1 0 110 2h-1.06A6 6 0 0111 15.94V17a1 1 0 11-2 0v-1.06A6 6 0 014.06 11H3a1 1 0 110-2h1.06A6 6 0 019 4.06V3a1 1 0 011-1zm0 4a4 4 0 100 8 4 4 0 000-8zm0 2.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3z"/></svg>
             </button>
-            <input id="city-input" type="text" placeholder="Rechercher une commune…" class="flex-1 min-w-0 bg-transparent outline-none text-sm" />
+            <input id="city-input" type="text" placeholder="Rechercher une commune…" class="flex-1 min-w-0 bg-transparent outline-none text-sm text-os placeholder:text-os/40" />
           </div>
-          <div id="city-results" class="absolute left-0 right-0 top-full mt-1 space-y-1 bg-white rounded-xl shadow-card border border-slate-200 p-1 z-10"></div>
+          <div id="city-results" class="absolute left-0 right-0 top-full mt-1 space-y-1 bg-sousbois text-os rounded-xl shadow-card border border-os/10 p-1 z-10"></div>
           </div>
           <!-- Direction A : nombre de puces affiché calculé dynamiquement (priority+) ; le reste va dans « ＋ Plus » -->
           <div id="chips-row" class="flex gap-1.5 items-start">
           <div id="layer-chips" class="flex gap-1.5 overflow-x-auto no-scrollbar min-w-0">
-            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-brand-500 text-white shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="radar">🍄 Radar</button>
-            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="temp">Température</button>
-            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="precip">Pluie</button>
-            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="forest">Forêt</button>
-            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="soil">Sol</button>
-            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="soilmoist">Humidité</button>
-            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="altitude">Altitude</button>
-            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap" data-layer="aspect">Exposition</button>
+            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-girolle text-sousbois shadow-soft border border-os/10 text-xs font-semibold whitespace-nowrap" data-layer="radar">🍄 Radar</button>
+            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-sousbois text-os shadow-soft border border-os/10 text-xs font-semibold whitespace-nowrap" data-layer="temp">Température</button>
+            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-sousbois text-os shadow-soft border border-os/10 text-xs font-semibold whitespace-nowrap" data-layer="precip">Pluie</button>
+            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-sousbois text-os shadow-soft border border-os/10 text-xs font-semibold whitespace-nowrap" data-layer="forest">Forêt</button>
+            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-sousbois text-os shadow-soft border border-os/10 text-xs font-semibold whitespace-nowrap" data-layer="soil">Sol</button>
+            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-sousbois text-os shadow-soft border border-os/10 text-xs font-semibold whitespace-nowrap" data-layer="soilmoist">Humidité</button>
+            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-sousbois text-os shadow-soft border border-os/10 text-xs font-semibold whitespace-nowrap" data-layer="altitude">Altitude</button>
+            <button class="layer-chip shrink-0 px-3 py-1.5 rounded-full bg-sousbois text-os shadow-soft border border-os/10 text-xs font-semibold whitespace-nowrap" data-layer="aspect">Exposition</button>
           </div>
           <div id="more-wrap" class="relative shrink-0 hidden">
-            <button id="more-layers-btn" class="px-3 py-1.5 rounded-full bg-white text-slate-600 shadow-soft border border-slate-200 text-xs font-semibold whitespace-nowrap">＋ Plus</button>
-            <div id="more-layers" class="hidden absolute right-0 mt-1.5 w-44 bg-white rounded-xl shadow-card border border-slate-200 p-1.5 space-y-1 z-[870]">
-              <button class="layer-chip more-item hidden w-full text-left px-3 py-1.5 rounded-lg bg-white text-slate-600 text-xs font-semibold hover:bg-slate-50" data-layer="temp">Température</button>
-              <button class="layer-chip more-item hidden w-full text-left px-3 py-1.5 rounded-lg bg-white text-slate-600 text-xs font-semibold hover:bg-slate-50" data-layer="precip">Pluie</button>
-              <button class="layer-chip more-item hidden w-full text-left px-3 py-1.5 rounded-lg bg-white text-slate-600 text-xs font-semibold hover:bg-slate-50" data-layer="forest">Forêt — essences</button>
-              <button class="layer-chip more-item hidden w-full text-left px-3 py-1.5 rounded-lg bg-white text-slate-600 text-xs font-semibold hover:bg-slate-50" data-layer="soil">Type de sol</button>
-              <button class="layer-chip more-item hidden w-full text-left px-3 py-1.5 rounded-lg bg-white text-slate-600 text-xs font-semibold hover:bg-slate-50" data-layer="soilmoist">Humidité du sol</button>
-              <button class="layer-chip more-item hidden w-full text-left px-3 py-1.5 rounded-lg bg-white text-slate-600 text-xs font-semibold hover:bg-slate-50" data-layer="altitude">Altitude / relief</button>
-              <button class="layer-chip more-item hidden w-full text-left px-3 py-1.5 rounded-lg bg-white text-slate-600 text-xs font-semibold hover:bg-slate-50" data-layer="aspect">Exposition</button>
+            <button id="more-layers-btn" class="px-3 py-1.5 rounded-full bg-sousbois text-os shadow-soft border border-os/10 text-xs font-semibold whitespace-nowrap">＋ Plus</button>
+            <div id="more-layers" class="hidden absolute right-0 mt-1.5 w-44 bg-sousbois rounded-xl shadow-card border border-os/10 p-1.5 space-y-1 z-[870]">
+              <button class="layer-chip more-item hidden w-full text-left px-3 py-1.5 rounded-lg bg-sousbois text-os text-xs font-semibold hover:bg-os/10" data-layer="temp">Température</button>
+              <button class="layer-chip more-item hidden w-full text-left px-3 py-1.5 rounded-lg bg-sousbois text-os text-xs font-semibold hover:bg-os/10" data-layer="precip">Pluie</button>
+              <button class="layer-chip more-item hidden w-full text-left px-3 py-1.5 rounded-lg bg-sousbois text-os text-xs font-semibold hover:bg-os/10" data-layer="forest">Forêt — essences</button>
+              <button class="layer-chip more-item hidden w-full text-left px-3 py-1.5 rounded-lg bg-sousbois text-os text-xs font-semibold hover:bg-os/10" data-layer="soil">Type de sol</button>
+              <button class="layer-chip more-item hidden w-full text-left px-3 py-1.5 rounded-lg bg-sousbois text-os text-xs font-semibold hover:bg-os/10" data-layer="soilmoist">Humidité du sol</button>
+              <button class="layer-chip more-item hidden w-full text-left px-3 py-1.5 rounded-lg bg-sousbois text-os text-xs font-semibold hover:bg-os/10" data-layer="altitude">Altitude / relief</button>
+              <button class="layer-chip more-item hidden w-full text-left px-3 py-1.5 rounded-lg bg-sousbois text-os text-xs font-semibold hover:bg-os/10" data-layer="aspect">Exposition</button>
             </div>
           </div>
         </div>
           <!-- Espèces radar (dans le conteneur → même espacement que search/puces) -->
           <div id="radar-species" class="hidden relative w-fit">
-            <button id="radar-species-btn" class="flex items-center gap-1 px-3 py-1.5 rounded-full bg-white shadow-soft border border-slate-200 text-xs font-semibold text-slate-600">🍄 Espèces ▾</button>
-            <div id="radar-species-pop" class="hidden absolute top-full left-0 mt-1.5 w-56 max-h-64 overflow-y-auto nice-scroll bg-white rounded-xl shadow-card border border-slate-200 p-2 z-10">
+            <button id="radar-species-btn" class="flex items-center gap-1 px-3 py-1.5 rounded-full bg-sousbois shadow-soft border border-os/10 text-xs font-semibold text-os">🍄 Espèces ▾</button>
+            <div id="radar-species-pop" class="hidden absolute top-full left-0 mt-1.5 w-56 max-h-64 overflow-y-auto nice-scroll bg-sousbois text-os rounded-xl shadow-card border border-os/10 p-2 z-10">
               <div class="flex items-center justify-between mb-1.5 px-1">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Afficher sur le radar</span>
-                <button id="radar-all-toggle" class="text-[10px] font-bold text-brand-600 hover:underline whitespace-nowrap">Tout / Aucun</button>
+                <span class="text-[10px] font-bold uppercase tracking-wider text-os/50">Afficher sur le radar</span>
+                <button id="radar-all-toggle" class="text-[10px] font-bold text-girolle hover:underline whitespace-nowrap">Tout / Aucun</button>
               </div>
               <div id="radar-species-list" class="space-y-0.5"></div>
             </div>
           </div>
           <!-- Curseur de dates (du…au…) : Température / Pluie -->
-          <div id="date-range" class="hidden w-full lg:w-80 bg-white/95 backdrop-blur rounded-xl shadow-card border border-slate-200 px-3 py-2.5">
-            <div class="text-[11px] font-semibold text-slate-600 mb-2.5">Période : du <span id="dr-from" class="text-brand-700 font-bold"></span> au <span id="dr-to" class="text-brand-700 font-bold"></span></div>
+          <div id="date-range" class="hidden w-full lg:w-80 bg-sousbois/95 backdrop-blur rounded-xl shadow-card border border-os/10 px-3 py-2.5">
+            <div class="text-[11px] font-semibold text-os/70 mb-2.5">Période : du <span id="dr-from" class="text-girolle font-bold"></span> au <span id="dr-to" class="text-girolle font-bold"></span></div>
             <div class="dr-slider relative h-5">
               <div class="dr-track"></div>
               <div id="dr-fill" class="dr-fill"></div>
@@ -120,16 +120,16 @@
           </div>
         </div>
         <!-- Légende en étiquette (bas-gauche de la carte) -->
-        <div id="map-legend" class="hidden absolute left-3 bottom-16 lg:bottom-3 z-[850] w-64 max-w-[calc(100vw-1.5rem)] max-h-[45vh] overflow-y-auto nice-scroll bg-white/95 backdrop-blur rounded-xl shadow-card border border-slate-200 px-3 py-2 text-xs text-slate-500"></div>
+        <div id="map-legend" class="hidden absolute left-3 bottom-16 lg:bottom-3 z-[850] w-64 max-w-[calc(100vw-1.5rem)] max-h-[45vh] overflow-y-auto nice-scroll bg-sousbois/95 text-os/70 backdrop-blur rounded-xl shadow-card border border-os/10 px-3 py-2 text-xs"></div>
         <!-- Carte d'info, positionnée au pixel du point cliqué (suit la carte) -->
-        <div id="point-card" class="hidden absolute z-[800] w-64 bg-white rounded-2xl shadow-card border border-slate-200 p-3.5 fade-in"></div>
+        <div id="point-card" class="hidden absolute z-[800] w-64 bg-sousbois text-os rounded-2xl shadow-card border border-os/10 p-3.5 fade-in"></div>
       </main>
 
       <!-- Vue Guide -->
-      <main id="view-guide" class="hidden flex-1 overflow-y-auto nice-scroll min-h-0 bg-slate-50">
+      <main id="view-guide" class="hidden flex-1 overflow-y-auto nice-scroll min-h-0 bg-sousbois text-os">
         <div class="max-w-5xl mx-auto px-6 pt-7 pb-24 lg:pb-7">
           <h1 class="text-2xl font-black">Guide cueillette</h1>
-          <p class="text-sm text-slate-500 mt-1 mb-5 max-w-2xl">
+          <p class="text-sm text-os/60 mt-1 mb-5 max-w-2xl">
             Conditions estimées pour le point sélectionné (saison, température, pluie) + essence
             forestière détectée. Indicatif — ne dispense jamais d'une identification formelle.
           </p>
@@ -138,10 +138,10 @@
       </main>
 
       <!-- Vue Mes spots -->
-      <main id="view-spots" class="hidden flex-1 overflow-y-auto nice-scroll min-h-0 bg-slate-50">
+      <main id="view-spots" class="hidden flex-1 overflow-y-auto nice-scroll min-h-0 bg-sousbois text-os">
         <div class="max-w-4xl mx-auto px-6 pt-7 pb-24 lg:pb-7">
           <h1 class="text-2xl font-black">Mes spots</h1>
-          <p class="text-sm text-slate-500 mt-1 mb-5 max-w-2xl">
+          <p class="text-sm text-os/60 mt-1 mb-5 max-w-2xl">
             Vos coins enregistrés. Cliquez sur le nom pour le renommer ; le statut « propice »
             suit la météo du jour (radar habitat × pousse).
           </p>
@@ -150,35 +150,35 @@
       </main>
 
       <!-- Vue Profil (mobile) : actions du compte au pouce (relaient vers le top-nav) -->
-      <main id="view-profil" class="hidden flex-1 overflow-y-auto nice-scroll min-h-0 bg-slate-50">
+      <main id="view-profil" class="hidden flex-1 overflow-y-auto nice-scroll min-h-0 bg-sousbois text-os">
         <div class="max-w-xl mx-auto px-6 pt-7 pb-24 lg:pb-7 space-y-3">
           <h1 class="text-2xl font-black">Profil</h1>
-          <p id="profil-user" class="text-sm text-slate-500 mb-2"></p>
-          <button id="install-btn" class="hidden w-full text-left px-4 py-3 rounded-xl bg-brand-500 text-white font-semibold hover:bg-brand-600 transition">📲 Installer l'application</button>
-          <button class="profil-act w-full text-left px-4 py-3 rounded-xl bg-white border border-slate-200 font-semibold text-brand-700 hover:bg-brand-50 transition" data-target="species-btn">🍄 Mes champignons</button>
-          <button class="profil-act admin-only hidden w-full text-left px-4 py-3 rounded-xl bg-white border border-slate-200 font-semibold text-brand-700 hover:bg-brand-50 transition" data-target="admin-requests-btn">📥 Demandes d'accès</button>
-          <button class="profil-act w-full text-left px-4 py-3 rounded-xl bg-white border border-slate-200 font-semibold text-brand-700 hover:bg-brand-50 transition" data-target="manage-sub">Mon abonnement</button>
-          <button class="profil-act w-full text-left px-4 py-3 rounded-xl bg-white border border-slate-200 font-semibold text-slate-600 hover:bg-slate-50 transition" data-target="logout-btn">Déconnexion</button>
-          <button class="profil-act w-full text-left px-4 py-3 rounded-xl bg-white border border-slate-200 font-semibold text-slate-400 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition" data-target="delete-account">Supprimer mon compte</button>
+          <p id="profil-user" class="text-sm text-os/60 mb-2"></p>
+          <button id="install-btn" class="hidden w-full text-left px-4 py-3 rounded-xl bg-girolle text-sousbois font-bold hover:bg-lactaire transition">📲 Installer l'application</button>
+          <button class="profil-act w-full text-left px-4 py-3 rounded-xl bg-os/5 border border-os/10 font-semibold text-girolle hover:bg-os/10 transition" data-target="species-btn">🍄 Mes champignons</button>
+          <button class="profil-act admin-only hidden w-full text-left px-4 py-3 rounded-xl bg-os/5 border border-os/10 font-semibold text-girolle hover:bg-os/10 transition" data-target="admin-requests-btn">📥 Demandes d'accès</button>
+          <button class="profil-act w-full text-left px-4 py-3 rounded-xl bg-os/5 border border-os/10 font-semibold text-girolle hover:bg-os/10 transition" data-target="manage-sub">Mon abonnement</button>
+          <button class="profil-act w-full text-left px-4 py-3 rounded-xl bg-os/5 border border-os/10 font-semibold text-os/70 hover:bg-os/10 transition" data-target="logout-btn">Déconnexion</button>
+          <button class="profil-act w-full text-left px-4 py-3 rounded-xl bg-os/5 border border-os/10 font-semibold text-os/40 hover:text-red-400 hover:border-red-400/40 hover:bg-red-500/10 transition" data-target="delete-account">Supprimer mon compte</button>
         </div>
       </main>
     </div>
 
     <!-- Barre d'onglets basse (mobile) — navigation au pouce ; masquée sur desktop (top-nav) -->
-    <nav id="tabbar" class="lg:hidden fixed bottom-0 inset-x-0 z-[1000] bg-white border-t border-slate-200 flex" style="padding-bottom:env(safe-area-inset-bottom)">
-      <button data-tab="carte" class="tabbar-btn flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 text-[10px] font-semibold text-brand-500">
+    <nav id="tabbar" class="lg:hidden fixed bottom-0 inset-x-0 z-[1000] bg-sousbois border-t border-os/10 flex" style="padding-bottom:env(safe-area-inset-bottom)">
+      <button data-tab="carte" class="tabbar-btn flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 text-[10px] font-semibold text-os/50">
         <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg>
         <span>Carte</span>
       </button>
-      <button data-tab="guide" class="tabbar-btn flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 text-[10px] font-semibold text-slate-400">
+      <button data-tab="guide" class="tabbar-btn flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 text-[10px] font-semibold text-os/50">
         <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2V5Z"/><path d="M19 3v18"/></svg>
         <span>Guide</span>
       </button>
-      <button data-tab="spots" class="tabbar-btn flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 text-[10px] font-semibold text-slate-400">
+      <button data-tab="spots" class="tabbar-btn flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 text-[10px] font-semibold text-os/50">
         <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.7-6-10a6 6 0 0 1 12 0c0 4.3-6 10-6 10Z"/><circle cx="12" cy="11" r="2"/></svg>
         <span>Spots</span>
       </button>
-      <button data-tab="profil" class="tabbar-btn flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 text-[10px] font-semibold text-slate-400">
+      <button data-tab="profil" class="tabbar-btn flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 text-[10px] font-semibold text-os/50">
         <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/></svg>
         <span>Profil</span>
       </button>

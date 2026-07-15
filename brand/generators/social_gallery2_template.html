@@ -1,0 +1,267 @@
+<style>
+  @font-face{font-family:'Clash Display';font-weight:700;font-display:swap;src:url(data:font/woff2;base64,__FONT_CLASH__) format('woff2')}
+  @font-face{font-family:'Fraunces';font-style:italic;font-weight:400 600;font-display:swap;src:url(data:font/woff2;base64,__FONT_FRAUNCES__) format('woff2')}
+  @font-face{font-family:'Space Mono';font-weight:400;font-display:swap;src:url(data:font/woff2;base64,__FONT_MONO__) format('woff2')}
+  @font-face{font-family:'Inter';font-weight:100 900;font-display:swap;src:url(data:font/woff2;base64,__FONT_INTER__) format('woff2')}
+
+  :root{--sousbois:#191510;--os:#efe6d3;--girolle:#f2a93b;--cepe:#b9793f;--lactaire:#d9772e;--mycene:#c6f24e;--paper:#12100b}
+  *{box-sizing:border-box}
+  body{margin:0;background:#0f0c08;color:var(--os);font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+
+  .page{max-width:1200px;margin:0 auto;padding:48px 24px 96px}
+  .masthead{border-bottom:1px solid rgba(239,230,211,.14);padding-bottom:28px;margin-bottom:40px}
+  .masthead .kicker{font-family:'Space Mono';font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:var(--girolle);margin:0 0 12px}
+  .masthead h1{font-family:'Clash Display';font-weight:700;text-transform:uppercase;letter-spacing:.01em;font-size:clamp(30px,5vw,52px);line-height:.98;margin:0;text-wrap:balance}
+  .masthead h1 em{font-family:'Fraunces';font-style:italic;font-weight:500;text-transform:none;color:var(--girolle)}
+  .masthead p{max-width:60ch;color:rgba(239,230,211,.72);font-size:15px;line-height:1.55;margin:14px 0 0}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:30px;align-items:start}
+  .shot{display:flex;flex-direction:column;gap:12px}
+
+  .card{position:relative;overflow:hidden;background:var(--sousbois);border-radius:8px;container-type:inline-size;box-shadow:0 20px 50px rgba(0,0,0,.5)}
+  .sq{aspect-ratio:1/1}
+  .story{aspect-ratio:9/16}
+  .grain{position:absolute;inset:0;pointer-events:none;opacity:.5;mix-blend-mode:soft-light;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+  .comp{position:absolute;inset:0;display:flex;flex-direction:column;padding:7.5cqw;gap:3cqw;z-index:1}
+  .eyebrow{font-family:'Space Mono';font-size:3cqw;letter-spacing:.22em;text-transform:uppercase;color:var(--accent,var(--girolle));margin:0}
+  .head{font-family:'Clash Display';font-weight:700;font-size:11cqw;line-height:.9;text-transform:uppercase;text-wrap:balance;margin:0;letter-spacing:-.01em}
+  .story .head{font-size:12.5cqw}
+  .head em{font-family:'Fraunces';font-style:italic;font-weight:500;text-transform:none;color:var(--accent,var(--girolle))}
+  .sub{font-family:'Inter';font-weight:400;font-size:3.7cqw;line-height:1.34;color:rgba(239,230,211,.82);margin:0;max-width:90%}
+  .sub b{color:var(--os);font-weight:700}
+
+  footer{margin-top:auto;display:flex;align-items:center;gap:2.4cqw;z-index:2}
+  .mark{width:8.5cqw;height:8.5cqw;flex:none}
+  .word{font-family:'Clash Display';font-weight:700;font-size:5cqw;letter-spacing:.01em;text-transform:uppercase}
+  .handle{font-family:'Space Mono';font-size:2.7cqw;color:rgba(239,230,211,.55);margin-left:auto;letter-spacing:.02em}
+
+  .sticker{position:absolute;background-repeat:no-repeat;background-position:center;background-size:contain;filter:drop-shadow(0 1cqw 6cqw rgba(0,0,0,.55));z-index:0}
+  .ph-coulemelle{background-image:url(data:image/png;base64,__IMG_COULEMELLE__)}
+  .ph-trompette{background-image:url(data:image/png;base64,__IMG_TROMPETTE__)}
+
+  /* helpers de mise en page lot 2 (décor en os/girolle — mycène réservé data) */
+  .glow{position:absolute;inset:0;z-index:0;background:radial-gradient(circle at 50% 38%,rgba(242,169,59,.30),transparent 56%)}
+  .ring{position:absolute;border-radius:50%;border:1.1cqw dashed rgba(239,230,211,.28);z-index:0}
+  .mini{position:absolute;width:4cqw;height:5cqw;border-radius:50% 50% 46% 46%/62% 62% 38% 38%;background:rgba(239,230,211,.55);z-index:0}
+  .stamp{align-self:flex-start;font-family:'Clash Display';font-weight:700;text-transform:uppercase;color:var(--lactaire);border:1cqw solid var(--lactaire);border-radius:2cqw;padding:.4cqw 3cqw;font-size:8cqw;transform:rotate(-6deg);letter-spacing:.02em;margin:1cqw 0}
+  .list{font-family:'Inter';font-size:3.8cqw;line-height:1.45;color:rgba(239,230,211,.85);margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:2cqw}
+  .list b{color:var(--accent,var(--girolle));font-weight:700}
+  .net{position:absolute;left:0;right:0;bottom:20cqw;width:100%;height:44cqw;z-index:0;opacity:.85}
+
+  figcaption{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 10px}
+  figcaption .num{font-family:'Space Mono';font-size:11px;color:var(--girolle)}
+  figcaption .ttl{font-family:'Inter';font-weight:600;font-size:14px;color:var(--os)}
+  figcaption .fmt{font-family:'Space Mono';font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:rgba(239,230,211,.5);border:1px solid rgba(239,230,211,.18);border-radius:20px;padding:2px 8px}
+  figcaption .flag{flex-basis:100%;font-family:'Space Mono';font-size:11px;line-height:1.4;color:#f0b24b;opacity:.9}
+</style>
+
+<div class="page">
+  <header class="masthead">
+    <p class="kicker">Sporia · kit réseaux · lot 2 (stock)</p>
+    <h1>Douze visuels <em>de plus</em> — Girolle × Cèpe</h1>
+    <p>Deuxième vague, piochée dans les anecdotes non utilisées au lot 1. Séries identifiées par
+      l'eyebrow (Le saviez-vous · On déconstruit · Conseil · Écologie · Histoires). Mêmes garde-fous :
+      aucun chiffre inventé, décor en os/girolle, Mycène gardé pour la data.</p>
+  </header>
+
+  <div class="grid">
+
+    <!-- 1 chitine -->
+    <figure class="shot">
+      <div class="card sq" style="--accent:var(--cepe)">
+        <div class="comp">
+          <p class="eyebrow">Le saviez-vous</p>
+          <h2 class="head">Même matière<br>qu'une <em>carapace</em><br>d'insecte</h2>
+          <p class="sub">La paroi des champignons est faite de chitine — comme l'exosquelette des insectes — et non de cellulose comme les plantes.</p>
+          <footer>__MARK__<span class="word">Sporia</span><span class="handle">sporia.duckdns.org</span></footer>
+        </div>
+        <div class="grain"></div>
+      </div>
+      <figcaption><span class="num">L2·01</span><span class="ttl">Chitine</span><span class="fmt">Carré 1080²</span></figcaption>
+    </figure>
+
+    <!-- 2 digestion externe -->
+    <figure class="shot">
+      <div class="card sq" style="--accent:var(--girolle)">
+        <div class="comp">
+          <p class="eyebrow">Le saviez-vous</p>
+          <h2 class="head">Ils digèrent<br>leur repas<br>de l'<em>extérieur</em></h2>
+          <p class="sub">Un champignon sécrète des enzymes, décompose la matière autour de lui, puis absorbe les nutriments. Son estomac, c'est tout son mycélium.</p>
+          <footer>__MARK__<span class="word">Sporia</span><span class="handle">sporia.duckdns.org</span></footer>
+        </div>
+        <div class="grain"></div>
+      </div>
+      <figcaption><span class="num">L2·02</span><span class="ttl">Digestion externe</span><span class="fmt">Carré 1080²</span></figcaption>
+    </figure>
+
+    <!-- 3 bioluminescence -->
+    <figure class="shot">
+      <div class="card story" style="--accent:var(--girolle)">
+        <div class="glow"></div>
+        <div class="comp">
+          <p class="eyebrow">Le saviez-vous</p>
+          <h2 class="head">Certains<br>brillent dans<br>le <em>noir</em></h2>
+          <p class="sub">La bioluminescence existe chez plusieurs espèces : le « foxfire », cette lueur du bois en décomposition la nuit.</p>
+          <footer>__MARK__<span class="word">Sporia</span><span class="handle">sporia.duckdns.org</span></footer>
+        </div>
+        <div class="grain"></div>
+      </div>
+      <figcaption><span class="num">L2·03</span><span class="ttl">Bioluminescence</span><span class="fmt">Story 1080×1920</span>
+        <span class="flag">💡 « plusieurs espèces » — préciser/sourcer le nombre avant de l'affirmer.</span></figcaption>
+    </figure>
+
+    <!-- 4 cordyceps -->
+    <figure class="shot">
+      <div class="card sq" style="--accent:var(--lactaire)">
+        <div class="comp">
+          <p class="eyebrow">Le saviez-vous</p>
+          <h2 class="head">Le champignon<br>qui <em>zombifie</em><br>les fourmis</h2>
+          <p class="sub">Le cordyceps parasite l'insecte, manipule son comportement, puis fructifie hors de son corps. Le vrai « champignon zombie ».</p>
+          <footer>__MARK__<span class="word">Sporia</span><span class="handle">sporia.duckdns.org</span></footer>
+        </div>
+        <div class="grain"></div>
+      </div>
+      <figcaption><span class="num">L2·04</span><span class="ttl">Cordyceps</span><span class="fmt">Carré 1080²</span></figcaption>
+    </figure>
+
+    <!-- 5 ronds de sorcière -->
+    <figure class="shot">
+      <div class="card sq" style="--accent:var(--girolle)">
+        <div class="ring" style="width:52cqw;height:52cqw;left:24cqw;bottom:8cqw"></div>
+        <div class="mini" style="left:48cqw;bottom:56cqw"></div>
+        <div class="mini" style="left:70cqw;bottom:42cqw"></div>
+        <div class="mini" style="left:66cqw;bottom:16cqw"></div>
+        <div class="mini" style="left:40cqw;bottom:8cqw"></div>
+        <div class="mini" style="left:22cqw;bottom:24cqw"></div>
+        <div class="mini" style="left:28cqw;bottom:50cqw"></div>
+        <div class="comp">
+          <p class="eyebrow">Le saviez-vous</p>
+          <h2 class="head">Les <em>ronds de<br>sorcière</em> n'ont<br>rien de magique</h2>
+          <p class="sub">Ces cercles en pré dessinent la croissance du mycélium, qui avance vers l'extérieur année après année.</p>
+          <footer>__MARK__<span class="word">Sporia</span><span class="handle">sporia.duckdns.org</span></footer>
+        </div>
+        <div class="grain"></div>
+      </div>
+      <figcaption><span class="num">L2·05</span><span class="ttl">Ronds de sorcière</span><span class="fmt">Carré 1080²</span></figcaption>
+    </figure>
+
+    <!-- 6 champignon de Paris -->
+    <figure class="shot">
+      <div class="card sq" style="--accent:var(--cepe)">
+        <div class="comp">
+          <p class="eyebrow">Le saviez-vous</p>
+          <h2 class="head">Le plus mangé<br>au monde n'a<br>rien d'<em>exotique</em></h2>
+          <p class="sub">C'est le champignon de Paris (<em>Agaricus bisporus</em>), de loin le plus cultivé et consommé sur la planète.</p>
+          <footer>__MARK__<span class="word">Sporia</span><span class="handle">sporia.duckdns.org</span></footer>
+        </div>
+        <div class="grain"></div>
+      </div>
+      <figcaption><span class="num">L2·06</span><span class="ttl">Champignon de Paris</span><span class="fmt">Carré 1080²</span></figcaption>
+    </figure>
+
+    <!-- 7 trois modes de vie -->
+    <figure class="shot">
+      <div class="card story" style="--accent:var(--girolle)">
+        <div class="comp">
+          <p class="eyebrow">Écologie</p>
+          <h2 class="head">Trois <em>modes<br>de vie</em></h2>
+          <ul class="list">
+            <li><b>Mycorhizien</b> — lié à un arbre-hôte (cèpe, girolle).</li>
+            <li><b>Saprophyte</b> — sur bois mort et litière.</li>
+            <li><b>Parasite</b> — aux dépens d'un hôte vivant.</li>
+          </ul>
+          <p class="sub">Savoir lequel vous cherchez change tout l'endroit où regarder.</p>
+          <footer>__MARK__<span class="word">Sporia</span><span class="handle">sporia.duckdns.org</span></footer>
+        </div>
+        <div class="grain"></div>
+      </div>
+      <figcaption><span class="num">L2·07</span><span class="ttl">Trois modes de vie</span><span class="fmt">Story 1080×1920</span></figcaption>
+    </figure>
+
+    <!-- 8 choc thermique -->
+    <figure class="shot">
+      <div class="card sq" style="--accent:var(--lactaire)">
+        <div class="comp">
+          <p class="eyebrow">Écologie</p>
+          <h2 class="head">L'automne,<br>c'est un <em>choc<br>thermique</em></h2>
+          <p class="sub">La baisse des températures avec l'humidité déclenche les grandes poussées. Sol trop sec ou gelé : rien ne sort.</p>
+          <footer>__MARK__<span class="word">Sporia</span><span class="handle">sporia.duckdns.org</span></footer>
+        </div>
+        <div class="grain"></div>
+      </div>
+      <figcaption><span class="num">L2·08</span><span class="ttl">Choc thermique d'automne</span><span class="fmt">Carré 1080²</span></figcaption>
+    </figure>
+
+    <!-- 9 wood wide web -->
+    <figure class="shot">
+      <div class="card story" style="--accent:var(--girolle)">
+        <svg class="net" viewBox="0 0 100 44" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+          <g stroke="rgba(239,230,211,.3)" stroke-width="0.5" fill="none">
+            <path d="M14 34 L34 22 L58 30 L44 12 L78 18 M58 30 L82 34 M34 22 L20 10"/>
+          </g>
+          <g fill="var(--girolle)">
+            <circle cx="14" cy="34" r="2.2"/><circle cx="34" cy="22" r="2.6"/><circle cx="58" cy="30" r="2.4"/>
+            <circle cx="44" cy="12" r="2"/><circle cx="78" cy="18" r="2.2"/><circle cx="82" cy="34" r="1.8"/>
+            <circle cx="20" cy="10" r="1.8"/>
+          </g>
+        </svg>
+        <div class="comp">
+          <p class="eyebrow">Écologie</p>
+          <h2 class="head">Les arbres se<br>parlent… par les<br><em>champignons</em></h2>
+          <p class="sub">Les réseaux mycorhiziens relient les racines de plusieurs arbres — le « wood wide web » — et échangent nutriments et signaux.</p>
+          <footer>__MARK__<span class="word">Sporia</span><span class="handle">sporia.duckdns.org</span></footer>
+        </div>
+        <div class="grain"></div>
+      </div>
+      <figcaption><span class="num">L2·09</span><span class="ttl">Wood wide web</span><span class="fmt">Story 1080×1920</span>
+        <span class="flag">💡 Notion établie mais l'ampleur du phénomène fait débat — rester au conditionnel.</span></figcaption>
+    </figure>
+
+    <!-- 10 comestible cuit / toxique cru -->
+    <figure class="shot">
+      <div class="card sq" style="--accent:var(--lactaire)">
+        <div class="comp">
+          <p class="eyebrow">Sécurité</p>
+          <h2 class="head">Comestible cuit,<br><em>toxique</em> cru</h2>
+          <p class="sub">Des espèces prisées comme les morilles sont toxiques crues et ne deviennent comestibles qu'après une cuisson suffisante.</p>
+          <footer>__MARK__<span class="word">Sporia</span><span class="handle">sporia.duckdns.org</span></footer>
+        </div>
+        <div class="grain"></div>
+      </div>
+      <figcaption><span class="num">L2·10</span><span class="ttl">Cuit vs cru</span><span class="fmt">Carré 1080²</span></figcaption>
+    </figure>
+
+    <!-- 11 le panier -->
+    <figure class="shot">
+      <div class="card sq" style="--accent:var(--cepe)">
+        <div class="comp">
+          <p class="eyebrow">Conseil de cueilleur</p>
+          <h2 class="head">Le <em>panier</em>,<br>pas le sac<br>plastique</h2>
+          <p class="sub">Un panier aéré laisse les spores se disperser en chemin et évite que la récolte ne s'écrase et fermente.</p>
+          <footer>__MARK__<span class="word">Sporia</span><span class="handle">sporia.duckdns.org</span></footer>
+        </div>
+        <div class="sticker ph-coulemelle" style="width:38cqw;height:38cqw;right:2cqw;bottom:14cqw;transform:rotate(7deg)"></div>
+        <div class="grain"></div>
+      </div>
+      <figcaption><span class="num">L2·11</span><span class="ttl">Le panier plutôt que le sac</span><span class="fmt">Carré 1080²</span>
+        <span class="flag">💡 Conseil d'usage (pas une règle de loi).</span></figcaption>
+    </figure>
+
+    <!-- 12 mythe joli = comestible -->
+    <figure class="shot">
+      <div class="card sq" style="--accent:var(--lactaire)">
+        <div class="comp">
+          <p class="eyebrow">On déconstruit</p>
+          <h2 class="head">« Joli et parfumé,<br>donc <em>comestible</em> »</h2>
+          <div class="stamp">Faux</div>
+          <p class="sub">Aucun rapport. Des espèces mortelles sont d'apparence banale et d'odeur agréable — l'aspect ne dit rien de la toxicité.</p>
+          <footer>__MARK__<span class="word">Sporia</span><span class="handle">sporia.duckdns.org</span></footer>
+        </div>
+        <div class="grain"></div>
+      </div>
+      <figcaption><span class="num">L2·12</span><span class="ttl">Mythe : joli = comestible</span><span class="fmt">Carré 1080²</span></figcaption>
+    </figure>
+
+  </div>
+</div>

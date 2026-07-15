@@ -1,0 +1,276 @@
+<style>
+  @font-face{font-family:'Clash Display';font-weight:700;font-display:swap;src:url(data:font/woff2;base64,__FONT_CLASH__) format('woff2')}
+  @font-face{font-family:'Fraunces';font-style:italic;font-weight:400 600;font-display:swap;src:url(data:font/woff2;base64,__FONT_FRAUNCES__) format('woff2')}
+  @font-face{font-family:'Space Mono';font-weight:400;font-display:swap;src:url(data:font/woff2;base64,__FONT_MONO__) format('woff2')}
+
+  :root{
+    --sousbois:#191510; --os:#efe6d3; --girolle:#f2a93b; --cepe:#b9793f;
+    --lactaire:#d9772e; --mycene:#c6f24e; --paper:#12100b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#0f0c08;color:var(--os);font-family:'Inter',system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased}
+
+  .page{max-width:1200px;margin:0 auto;padding:48px 24px 96px}
+  .masthead{border-bottom:1px solid rgba(239,230,211,.14);padding-bottom:28px;margin-bottom:40px}
+  .masthead .kicker{font-family:'Space Mono';font-size:12px;letter-spacing:.28em;text-transform:uppercase;
+    color:var(--girolle);margin:0 0 12px}
+  .masthead h1{font-family:'Clash Display';font-weight:700;text-transform:uppercase;letter-spacing:.01em;
+    font-size:clamp(30px,5vw,52px);line-height:.98;margin:0;text-wrap:balance}
+  .masthead h1 em{font-family:'Fraunces';font-style:italic;font-weight:500;text-transform:none;color:var(--girolle)}
+  .masthead p{max-width:60ch;color:rgba(239,230,211,.72);font-size:15px;line-height:1.55;margin:14px 0 0}
+  .legend{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:16px;font-family:'Space Mono';font-size:11px;
+    letter-spacing:.04em;color:rgba(239,230,211,.6)}
+  .legend b{color:var(--mycene);font-weight:400}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:30px;align-items:start}
+  .shot{display:flex;flex-direction:column;gap:12px}
+
+  /* ---- La carte = composition sociale, tout dimensionné en cqw ---- */
+  .card{position:relative;overflow:hidden;background:var(--sousbois);border-radius:8px;
+    container-type:inline-size;box-shadow:0 20px 50px rgba(0,0,0,.5)}
+  .sq{aspect-ratio:1/1}
+  .story{aspect-ratio:9/16}
+  .grain{position:absolute;inset:0;pointer-events:none;opacity:.5;mix-blend-mode:soft-light;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+  .comp{position:absolute;inset:0;display:flex;flex-direction:column;padding:7.5cqw;gap:3cqw;z-index:1}
+  .eyebrow{font-family:'Space Mono';font-size:3cqw;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--accent,var(--girolle));margin:0}
+  .head{font-family:'Clash Display';font-weight:700;font-size:11cqw;line-height:.9;text-transform:uppercase;
+    text-wrap:balance;margin:0;letter-spacing:-.01em}
+  .story .head{font-size:12.5cqw}
+  .head em{font-family:'Fraunces';font-style:italic;font-weight:500;text-transform:none;color:var(--accent,var(--girolle))}
+  .sub{font-family:'Inter',system-ui,sans-serif;font-weight:400;font-size:3.7cqw;line-height:1.34;color:rgba(239,230,211,.82);
+    margin:0;max-width:88%}
+  .sub b{color:var(--os);font-weight:700}
+
+  footer{margin-top:auto;display:flex;align-items:center;gap:2.4cqw;z-index:2}
+  .mark{width:8.5cqw;height:8.5cqw;flex:none}
+  .word{font-family:'Clash Display';font-weight:700;font-size:5cqw;letter-spacing:.01em;text-transform:uppercase}
+  .handle{font-family:'Space Mono';font-size:2.7cqw;color:rgba(239,230,211,.55);margin-left:auto;letter-spacing:.02em}
+
+  /* stickers photo détourée (liseré os + ombre = effet autocollant) */
+  .sticker{position:absolute;background-repeat:no-repeat;background-position:center;background-size:contain;
+    filter:drop-shadow(0 1cqw 6cqw rgba(0,0,0,.55));z-index:0}
+  .ph-girolle{background-image:url(data:image/png;base64,__IMG_GIROLLE__)}
+  .ph-cepe{background-image:url(data:image/png;base64,__IMG_CEPE__)}
+  .ph-trompette{background-image:url(data:image/png;base64,__IMG_TROMPETTE__)}
+  .ph-piedbleu{background-image:url(data:image/png;base64,__IMG_PIEDBLEU__)}
+  .ph-lactaire{background-image:url(data:image/png;base64,__IMG_LACTAIRE__)}
+  .ph-coulemelle{background-image:url(data:image/png;base64,__IMG_COULEMELLE__)}
+
+  /* données (mycène = réservé data) */
+  .data{font-family:'Space Mono';font-size:5cqw;color:var(--mycene);border:.4cqw solid rgba(198,242,78,.4);
+    border-radius:2.2cqw;padding:3cqw 3.4cqw;display:flex;align-items:center;gap:2.4cqw;
+    background:rgba(198,242,78,.07);z-index:2}
+  .ex{font-family:'Space Mono';font-size:2.5cqw;color:var(--sousbois);background:var(--mycene);
+    padding:.5cqw 1.6cqw;border-radius:1cqw;text-transform:uppercase;letter-spacing:.12em;white-space:nowrap}
+  .bignum{font-family:'Clash Display';font-weight:700;font-size:20cqw;color:var(--mycene);line-height:.85;
+    display:flex;align-items:baseline;gap:2cqw;flex-wrap:wrap}
+  .bignum span{font-size:5cqw;color:rgba(239,230,211,.8)}
+
+  .rain{position:absolute;inset:0;z-index:0;opacity:.5;
+    background:repeating-linear-gradient(112deg,transparent 0 6cqw,rgba(198,242,78,.14) 6cqw 6.5cqw)}
+
+  .radar{position:relative;flex:1;min-height:0;border-radius:3cqw;margin-top:1cqw;overflow:hidden;
+    background:radial-gradient(circle at 52% 42%,rgba(198,242,78,.06),transparent 62%),var(--paper);
+    border:.3cqw solid rgba(239,230,211,.1)}
+  .radar::before{content:"";position:absolute;inset:0;
+    background:linear-gradient(rgba(239,230,211,.05) .2cqw,transparent .2cqw) 0 0/100% 8cqw,
+    linear-gradient(90deg,rgba(239,230,211,.05) .2cqw,transparent .2cqw) 0 0/8cqw 100%}
+  .dot{position:absolute;border-radius:50%;background:var(--mycene)}
+
+  .cta{font-family:'Space Mono';font-size:3.2cqw;color:var(--sousbois);background:var(--girolle);
+    padding:2.6cqw 4cqw;border-radius:2cqw;align-self:flex-start;letter-spacing:.03em;z-index:2}
+
+  /* légende sous chaque visuel */
+  figcaption{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 10px}
+  figcaption .num{font-family:'Space Mono';font-size:11px;color:var(--girolle)}
+  figcaption .ttl{font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:14px;color:var(--os)}
+  figcaption .fmt{font-family:'Space Mono';font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+    color:rgba(239,230,211,.5);border:1px solid rgba(239,230,211,.18);border-radius:20px;padding:2px 8px}
+  figcaption .flag{flex-basis:100%;font-family:'Space Mono';font-size:11px;line-height:1.4;color:var(--mycene);
+    opacity:.85}
+  figcaption .flag.warn{color:#f0b24b}
+</style>
+
+<div class="page">
+  <header class="masthead">
+    <p class="kicker">Sporia · kit réseaux · brouillon</p>
+    <h1>Dix visuels <em>réseaux</em> — Girolle × Cèpe</h1>
+    <p>Planche de validation. Chaque visuel est rendu à son ratio réel (carré 1080² ou story 1080×1920)
+      et reste net à l'export. On valide, on ajuste, puis j'exporte les retenus en SVG éditables.</p>
+    <div class="legend">
+      <span>Légende&nbsp;:</span>
+      <span><b>◆</b> chiffre illustratif → à remplacer / sourcer avant publication</span>
+      <span><b>⚠</b> fait à sourcer</span>
+    </div>
+  </header>
+
+  <div class="grid">
+
+    <!-- 1 -->
+    <figure class="shot">
+      <div class="card sq" style="--accent:var(--girolle)">
+        <div class="comp">
+          <p class="eyebrow">Le saviez-vous</p>
+          <h2 class="head">Le plus grand<br>être vivant<br>est un <em>champignon</em></h2>
+          <p class="sub">Une armillaire de l'Oregon s'étend sur près de <b>9 km²</b> sous la forêt, en un seul organisme millénaire.</p>
+          <footer>__MARK__<span class="word">Sporia</span><span class="handle">sporia.duckdns.org</span></footer>
+        </div>
+        <div class="grain"></div>
+      </div>
+      <figcaption><span class="num">01</span><span class="ttl">Le plus grand être vivant</span><span class="fmt">Carré 1080²</span>
+        <span class="flag warn">⚠ 9 km² &amp; « millénaire » = fait documenté (armillaire, Oregon) — vérifier/sourcer avant post.</span></figcaption>
+    </figure>
+
+    <!-- 2 -->
+    <figure class="shot">
+      <div class="card sq" style="--accent:var(--cepe)">
+        <div class="comp">
+          <p class="eyebrow">Ni plante, ni animal</p>
+          <h2 class="head">Un <em>règne</em><br>à part</h2>
+          <p class="sub">Génétiquement, les champignons sont plus proches de nous que des végétaux.</p>
+          <footer>__MARK__<span class="word">Sporia</span><span class="handle">sporia.duckdns.org</span></footer>
+        </div>
+        <div class="sticker ph-girolle" style="width:34cqw;height:34cqw;right:4cqw;top:24cqw;transform:rotate(8deg)"></div>
+        <div class="sticker ph-cepe" style="width:30cqw;height:30cqw;right:22cqw;bottom:20cqw;transform:rotate(-10deg)"></div>
+        <div class="grain"></div>
+      </div>
+      <figcaption><span class="num">02</span><span class="ttl">Un règne à part</span><span class="fmt">Carré 1080²</span></figcaption>
+    </figure>
+
+    <!-- 3 -->
+    <figure class="shot">
+      <div class="card story" style="--accent:var(--lactaire)">
+        <div class="comp">
+          <p class="eyebrow">Ce que vous cueillez…</p>
+          <h2 class="head">…n'est que<br>la <em>pointe</em></h2>
+          <p class="sub">L'organisme vit sous terre en mycélium toute l'année. Le chapeau n'est que sa fructification.</p>
+          <div class="sticker ph-coulemelle" style="width:52cqw;height:52cqw;right:2cqw;top:34cqw;transform:rotate(-6deg)"></div>
+          <footer>__MARK__<span class="word">Sporia</span><span class="handle">sporia.duckdns.org</span></footer>
+        </div>
+        <div class="grain"></div>
+      </div>
+      <figcaption><span class="num">03</span><span class="ttl">La partie cachée</span><span class="fmt">Story 1080×1920</span></figcaption>
+    </figure>
+
+    <!-- 4 -->
+    <figure class="shot">
+      <div class="card sq" style="--accent:var(--girolle)">
+        <div class="comp">
+          <p class="eyebrow">Le saviez-vous</p>
+          <h2 class="head">La « trompette<br>de la mort »<br>est un <em>délice</em></h2>
+          <p class="sub">Un nom sinistre pour l'un des meilleurs comestibles d'automne.</p>
+          <footer>__MARK__<span class="word">Sporia</span><span class="handle">sporia.duckdns.org</span></footer>
+        </div>
+        <div class="sticker ph-trompette" style="width:40cqw;height:40cqw;right:3cqw;bottom:14cqw;transform:rotate(6deg)"></div>
+        <div class="grain"></div>
+      </div>
+      <figcaption><span class="num">04</span><span class="ttl">Trompette de la mort</span><span class="fmt">Carré 1080²</span></figcaption>
+    </figure>
+
+    <!-- 5 -->
+    <figure class="shot">
+      <div class="card story" style="--accent:var(--mycene)">
+        <div class="comp">
+          <div class="rain"></div>
+          <p class="eyebrow">Après la pluie</p>
+          <h2 class="head">Pluie<br>aujourd'hui.<br><em>Cèpes</em> bientôt ?</h2>
+          <p class="sub">La plupart des espèces fructifient plusieurs jours après un bon épisode pluvieux.</p>
+          <div class="data">+40 mm / 48 h → J+? <span class="ex">exemple</span></div>
+          <footer>__MARK__<span class="word">Sporia</span><span class="handle">sporia.duckdns.org</span></footer>
+        </div>
+        <div class="grain"></div>
+      </div>
+      <figcaption><span class="num">05</span><span class="ttl">Pluie → poussée</span><span class="fmt">Story 1080×1920</span>
+        <span class="flag">◆ « +40 mm / 48 h → J+? » = exemple. Le délai réel dépend de l'espèce et des conditions.</span></figcaption>
+    </figure>
+
+    <!-- 6 -->
+    <figure class="shot">
+      <div class="card sq" style="--accent:var(--mycene)">
+        <div class="comp">
+          <p class="eyebrow">Météo</p>
+          <h2 class="head">Épisode<br><em>exceptionnel</em><br>ce week-end</h2>
+          <div class="bignum">__ mm<span>/ 48 h</span></div>
+          <p class="sub">sur [région] — <b>à remplir</b>. La forêt va réagir.</p>
+          <footer>__MARK__<span class="word">Sporia</span><span class="handle">sporia.duckdns.org</span></footer>
+        </div>
+        <div class="grain"></div>
+      </div>
+      <figcaption><span class="num">06</span><span class="ttl">Pluviométrie exceptionnelle</span><span class="fmt">Carré 1080²</span>
+        <span class="flag">◆ « __ mm » et « [région] » = à remplir avec une donnée réelle et sourcée avant publication.</span></figcaption>
+    </figure>
+
+    <!-- 7 -->
+    <figure class="shot">
+      <div class="card sq" style="--accent:var(--mycene)">
+        <div class="comp">
+          <p class="eyebrow">Sporia</p>
+          <h2 class="head">Un <em>radar</em><br>à champignons</h2>
+          <p class="sub">Météo, forêt et sol croisés pour estimer les zones propices, jour par jour.</p>
+          <div class="radar">
+            <span class="dot" style="width:9cqw;height:9cqw;left:24cqw;top:30%;opacity:.95;box-shadow:0 0 5cqw var(--mycene)"></span>
+            <span class="dot" style="width:6cqw;height:6cqw;left:55cqw;top:52%;opacity:.8;box-shadow:0 0 4cqw var(--mycene)"></span>
+            <span class="dot" style="width:4cqw;height:4cqw;left:38cqw;top:70%;opacity:.6"></span>
+            <span class="dot" style="width:5cqw;height:5cqw;left:66cqw;top:26%;opacity:.5"></span>
+            <span class="dot" style="width:3cqw;height:3cqw;left:16cqw;top:60%;opacity:.45"></span>
+          </div>
+          <footer>__MARK__<span class="word">Sporia</span><span class="handle">sporia.duckdns.org</span></footer>
+        </div>
+        <div class="grain"></div>
+      </div>
+      <figcaption><span class="num">07</span><span class="ttl">Le radar à champignons</span><span class="fmt">Carré 1080²</span></figcaption>
+    </figure>
+
+    <!-- 8 -->
+    <figure class="shot">
+      <div class="card story" style="--accent:var(--girolle)">
+        <div class="comp">
+          <p class="eyebrow">Sporia</p>
+          <h2 class="head">Les comestibles<br>ne sont pas<br><em>beiges</em></h2>
+          <p class="sub">La prospection, en couleurs.</p>
+          <footer>__MARK__<span class="word">Sporia</span><span class="handle">sporia.duckdns.org</span></footer>
+        </div>
+        <div class="sticker ph-piedbleu" style="width:34cqw;height:34cqw;left:2cqw;top:40cqw;transform:rotate(-8deg)"></div>
+        <div class="sticker ph-lactaire" style="width:30cqw;height:30cqw;right:3cqw;top:52cqw;transform:rotate(10deg)"></div>
+        <div class="sticker ph-girolle" style="width:32cqw;height:32cqw;right:8cqw;bottom:16cqw;transform:rotate(-4deg)"></div>
+        <div class="grain"></div>
+      </div>
+      <figcaption><span class="num">08</span><span class="ttl">Manifeste — pas beiges</span><span class="fmt">Story 1080×1920</span></figcaption>
+    </figure>
+
+    <!-- 9 -->
+    <figure class="shot">
+      <div class="card sq" style="--accent:var(--lactaire)">
+        <div class="comp">
+          <p class="eyebrow">Sécurité</p>
+          <h2 class="head">Un doute ?<br><em>On ne mange pas.</em></h2>
+          <p class="sub">Sporia estime les zones propices, jamais l'espèce. Faites toujours valider votre récolte (pharmacien, société mycologique).</p>
+          <footer>__MARK__<span class="word">Sporia</span><span class="handle">sporia.duckdns.org</span></footer>
+        </div>
+        <div class="grain"></div>
+      </div>
+      <figcaption><span class="num">09</span><span class="ttl">Sécurité — le doute ne se mange pas</span><span class="fmt">Carré 1080²</span></figcaption>
+    </figure>
+
+    <!-- 10 -->
+    <figure class="shot">
+      <div class="card story" style="--accent:var(--girolle)">
+        <div class="comp">
+          <p class="eyebrow">Accès anticipé</p>
+          <h2 class="head"><em>Bêta</em><br>ouverte —<br>gratuit</h2>
+          <p class="sub">Testez le radar à champignons cet automne.</p>
+          <div class="cta">sporia.duckdns.org</div>
+          <div class="sticker ph-girolle" style="width:40cqw;height:40cqw;right:1cqw;bottom:20cqw;transform:rotate(7deg)"></div>
+          <footer>__MARK__<span class="word">Sporia</span><span class="handle">bêta gratuite</span></footer>
+        </div>
+        <div class="grain"></div>
+      </div>
+      <figcaption><span class="num">10</span><span class="ttl">Bêta ouverte</span><span class="fmt">Story 1080×1920</span></figcaption>
+    </figure>
+
+  </div>
+</div>
