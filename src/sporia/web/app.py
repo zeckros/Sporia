@@ -92,6 +92,10 @@ app.add_middleware(
 app.middleware("http")(security_headers)
 
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
+# Clé CARTO Basemaps (fonds de carte raster) : obligatoire depuis 2026-09 sinon filigrane
+# « API key required » sur les tuiles. Clé publique par nature (visible côté navigateur)
+# mais tenue hors du dépôt → .env. Absente = carte fonctionnelle, filigrane visible.
+templates.env.globals["carto_key"] = os.environ.get("CARTO_API_KEY", "")
 
 
 # ===== Validation des entrées (anti path-traversal sur les noms de fichiers rasters) =====

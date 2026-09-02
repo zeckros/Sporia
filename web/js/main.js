@@ -318,9 +318,16 @@ function initMap() {
   state.map = L.map("map", { zoomControl: false, preferCanvas: true }).setView([46.6, 2.5], 6);
   L.control.zoom({ position: "topright" }).addTo(state.map);
   // Deux fonds CARTO (même hôte → aucun ajout CSP) : clair par défaut, sombre en option.
+  // Depuis 2026-09 les tuiles raster exigent une clé (`?key=`), sinon filigrane
+  // « API key required ». Clé injectée par le serveur (env CARTO_API_KEY) via <meta>.
+  const cartoKey = document.querySelector('meta[name="sporia:carto-key"]')?.content || "";
+  const cartoUrl = (style) =>
+    `https://{s}.basemaps.cartocdn.com/${style}/{z}/{x}/{y}{r}.png` +
+    (cartoKey ? `?key=${encodeURIComponent(cartoKey)}` : "");
+  // Attribution CARTO + OSM obligatoire : c'est la contrepartie du palier gratuit.
   const baseOpts = { attribution: "&copy; OpenStreetMap, &copy; CARTO", subdomains: "abcd", maxZoom: 19 };
-  state.baseLight = L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", baseOpts);
-  state.baseDark = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", baseOpts);
+  state.baseLight = L.tileLayer(cartoUrl("light_all"), baseOpts);
+  state.baseDark = L.tileLayer(cartoUrl("dark_all"), baseOpts);
   try { state.darkMap = localStorage.getItem("sporia:darkmap") === "1"; } catch (e) { state.darkMap = false; }
   (state.darkMap ? state.baseDark : state.baseLight).addTo(state.map);
   document.body.classList.toggle("map-dark", state.darkMap);
