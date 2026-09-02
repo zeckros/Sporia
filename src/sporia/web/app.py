@@ -143,6 +143,17 @@ def logout(request: Request):
     return {"ok": True}
 
 
+def _access_kind(account: dict | None) -> str:
+    """Nature de l'accès, pour l'affichage seul. La barrière reste has_access."""
+    if account is None:
+        return "none"
+    if account.get("role") == "admin":
+        return "admin"
+    if account.get("subscription_status") == "beta":
+        return "beta"
+    return "paid" if billing.has_access(account) else "none"
+
+
 @app.get("/api/me")
 def me(request: Request):
     user = request.session.get("user")
@@ -151,6 +162,7 @@ def me(request: Request):
         "authenticated": bool(user),
         "name": user["name"] if user else None,
         "subscribed": billing.has_access(account),
+        "access": _access_kind(account),
         "role": (user or {}).get("role"),
         "price_label": os.environ.get("SPORIA_PRICE_LABEL", "15 €/an"),
     }

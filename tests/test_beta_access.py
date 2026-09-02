@@ -169,3 +169,34 @@ def test_set_access_rejects_invalid_status_400(client):
     acc.create_user("testeur@sporia.fr", "password123")
     r = c.post("/api/admin/accounts/access", json={"email": "testeur@sporia.fr", "status": "admin"})
     assert r.status_code == 400
+
+
+def test_me_access_none_then_beta(client):
+    c, acc, webapp = client
+    _login(c, acc, "testeur@sporia.fr")
+    assert c.get("/api/me").json()["access"] == "none"
+
+    compte = acc.get_by_email("testeur@sporia.fr")
+    acc.set_subscription(compte["id"], "beta")
+    body = c.get("/api/me").json()
+    assert body["access"] == "beta"
+    assert body["subscribed"] is True
+
+
+def test_me_access_admin(client):
+    c, acc, webapp = client
+    _login(c, acc, "admin@sporia.fr", role="admin")
+    assert c.get("/api/me").json()["access"] == "admin"
+
+
+def test_me_access_paid(client):
+    c, acc, webapp = client
+    _login(c, acc, "payant@sporia.fr")
+    compte = acc.get_by_email("payant@sporia.fr")
+    acc.set_subscription(compte["id"], "active")
+    assert c.get("/api/me").json()["access"] == "paid"
+
+
+def test_me_access_none_when_anonymous(client):
+    c, acc, webapp = client
+    assert c.get("/api/me").json()["access"] == "none"
