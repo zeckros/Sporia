@@ -69,6 +69,17 @@ sudo -u app nano /home/app/champi_pipeline_package/.env
 sudo systemctl restart scheduler.service
 ```
 
+### Clé CARTO Basemaps (fond de carte)
+Depuis septembre 2026, les tuiles raster CARTO exigent une clé, sinon un filigrane
+« API key required » s'affiche sur le fond de carte. Ajouter dans le même `.env` :
+```
+CARTO_API_KEY=cb1_...
+```
+Puis `sudo systemctl restart champimap.service` (la clé est lue au démarrage et injectée
+dans la page via `<meta name="sporia:carto-key">`). Sans elle l'app fonctionne, filigrane
+en plus. Palier gratuit : 5 M de tuiles/mois, **attribution CARTO + OpenStreetMap à garder
+visible** (déjà en place sur la carte).
+
 ### Comptes utilisateurs (en plus de `admin`)
 ```bash
 cd /home/app/champi_pipeline_package

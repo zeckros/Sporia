@@ -27,7 +27,7 @@ html,body{height:100%;margin:0;font-family:'Inter',system-ui,sans-serif;backgrou
 /* Bouton bascule fond clair/sombre (contrôle Leaflet, empilé sous le zoom) */
 .basemap-toggle-btn{width:34px;height:34px;display:flex;align-items:center;justify-content:center;
   font-size:16px;line-height:1;cursor:pointer;background:var(--sousbois);color:var(--os);
-  border:1px solid rgba(239,230,211,.15);border-radius:9px;box-shadow:0 8px 28px rgba(15,23,42,.18)}
+  border:1px solid rgba(239,230,211,.15);border-radius:4px;box-shadow:0 8px 28px rgba(15,23,42,.18)}
 .basemap-toggle-btn:hover{background:#221c14}
 /* Fond de carte sombre : les overlays sous-bois se détachent moins → liseré + ombre renforcés */
 body.map-dark #search-pill>div,body.map-dark #city-input~*,body.map-dark .layer-chip,
@@ -40,7 +40,7 @@ body.map-dark #date-range,body.map-dark #radar-species-btn{
 /* Mobile (<768) : la fiche devient un bottom-sheet ancré en bas ; aperçu P2 + détail repliable */
 @media (max-width:1023px){
   #point-card{position:fixed!important;left:0!important;right:0!important;bottom:var(--tabbar-h,3.25rem)!important;top:auto!important;
-    width:100%!important;max-width:100%!important;border-radius:18px 18px 0 0;max-height:calc(85vh - var(--tabbar-h,3.25rem));overflow-y:auto;
+    width:100%!important;max-width:100%!important;border-radius:4px 4px 0 0;max-height:calc(85vh - var(--tabbar-h,3.25rem));overflow-y:auto;
     z-index:1200;box-shadow:0 -8px 28px rgba(15,23,42,.18)}
   #point-card .pc-handle{display:block;width:38px;height:4px;background:rgba(239,230,211,.3);border-radius:4px;margin:0 auto .5rem}
   #point-card .pc-expand{display:block}
@@ -53,11 +53,11 @@ body.map-dark #date-range,body.map-dark #radar-species-btn{
     width:100%!important;max-width:100%!important;height:auto!important;
     transform:translateY(115%)!important;transition:transform .3s ease;z-index:1150}
   #sidebar.sheet-open{transform:translateY(0)!important}
-  #sidebar>div{border-radius:18px 18px 0 0!important;border-right:0!important;max-height:72vh}
+  #sidebar>div{border-radius:4px 4px 0 0!important;border-right:0!important;max-height:72vh}
   #sidebar-toggle{display:none!important}
 }
 .leaflet-container{font-family:'Inter',sans-serif}
-.leaflet-popup-content-wrapper{border-radius:14px;box-shadow:0 10px 30px rgba(15,23,42,.18);border:1px solid #e2e8f0}
+.leaflet-popup-content-wrapper{border-radius:4px;box-shadow:0 10px 30px rgba(15,23,42,.18);border:1px solid #e2e8f0}
 .leaflet-popup-content{margin:.7rem .9rem}
 /* barre de scroll fine ; gutter STABLE → la barre n'élargit/rétrécit jamais le contenu
    (largeur du volet latéral constante, qu'il y ait scroll ou non) */

@@ -318,9 +318,16 @@ function initMap() {
   state.map = L.map("map", { zoomControl: false, preferCanvas: true }).setView([46.6, 2.5], 6);
   L.control.zoom({ position: "topright" }).addTo(state.map);
   // Deux fonds CARTO (même hôte → aucun ajout CSP) : clair par défaut, sombre en option.
+  // Depuis 2026-09 les tuiles raster exigent une clé (`?key=`), sinon filigrane
+  // « API key required ». Clé injectée par le serveur (env CARTO_API_KEY) via <meta>.
+  const cartoKey = document.querySelector('meta[name="sporia:carto-key"]')?.content || "";
+  const cartoUrl = (style) =>
+    `https://{s}.basemaps.cartocdn.com/${style}/{z}/{x}/{y}{r}.png` +
+    (cartoKey ? `?key=${encodeURIComponent(cartoKey)}` : "");
+  // Attribution CARTO + OSM obligatoire : c'est la contrepartie du palier gratuit.
   const baseOpts = { attribution: "&copy; OpenStreetMap, &copy; CARTO", subdomains: "abcd", maxZoom: 19 };
-  state.baseLight = L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", baseOpts);
-  state.baseDark = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", baseOpts);
+  state.baseLight = L.tileLayer(cartoUrl("light_all"), baseOpts);
+  state.baseDark = L.tileLayer(cartoUrl("dark_all"), baseOpts);
   try { state.darkMap = localStorage.getItem("sporia:darkmap") === "1"; } catch (e) { state.darkMap = false; }
   (state.darkMap ? state.baseDark : state.baseLight).addTo(state.map);
   document.body.classList.toggle("map-dark", state.darkMap);
@@ -504,7 +511,7 @@ export async function refreshAspect() {
 
 /* ---------- Légende (calque actif) ---------- */
 function _grad(colors) {
-  return `<div class="h-2.5 rounded-full mb-1" style="background:linear-gradient(to right, ${colors.join(",")})"></div>`;
+  return `<div class="h-2.5 rounded-sm mb-1" style="background:linear-gradient(to right, ${colors.join(",")})"></div>`;
 }
 function _swatch(label, color) {
   return `<div class="flex items-center gap-2"><span class="inline-block w-3.5 h-3.5 rounded-sm border border-slate-300" style="background:${color}"></span><span>${label}</span></div>`;
@@ -873,14 +880,14 @@ async function loadPreferences() {
 
 function confidenceBadge(conf) {
   const cls = CONF_BADGE[conf] || CONF_BADGE["modérée"];
-  return `<span class="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${cls}" title="Fiabilité de la carte d'habitat">${conf || "modérée"}</span>`;
+  return `<span class="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-sm ${cls}" title="Fiabilité de la carte d'habitat">${conf || "modérée"}</span>`;
 }
 
 function openSpeciesModal() {
   const sel = new Set(state.species || state.allSpecies.map((s) => s.latin));
   const legend = `<p class="text-[11px] text-os/50 mb-1 px-1">Badge = fiabilité de la carte d'habitat (<span class="text-green-400 font-semibold">élevée</span> · <span class="text-amber-400 font-semibold">bonne</span> · <span class="text-os/60 font-semibold">modérée</span>).</p>`;
   document.getElementById("species-list").innerHTML = legend + state.allSpecies.map((s) =>
-    `<label class="flex items-center gap-2 p-2 rounded-lg border border-os/10 hover:bg-os/10 cursor-pointer">
+    `<label class="flex items-center gap-2 p-2 rounded-sm border border-os/10 hover:bg-os/10 cursor-pointer">
        <input type="checkbox" class="sp-check accent-girolle" value="${s.latin}" ${sel.has(s.latin) ? "checked" : ""}>
        <span class="inline-block w-3 h-3 rounded-full shrink-0" style="background:${s.color}"></span>
        <span class="text-sm truncate flex-1">${s.nom}</span>
@@ -920,7 +927,7 @@ function renderAccessRequests(reqs) {
   // list_requests() renvoie les plus anciennes d'abord → on affiche les plus récentes en haut.
   list.innerHTML = reqs.slice().reverse().map((r) => {
     const date = r.created ? new Date(r.created * 1000).toLocaleDateString("fr-FR") : "";
-    return `<div class="rounded-xl border border-os/10 bg-os/5 p-3" data-id="${escapeHtml(r.id)}">
+    return `<div class="rounded-sm border border-os/10 bg-os/5 p-3" data-id="${escapeHtml(r.id)}">
       <div class="flex items-start justify-between gap-2">
         <div class="min-w-0">
           <div class="font-semibold text-sm text-os truncate">${escapeHtml(r.name)}</div>
@@ -930,8 +937,8 @@ function renderAccessRequests(reqs) {
       </div>
       <div class="mt-2 text-sm text-os/70 whitespace-pre-line break-words">${escapeHtml(r.message)}</div>
       <div class="areq-action mt-3 flex gap-2">
-        <button class="areq-create px-3 py-1.5 rounded-lg bg-girolle hover:bg-lactaire text-sousbois text-xs font-bold shadow-card transition">Créer le compte</button>
-        <button class="areq-reject px-3 py-1.5 rounded-lg bg-transparent border border-os/20 text-os/60 hover:text-red-400 hover:border-red-400/40 text-xs font-bold transition">Refuser</button>
+        <button class="areq-create px-3 py-1.5 rounded-sm bg-girolle hover:bg-lactaire text-sousbois text-xs font-bold shadow-card transition">Créer le compte</button>
+        <button class="areq-reject px-3 py-1.5 rounded-sm bg-transparent border border-os/20 text-os/60 hover:text-red-400 hover:border-red-400/40 text-xs font-bold transition">Refuser</button>
       </div>
     </div>`;
   }).join("");
@@ -1007,7 +1014,7 @@ async function doCitySearch(q, box, inputEl) {
   try {
     const res = await API.get(`/api/cities?q=${encodeURIComponent(q)}`);
     box.innerHTML = res.results.map((r, i) =>
-      `<button data-i="${i}" class="city-pick w-full text-left text-sm px-3 py-1.5 rounded-lg hover:bg-os/10 border border-transparent hover:border-os/20">${r.label}</button>`
+      `<button data-i="${i}" class="city-pick w-full text-left text-sm px-3 py-1.5 rounded-sm hover:bg-os/10 border border-transparent hover:border-os/20">${r.label}</button>`
     ).join("");
     box.querySelectorAll(".city-pick").forEach((btn) =>
       btn.addEventListener("click", () => {
@@ -1097,14 +1104,14 @@ function factorLevel(key, v) {
 }
 function miniStat(big, small, level) {
   const c = FACTOR_CLR[level] || FACTOR_CLR.off;
-  return `<div class="${c} border rounded-lg px-2 py-1.5 text-center">
+  return `<div class="${c} border rounded-sm px-2 py-1.5 text-center">
     <div class="text-base font-extrabold">${big}</div><div class="text-[10px] opacity-70">${small}</div></div>`;
 }
 /* Pastille d'adéquation du pH du sol pour une espèce. */
 function phBadge(soilPh) {
-  if (soilPh === "ok") return '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full text-green-700 bg-green-100">pH favorable</span>';
-  if (soilPh === "mid") return '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full text-amber-700 bg-amber-100">pH acceptable</span>';
-  if (soilPh === "no") return '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full text-red-700 bg-red-100">pH inadapté</span>';
+  if (soilPh === "ok") return '<span class="text-[10px] font-bold px-2 py-0.5 rounded-sm text-green-300 bg-green-500/15">pH favorable</span>';
+  if (soilPh === "mid") return '<span class="text-[10px] font-bold px-2 py-0.5 rounded-sm text-amber-300 bg-amber-500/15">pH acceptable</span>';
+  if (soilPh === "no") return '<span class="text-[10px] font-bold px-2 py-0.5 rounded-sm text-red-300 bg-red-500/15">pH inadapté</span>';
   return "";
 }
 
@@ -1171,11 +1178,11 @@ function showPointCard(lat, lon, r) {
   const chips = chipList.length
     ? chipList.map((m) => {
         const [, fg, bg] = LEVEL[m.level];
-        return `<span class="inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded-full ${fg} ${bg}">${m.nom}</span>`;
+        return `<span class="inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded-sm ${fg} ${bg}">${m.nom}</span>`;
       }).join("")
     : '<span class="text-xs text-os/50">Aucune espèce en saison ici.</span>';
   const peekBadge = favs.length
-    ? `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full text-green-700 bg-green-100">${favs.length} favorable${favs.length > 1 ? "s" : ""}</span>`
+    ? `<span class="text-[11px] font-bold px-2 py-0.5 rounded-sm text-green-300 bg-green-500/15">${favs.length} favorable${favs.length > 1 ? "s" : ""}</span>`
     : "";
   const card = document.getElementById("point-card");
   card.classList.remove("expanded");
@@ -1186,7 +1193,7 @@ function showPointCard(lat, lon, r) {
       <button class="pc-close text-os/50 hover:text-os -mt-1 -mr-1 text-lg leading-none shrink-0">×</button>
     </div>
     <div class="mt-1.5 flex flex-wrap gap-1.5">${chips}</div>
-    <button class="pc-expand mt-2 w-full py-1.5 rounded-lg bg-os/10 text-os/80 text-sm font-semibold hover:bg-os/20">Voir le détail ▾</button>
+    <button class="pc-expand mt-2 w-full py-1.5 rounded-sm bg-os/10 text-os/80 text-sm font-semibold hover:bg-os/20">Voir le détail ▾</button>
     <div class="pc-detail mt-2">
       <div class="text-[11px] text-os/50 mb-2">${r.lat.toFixed(3)}°N · ${r.lon.toFixed(3)}°E · dalle 1 km</div>
       <div class="grid grid-cols-2 gap-2 mb-2">
@@ -1204,13 +1211,13 @@ function showPointCard(lat, lon, r) {
           const [, fg, bg] = LEVEL[m.level];
           return `<div class="flex items-center gap-2 text-sm">
             <span class="flex-1 truncate">${m.nom} ${hostDot(m.host)}</span>
-            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${fg} ${bg}">${m.label}${m.score_pct != null ? " · " + m.score_pct + "%" : ""}</span></div>`;
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-sm ${fg} ${bg}">${m.label}${m.score_pct != null ? " · " + m.score_pct + "%" : ""}</span></div>`;
         }).join("") : '<div class="text-xs text-os/50">Aucune espèce en saison.</div>'}
       </div>
-      <button class="pc-guide mt-2 w-full py-1.5 rounded-lg bg-girolle text-sousbois text-sm font-bold hover:bg-lactaire transition">Voir le guide complet</button>
+      <button class="pc-guide mt-2 w-full py-1.5 rounded-sm bg-girolle text-sousbois text-sm font-bold hover:bg-lactaire transition">Voir le guide complet</button>
       ${spot
-        ? `<button class="pc-delete mt-1.5 w-full py-1.5 rounded-lg border border-red-400/40 text-red-400 text-sm font-semibold hover:bg-red-500/10 transition">🗑 Supprimer ce spot</button>`
-        : `<button class="pc-save mt-1.5 w-full py-1.5 rounded-lg border border-girolle/50 text-girolle text-sm font-semibold hover:bg-os/10 transition">📍 Enregistrer ce spot</button>`}
+        ? `<button class="pc-delete mt-1.5 w-full py-1.5 rounded-sm border border-red-400/40 text-red-400 text-sm font-semibold hover:bg-red-500/10 transition">🗑 Supprimer ce spot</button>`
+        : `<button class="pc-save mt-1.5 w-full py-1.5 rounded-sm border border-girolle/50 text-girolle text-sm font-semibold hover:bg-os/10 transition">📍 Enregistrer ce spot</button>`}
     </div>`;
   card.classList.remove("hidden");
   positionPointCard();
@@ -1271,10 +1278,10 @@ function renderGuide() {
   const box = document.getElementById("guide-content");
   const r = state.lastPoint;
   if (!r) {
-    box.innerHTML = `<div class="bg-os/5 border border-os/10 rounded-2xl p-6 text-os/70 max-w-xl">
+    box.innerHTML = `<div class="bg-os/5 border border-os/10 rounded-sm p-6 text-os/70 max-w-xl">
       <div class="mb-3">Aucun point sélectionné. Cliquez sur la carte (onglet Carte) ou cherchez une ville.</div>
       <input id="guide-city-input" type="text" placeholder="Ville ou code postal…"
-             class="w-full px-3 py-2 rounded-xl bg-transparent text-os placeholder:text-os/40 border border-os/20 focus:border-girolle focus:ring-2 focus:ring-girolle/30 outline-none text-sm" />
+             class="w-full px-3 py-2 rounded-sm bg-transparent text-os placeholder:text-os/40 border border-os/20 focus:border-girolle focus:ring-2 focus:ring-girolle/30 outline-none text-sm" />
       <div id="guide-city-results" class="mt-1 space-y-1"></div></div>`;
     const gi = document.getElementById("guide-city-input");
     const gr = document.getElementById("guide-city-results");
@@ -1288,17 +1295,17 @@ function renderGuide() {
   const fam = { feuillus: "feuillus", coniferes: "conifères", mixte: "mixte", peupleraie: "peupleraie", ouvert: "milieu ouvert" };
   const famTitle = r.forest && familyLabel(r.forest.family);
   const banner = r.forest && r.forest.tfv
-    ? `<div class="bg-os/5 border-l-4 border-green-600 border border-os/10 rounded-xl p-4 mb-4 shadow-soft">
+    ? `<div class="bg-os/5 border-l-4 border-green-600 border border-os/10 rounded-sm p-4 mb-4 shadow-soft">
          <div class="font-bold">${r.forest.tfv}</div>
          <div class="text-sm text-os/70 mt-0.5">Essence dominante : <strong>${r.forest.essence || "—"}</strong> ·
          famille d'hôte : <strong>${fam[r.family] || r.family || "?"}</strong> — les espèces dont l'arbre-hôte
          est présent sont mises en avant (BD&nbsp;Forêt® V2, IGN).</div></div>`
     : (famTitle
-      ? `<div class="bg-os/5 border-l-4 border-green-600 border border-os/10 rounded-xl p-4 mb-4 shadow-soft">
+      ? `<div class="bg-os/5 border-l-4 border-green-600 border border-os/10 rounded-sm p-4 mb-4 shadow-soft">
            <div class="font-bold">${famTitle}</div>
            <div class="text-sm text-os/70 mt-0.5">Famille d'hôte : <strong>${fam[r.family] || r.family || "?"}</strong> —
            les espèces dont l'arbre-hôte est présent sont mises en avant (BD&nbsp;Forêt® V2, IGN).</div></div>`
-      : `<div class="bg-os/5 border-l-4 border-os/40 border border-os/10 rounded-xl p-4 mb-4 shadow-soft">
+      : `<div class="bg-os/5 border-l-4 border-os/40 border border-os/10 rounded-sm p-4 mb-4 shadow-soft">
            <div class="font-bold">Hors forêt cartographiée</div>
            <div class="text-sm text-os/70 mt-0.5">Privilégiez les espèces de prés/lisières, ou cliquez sur une forêt voisine.</div></div>`);
 
@@ -1306,10 +1313,10 @@ function renderGuide() {
   const texSeg = (label, v, color) => (v == null ? "" :
     `<div style="width:${v}%;background:${color}" title="${label} ${fmtNum(v)} %"></div>`);
   const soilBanner = soil.texture_fr
-    ? `<div class="bg-os/5 border-l-4 border-amber-700 border border-os/10 rounded-xl p-4 mb-4 shadow-soft">
+    ? `<div class="bg-os/5 border-l-4 border-amber-700 border border-os/10 rounded-sm p-4 mb-4 shadow-soft">
          <div class="font-bold">Sol : ${soil.texture_fr}
            ${soil.ph != null ? `<span class="text-sm font-normal text-os/50">· pH ${fmtNum(soil.ph)} (${soil.ph_class || ""})</span>` : ""}</div>
-         <div class="flex h-2.5 rounded-full overflow-hidden my-2 border border-os/20">
+         <div class="flex h-2.5 rounded-sm overflow-hidden my-2 border border-os/20">
            ${texSeg("Sable", soil.sand, "#eab308")}${texSeg("Limon", soil.silt, "#84cc16")}${texSeg("Argile", soil.clay, "#b45309")}</div>
          <div class="text-sm text-os/70">Sable ${fmtNum(soil.sand)} % · Limon ${fmtNum(soil.silt)} % · Argile ${fmtNum(soil.clay)} %
            — humidité <strong>${pct(r.soil_moisture)}</strong>, T° du sol <strong>${valFmt(r.soil_temp, "°C")}</strong>.
@@ -1332,12 +1339,12 @@ function renderGuide() {
   const cards = r.mushrooms.filter((m) => m.selected !== false).map((m) => {
     const [, fg, bg] = LEVEL[m.level];
     const hostBadge = m.host === "ok"
-      ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full text-green-700 bg-green-100">hôte présent</span>`
-      : (m.host === "no" ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full text-red-700 bg-red-100">hôte absent ici</span>` : "");
-    return `<div class="bg-os/5 border border-os/10 rounded-2xl p-4 shadow-soft">
+      ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-sm text-green-300 bg-green-500/15">hôte présent</span>`
+      : (m.host === "no" ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-sm text-red-300 bg-red-500/15">hôte absent ici</span>` : "");
+    return `<div class="bg-os/5 border border-os/10 rounded-sm p-4 shadow-soft">
       <div class="flex items-center gap-2">
         <span class="font-bold flex-1">${m.nom}</span>
-        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${fg} ${bg}">${m.label}${m.score_pct != null ? " · " + m.score_pct + "%" : ""}</span>
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-sm ${fg} ${bg}">${m.label}${m.score_pct != null ? " · " + m.score_pct + "%" : ""}</span>
         ${hostBadge}
       </div>
       <div class="text-xs italic text-os/50">${m.latin}</div>
@@ -1350,7 +1357,7 @@ function renderGuide() {
   }).join("");
 
   box.innerHTML = `
-    <div class="bg-os/5 border border-os/10 rounded-xl p-4 mb-4 shadow-soft">
+    <div class="bg-os/5 border border-os/10 rounded-sm p-4 mb-4 shadow-soft">
       <div class="font-bold">${r.commune || "Point sélectionné"}
         <span class="text-xs font-normal text-os/50">${r.lat.toFixed(3)}°N · ${r.lon.toFixed(3)}°E · dalle 1 km</span></div>
     </div>
@@ -1360,7 +1367,7 @@ function renderGuide() {
 
 function chip(big, small, level) {
   const c = level ? FACTOR_CLR[level] + " border" : "bg-os/5 border border-os/10 text-os";
-  return `<div class="${c} rounded-xl px-3 py-2 text-center shadow-soft">
+  return `<div class="${c} rounded-sm px-3 py-2 text-center shadow-soft">
     <div class="font-extrabold">${big}</div><div class="text-[11px] opacity-70">${small}</div></div>`;
 }
 /* ---------- Spots enregistrés + notifications « propice » ---------- */
@@ -1454,7 +1461,7 @@ function updateNotifications() {
   panel.innerHTML =
     `<div class="px-3 pt-2 pb-1 text-[11px] font-bold uppercase tracking-wide text-os/50">Propices en ce moment</div>` +
     propices.map((s) =>
-      `<button class="notif-item w-full text-left px-3 py-2 rounded-xl hover:bg-os/10 flex items-center gap-2" data-id="${s.id}">
+      `<button class="notif-item w-full text-left px-3 py-2 rounded-sm hover:bg-os/10 flex items-center gap-2" data-id="${s.id}">
          <span class="text-lg leading-none">🍄</span>
          <span class="flex-1 min-w-0">
            <span class="block font-semibold text-os truncate">${escapeHtml(s.name)}</span>
@@ -1476,7 +1483,7 @@ function renderSpots() {
   const box = document.getElementById("spots-content");
   if (!box) return;
   if (!state.spots.length) {
-    box.innerHTML = `<div class="bg-os/5 border border-os/10 rounded-2xl p-6 text-os/70 max-w-xl shadow-soft">
+    box.innerHTML = `<div class="bg-os/5 border border-os/10 rounded-sm p-6 text-os/70 max-w-xl shadow-soft">
       Aucun spot enregistré. Sur l'onglet <strong>Carte</strong>, cliquez sur un endroit puis « 📍 Enregistrer ce spot ».</div>`;
     return;
   }
@@ -1486,13 +1493,13 @@ function renderSpots() {
       : (s.score_pct != null
           ? `<span class="text-os/60">Indice du jour : <strong>${s.score_pct} %</strong></span>`
           : `<span class="text-os/50">Hors zone modélisée</span>`);
-    return `<div class="bg-os/5 border border-os/10 rounded-2xl p-4 shadow-soft">
+    return `<div class="bg-os/5 border border-os/10 rounded-sm p-4 shadow-soft">
       <input class="spot-name w-full font-bold text-os bg-transparent border-b border-dashed border-os/30 hover:border-os/50 focus:border-solid focus:border-girolle outline-none" value="${escapeHtml(s.name)}" data-id="${s.id}" title="Cliquez pour renommer">
       <div class="text-[11px] text-os/50 mt-0.5">${s.lat.toFixed(3)}°N · ${s.lon.toFixed(3)}°E</div>
       <div class="text-sm mt-2">${status}</div>
       <div class="flex gap-2 mt-3">
-        <button class="spot-map flex-1 py-1.5 rounded-lg bg-girolle text-sousbois text-sm font-bold hover:bg-lactaire transition" data-id="${s.id}">Voir sur la carte</button>
-        <button class="spot-del py-1.5 px-3 rounded-lg text-red-400 text-sm font-semibold hover:bg-red-500/10 transition" data-id="${s.id}">Supprimer</button>
+        <button class="spot-map flex-1 py-1.5 rounded-sm bg-girolle text-sousbois text-sm font-bold hover:bg-lactaire transition" data-id="${s.id}">Voir sur la carte</button>
+        <button class="spot-del py-1.5 px-3 rounded-sm text-red-400 text-sm font-semibold hover:bg-red-500/10 transition" data-id="${s.id}">Supprimer</button>
       </div></div>`;
   }).join("") + `</div>`;
 
