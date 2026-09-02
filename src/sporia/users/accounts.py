@@ -76,6 +76,22 @@ def get_by_email(email: str) -> dict | None:
     return dict(r) if r else None
 
 
+def list_accounts(limit: int = 500) -> tuple[list[dict], bool]:
+    """Comptes du plus récent au plus ancien. Renvoie (liste, truncated).
+
+    Ne sélectionne jamais password_hash ni stripe_customer_id : cette liste part
+    vers le navigateur d'un admin. `truncated` dit explicitement que le plafond a
+    été atteint, plutôt que de laisser croire que la liste est complète."""
+    init_db()
+    with _connect() as c:
+        rows = c.execute(
+            "SELECT id,email,name,role,subscription_status,current_period_end,created_at "
+            "FROM users ORDER BY created_at DESC, id DESC LIMIT ?",
+            (limit + 1,),
+        ).fetchall()
+    return [dict(r) for r in rows[:limit]], len(rows) > limit
+
+
 def verify_password(email: str, password: str) -> dict | None:
     u = get_by_email(email)
     try:

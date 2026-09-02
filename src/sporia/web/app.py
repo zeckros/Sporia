@@ -143,6 +143,17 @@ def logout(request: Request):
     return {"ok": True}
 
 
+def _access_kind(account: dict | None) -> str:
+    """Nature de l'accès, pour l'affichage seul. La barrière reste has_access."""
+    if account is None:
+        return "none"
+    if account.get("role") == "admin":
+        return "admin"
+    if account.get("subscription_status") == "beta":
+        return "beta"
+    return "paid" if billing.has_access(account) else "none"
+
+
 @app.get("/api/me")
 def me(request: Request):
     user = request.session.get("user")
@@ -151,6 +162,7 @@ def me(request: Request):
         "authenticated": bool(user),
         "name": user["name"] if user else None,
         "subscribed": billing.has_access(account),
+        "access": _access_kind(account),
         "role": (user or {}).get("role"),
         "price_label": os.environ.get("SPORIA_PRICE_LABEL", "15 €/an"),
     }
@@ -592,6 +604,8 @@ def api_create_account_from_request(
         raise HTTPException(
             status_code=409, detail="Un compte existe déjà pour cet email."
         ) from None
+    # Une demande acceptée = un bêta-testeur : accès offert, sans passage par le paywall.
+    accounts.set_subscription(acc["id"], "beta")
     token = accounts.create_token(acc["id"], "reset", 7 * 24 * 3600)
     invite_url = f"{str(request.base_url).rstrip('/')}/?reset={token}"
     send_email(
@@ -610,6 +624,41 @@ def api_delete_access_request(req_id: str, user=Depends(require_admin)):
     if not access_requests.remove_request(req_id):
         raise HTTPException(status_code=404, detail="Demande introuvable.")
     return {"ok": True}
+
+
+class AccountAccessIn(BaseModel):
+    email: str
+    status: str
+
+
+@app.get("/api/admin/accounts")
+def api_admin_accounts(user=Depends(require_admin)):
+    """Liste des comptes pour l'écran d'administration — RÉSERVÉ ADMIN."""
+    items, truncated = accounts.list_accounts()
+    return {"accounts": items, "truncated": truncated}
+
+
+@app.post("/api/admin/accounts/access")
+def api_admin_set_access(body: AccountAccessIn, user=Depends(require_admin)):
+    """Accorde ou retire l'accès bêta d'un compte — RÉSERVÉ ADMIN.
+
+    Refuse les comptes admin (le rôle donne déjà l'accès) et les comptes dont
+    l'abonnement Stripe est en cours — actif, ou encore dans une période payée
+    non expirée : leur statut appartient à Stripe, pas à cet écran."""
+    status = (body.status or "").strip()
+    if status not in ("beta", "none"):
+        raise HTTPException(status_code=400, detail="Statut invalide (beta ou none).")
+    account = accounts.get_by_email(_valid_email(body.email))
+    if account is None:
+        raise HTTPException(status_code=404, detail="Compte introuvable.")
+    if account.get("role") == "admin":
+        raise HTTPException(status_code=409, detail="Un compte admin a déjà l'accès complet.")
+    if account.get("subscription_status") == "active" or billing.in_paid_period(account):
+        raise HTTPException(
+            status_code=409, detail="Abonnement Stripe en cours : statut géré par Stripe."
+        )
+    accounts.set_subscription(account["id"], status)
+    return {"ok": True, "email": account["email"], "status": status}
 
 
 # ===== Statique =====
