@@ -23,34 +23,34 @@
       <!-- Cloche : alerte « spots propices » — toujours visible (haut-droite), mobile et desktop -->
       <div class="relative order-last ml-auto lg:ml-0">
         <button id="notif-btn" title="Mes spots propices"
-                class="relative p-2 rounded-lg text-os/60 hover:bg-os/10 transition">
+                class="relative p-2 rounded-sm text-os/60 hover:bg-os/10 transition">
           <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a5 5 0 00-5 5v2.6c0 .47-.18.92-.5 1.27L3 12.5V14h14v-1.5l-1.5-1.63a1.9 1.9 0 01-.5-1.27V7a5 5 0 00-5-5zM8 16a2 2 0 104 0H8z"/></svg>
           <span id="notif-badge" class="hidden absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold leading-4 text-center"></span>
         </button>
-        <div id="notif-panel" class="hidden absolute right-0 mt-2 w-72 max-w-[calc(100vw-2rem)] max-h-[60vh] overflow-y-auto nice-scroll bg-sousbois text-os rounded-2xl shadow-card border border-os/10 p-2 z-[2100]"></div>
+        <div id="notif-panel" class="hidden absolute right-0 mt-2 w-72 max-w-[calc(100vw-2rem)] max-h-[60vh] overflow-y-auto nice-scroll bg-sousbois text-os rounded-sm shadow-card border border-os/10 p-2 z-[2100]"></div>
       </div>
 
       <!-- Navigation : en ligne sur desktop, masquée sur mobile (barre d'onglets basse) -->
       <div id="nav-menu" class="hidden lg:flex lg:flex-1 lg:items-center lg:gap-2">
         <nav class="flex flex-col lg:flex-row lg:items-center gap-1">
-          <button data-tab="carte" class="tab-btn px-4 py-2 lg:py-1.5 rounded-lg font-semibold text-sm text-os/70 hover:bg-os/10 transition text-left lg:text-center">Carte</button>
-          <button data-tab="guide" class="tab-btn px-4 py-2 lg:py-1.5 rounded-lg font-semibold text-sm text-os/70 hover:bg-os/10 transition text-left lg:text-center">Guide champignons</button>
-          <button data-tab="spots" class="tab-btn px-4 py-2 lg:py-1.5 rounded-lg font-semibold text-sm text-os/70 hover:bg-os/10 transition text-left lg:text-center">Mes spots</button>
+          <button data-tab="carte" class="tab-btn px-4 py-2 lg:py-1.5 rounded-sm font-semibold text-sm text-os/70 hover:bg-os/10 transition text-left lg:text-center">Carte</button>
+          <button data-tab="guide" class="tab-btn px-4 py-2 lg:py-1.5 rounded-sm font-semibold text-sm text-os/70 hover:bg-os/10 transition text-left lg:text-center">Guide champignons</button>
+          <button data-tab="spots" class="tab-btn px-4 py-2 lg:py-1.5 rounded-sm font-semibold text-sm text-os/70 hover:bg-os/10 transition text-left lg:text-center">Mes spots</button>
         </nav>
         <!-- Menu compte (desktop) : regroupe les actions pour alléger la barre -->
         <div class="relative lg:ml-auto">
-          <button id="account-btn" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold text-os/70 hover:bg-os/10 transition">
+          <button id="account-btn" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm text-sm font-semibold text-os/70 hover:bg-os/10 transition">
             <svg class="w-5 h-5 text-os/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/></svg>
             <span id="nav-user"></span>
             <svg class="w-4 h-4 text-os/40" viewBox="0 0 20 20" fill="currentColor"><path d="M5.2 7.5a1 1 0 011.4 0L10 10.9l3.4-3.4a1 1 0 111.4 1.4l-4.1 4.1a1 1 0 01-1.4 0L5.2 8.9a1 1 0 010-1.4z"/></svg>
           </button>
-          <div id="account-menu" class="hidden absolute right-0 mt-2 w-56 bg-sousbois rounded-2xl shadow-card border border-os/10 p-1.5 z-[1100]">
-            <button id="species-btn" class="w-full text-left px-3 py-2 rounded-lg text-sm font-semibold text-girolle hover:bg-os/10 transition">🍄 Mes champignons</button>
-            <button id="manage-sub" class="hidden w-full text-left px-3 py-2 rounded-lg text-sm font-semibold text-girolle hover:bg-os/10 transition">Mon abonnement</button>
-            <button id="admin-requests-btn" class="admin-only hidden w-full text-left px-3 py-2 rounded-lg text-sm font-semibold text-girolle hover:bg-os/10 transition">📥 Demandes d'accès</button>
+          <div id="account-menu" class="hidden absolute right-0 mt-2 w-56 bg-sousbois rounded-sm shadow-card border border-os/10 p-1.5 z-[1100]">
+            <button id="species-btn" class="w-full text-left px-3 py-2 rounded-sm text-sm font-semibold text-girolle hover:bg-os/10 transition">🍄 Mes champignons</button>
+            <button id="manage-sub" class="hidden w-full text-left px-3 py-2 rounded-sm text-sm font-semibold text-girolle hover:bg-os/10 transition">Mon abonnement</button>
+            <button id="admin-requests-btn" class="admin-only hidden w-full text-left px-3 py-2 rounded-sm text-sm font-semibold text-girolle hover:bg-os/10 transition">📥 Demandes d'accès</button>
             <div class="my-1 border-t border-os/10"></div>
-            <button id="logout-btn" class="w-full text-left px-3 py-2 rounded-lg text-sm font-semibold text-os/70 hover:bg-os/10 transition">Déconnexion</button>
-            <button id="delete-account" class="w-full text-left px-3 py-2 rounded-lg text-sm font-semibold text-os/40 hover:text-red-400 hover:bg-red-500/10 transition">Supprimer mon compte</button>
+            <button id="logout-btn" class="w-full text-left px-3 py-2 rounded-sm text-sm font-semibold text-os/70 hover:bg-os/10 transition">Déconnexion</button>
+            <button id="delete-account" class="w-full text-left px-3 py-2 rounded-sm text-sm font-semibold text-os/40 hover:text-red-400 hover:bg-red-500/10 transition">Supprimer mon compte</button>
           </div>
         </div>
       </div>
@@ -109,7 +109,7 @@
             </div>
           </div>
           <!-- Curseur de dates (du…au…) : Température / Pluie -->
-          <div id="date-range" class="hidden w-full lg:w-80 bg-sousbois/95 backdrop-blur rounded-xl shadow-card border border-os/10 px-3 py-2.5">
+          <div id="date-range" class="hidden w-full lg:w-80 bg-sousbois/95 backdrop-blur rounded-sm shadow-card border border-os/10 px-3 py-2.5">
             <div class="text-[11px] font-semibold text-os/70 mb-2.5">Période : du <span id="dr-from" class="text-girolle font-bold"></span> au <span id="dr-to" class="text-girolle font-bold"></span></div>
             <div class="dr-slider relative h-5">
               <div class="dr-track"></div>
@@ -120,9 +120,9 @@
           </div>
         </div>
         <!-- Légende en étiquette (bas-gauche de la carte) -->
-        <div id="map-legend" class="hidden absolute left-3 bottom-16 lg:bottom-3 z-[850] w-64 max-w-[calc(100vw-1.5rem)] max-h-[45vh] overflow-y-auto nice-scroll bg-sousbois/95 text-os/70 backdrop-blur rounded-xl shadow-card border border-os/10 px-3 py-2 text-xs"></div>
+        <div id="map-legend" class="hidden absolute left-3 bottom-16 lg:bottom-3 z-[850] w-64 max-w-[calc(100vw-1.5rem)] max-h-[45vh] overflow-y-auto nice-scroll bg-sousbois/95 text-os/70 backdrop-blur rounded-sm shadow-card border border-os/10 px-3 py-2 text-xs"></div>
         <!-- Carte d'info, positionnée au pixel du point cliqué (suit la carte) -->
-        <div id="point-card" class="hidden absolute z-[800] w-64 bg-sousbois text-os rounded-2xl shadow-card border border-os/10 p-3.5 fade-in"></div>
+        <div id="point-card" class="hidden absolute z-[800] w-64 bg-sousbois text-os rounded-sm shadow-card border border-os/10 p-3.5 fade-in"></div>
       </main>
 
       <!-- Vue Guide -->
@@ -154,12 +154,12 @@
         <div class="max-w-xl mx-auto px-6 pt-7 pb-24 lg:pb-7 space-y-3">
           <h1 class="text-2xl font-black">Profil</h1>
           <p id="profil-user" class="text-sm text-os/60 mb-2"></p>
-          <button id="install-btn" class="hidden w-full text-left px-4 py-3 rounded-xl bg-girolle text-sousbois font-bold hover:bg-lactaire transition">📲 Installer l'application</button>
-          <button class="profil-act w-full text-left px-4 py-3 rounded-xl bg-os/5 border border-os/10 font-semibold text-girolle hover:bg-os/10 transition" data-target="species-btn">🍄 Mes champignons</button>
-          <button class="profil-act admin-only hidden w-full text-left px-4 py-3 rounded-xl bg-os/5 border border-os/10 font-semibold text-girolle hover:bg-os/10 transition" data-target="admin-requests-btn">📥 Demandes d'accès</button>
-          <button class="profil-act w-full text-left px-4 py-3 rounded-xl bg-os/5 border border-os/10 font-semibold text-girolle hover:bg-os/10 transition" data-target="manage-sub">Mon abonnement</button>
-          <button class="profil-act w-full text-left px-4 py-3 rounded-xl bg-os/5 border border-os/10 font-semibold text-os/70 hover:bg-os/10 transition" data-target="logout-btn">Déconnexion</button>
-          <button class="profil-act w-full text-left px-4 py-3 rounded-xl bg-os/5 border border-os/10 font-semibold text-os/40 hover:text-red-400 hover:border-red-400/40 hover:bg-red-500/10 transition" data-target="delete-account">Supprimer mon compte</button>
+          <button id="install-btn" class="hidden w-full text-left px-4 py-3 rounded-sm bg-girolle text-sousbois font-bold hover:bg-lactaire transition">📲 Installer l'application</button>
+          <button class="profil-act w-full text-left px-4 py-3 rounded-sm bg-os/5 border border-os/10 font-semibold text-girolle hover:bg-os/10 transition" data-target="species-btn">🍄 Mes champignons</button>
+          <button class="profil-act admin-only hidden w-full text-left px-4 py-3 rounded-sm bg-os/5 border border-os/10 font-semibold text-girolle hover:bg-os/10 transition" data-target="admin-requests-btn">📥 Demandes d'accès</button>
+          <button class="profil-act w-full text-left px-4 py-3 rounded-sm bg-os/5 border border-os/10 font-semibold text-girolle hover:bg-os/10 transition" data-target="manage-sub">Mon abonnement</button>
+          <button class="profil-act w-full text-left px-4 py-3 rounded-sm bg-os/5 border border-os/10 font-semibold text-os/70 hover:bg-os/10 transition" data-target="logout-btn">Déconnexion</button>
+          <button class="profil-act w-full text-left px-4 py-3 rounded-sm bg-os/5 border border-os/10 font-semibold text-os/40 hover:text-red-400 hover:border-red-400/40 hover:bg-red-500/10 transition" data-target="delete-account">Supprimer mon compte</button>
         </div>
       </main>
     </div>

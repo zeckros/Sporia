@@ -1,0 +1,39 @@
+==============================================================================
+ SPORIA — RÉCAP DES MÉTRIQUES PAR ESPÈCE (après entraînement)
+ généré le 08/07/2026 21:50
+==============================================================================
+
+HABITAT (SDM « où ») : gating & paliers sur l'AUC (0.5=hasard).
+  servie si AUC >= 0.65 ; palier « élevée » >=0.80, « bonne » >=0.73, sinon « modérée ».
+  Boyce = informatif (dépendant de N, non comparable entre espèces).
+  Domaine : transfrontalier (bbox tous-pays) sauf Pleurotus (FR-only, meilleur en A/B).
+
+FRUCTIFICATION (« quand ») : modèle météo-pure. AUC = CV spatiale (fiable).
+  Boyce fructification = SATURÉ / non fiable (indicatif seulement).
+
+----------------------------------------------------------------------------------
+                               |      ---- HABITAT ----      | -- FRUCTIF --
+espèce (nom latin)             |   AUC  Boyce   ±SE palier   servie |   AUC  Boyce
+----------------------------------------------------------------------------------
+Boletus aereus                 | 0.832  0.825 0.016 élevée   OUI    | 0.719  0.749
+Craterellus tubaeformis        | 0.824  0.940 0.009 élevée   OUI    | 0.641  0.543
+Craterellus cornucopioides     | 0.811  0.900 0.011 élevée   OUI    | 0.627  0.440
+Lactarius deliciosus           | 0.800  0.900 0.009 élevée   OUI    | 0.720  0.562
+Cantharellus cibarius          | 0.759  0.802 0.016 bonne    OUI    | 0.618  0.407
+Morchella esculenta            | 0.756  0.882 0.013 bonne    OUI    |     —      —
+Hydnum repandum                | 0.755  0.861 0.012 bonne    OUI    | 0.661  0.450
+Imleria badia                  | 0.744  0.887 0.013 bonne    OUI    | 0.726  0.662
+Boletus edulis                 | 0.737  0.823 0.014 bonne    OUI    | 0.700  0.643
+Lepista nuda                   | 0.734  0.877 0.015 bonne    OUI    | 0.716  0.581
+Agaricus campestris            | 0.706  0.825 0.014 modérée  OUI    | 0.737  0.872
+Calocybe gambosa               | 0.705  0.813 0.017 modérée  OUI    | 0.594  0.139
+Macrolepiota procera           | 0.692  0.808 0.015 modérée  OUI    | 0.777  0.737
+Pleurotus ostreatus            | 0.681  0.230 0.036 modérée  OUI    | 0.629  0.603
+----------------------------------------------------------------------------------
+
+Notes :
+ - Habitat transfrontalier : +données GBIF tous-pays (bbox) + couche forêt-type
+   européenne (CGLS) comme hôte pour les ectomycorhiziennes. A/B garde-le-meilleur
+   par espèce sur l'AUC vs le modèle FR-only (aucune régression).
+ - Fructification : modèle météo-pure (le SDM porte l'habitat), max-pres 200 (plateau).
+ - « — » = pas de modèle (Morchella : pas de modèle de fructification).

@@ -8,10 +8,10 @@ export const CMAP = {
   fruit:["#ffffb2","#fecc5c","#fd8d3c","#f03b20","#bd0026"],         // YlOrRd (indice de pousse)
 };
 export const LEVEL = {
-  good: ["Favorable", "text-green-700", "bg-green-100"],
-  mid:  ["Conditions partielles", "text-amber-700", "bg-amber-100"],
-  bad:  ["Peu probable", "text-red-700", "bg-red-100"],
-  off:  ["Hors saison", "text-slate-500", "bg-slate-100"],
+  good: ["Favorable", "text-green-300", "bg-green-500/15"],
+  mid:  ["Conditions partielles", "text-amber-300", "bg-amber-500/15"],
+  bad:  ["Peu probable", "text-red-300", "bg-red-500/15"],
+  off:  ["Hors saison", "text-os/60", "bg-os/10"],
 };
 
 export const state = {
@@ -46,9 +46,9 @@ export const LAYER_NAMES = {
 };
 
 export const CONF_BADGE = {
-  "élevée": "bg-green-100 text-green-700",
-  "bonne": "bg-amber-100 text-amber-700",
-  "modérée": "bg-slate-100 text-slate-500",
+  "élevée": "bg-green-500/15 text-green-300",
+  "bonne": "bg-amber-500/15 text-amber-300",
+  "modérée": "bg-os/10 text-os/60",
 };
 
 /* ---------- Légende (calque actif) ---------- */
