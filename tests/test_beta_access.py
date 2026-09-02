@@ -77,3 +77,30 @@ def test_has_access_false_for_none():
     from sporia import billing
 
     assert billing.has_access({"role": "user", "subscription_status": "none"}) is False
+
+
+def test_list_accounts_excludes_secrets_and_sorts_recent_first(client):
+    c, acc, webapp = client
+    acc.create_user("premier@sporia.fr", "password123", name="Premier")
+    acc.create_user("second@sporia.fr", "password123", name="Second")
+    rows, truncated = acc.list_accounts()
+    assert truncated is False
+    assert [r["email"] for r in rows][:2] == ["second@sporia.fr", "premier@sporia.fr"]
+    assert set(rows[0]) == {
+        "id",
+        "email",
+        "name",
+        "role",
+        "subscription_status",
+        "current_period_end",
+        "created_at",
+    }
+
+
+def test_list_accounts_flags_truncation(client):
+    c, acc, webapp = client
+    for i in range(3):
+        acc.create_user(f"u{i}@sporia.fr", "password123")
+    rows, truncated = acc.list_accounts(limit=2)
+    assert len(rows) == 2
+    assert truncated is True
