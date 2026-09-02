@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib
+import time
 
 import pytest
 from fastapi.testclient import TestClient
@@ -161,6 +162,27 @@ def test_set_access_refuses_paying_account_409(client):
     acc.set_subscription(payant["id"], "active")
     r = c.post("/api/admin/accounts/access", json={"email": "payant@sporia.fr", "status": "beta"})
     assert r.status_code == 409
+
+
+def test_set_access_refuses_grace_period_account_409(client):
+    """Statut 'canceled' mais current_period_end futur = grâce Stripe, pas à écraser."""
+    c, acc, webapp = client
+    _login(c, acc, "admin@sporia.fr", role="admin")
+    compte = acc.create_user("grace@sporia.fr", "password123")
+    acc.set_subscription(compte["id"], "canceled", int(time.time()) + 3600)
+    r = c.post("/api/admin/accounts/access", json={"email": "grace@sporia.fr", "status": "beta"})
+    assert r.status_code == 409
+
+
+def test_set_access_allows_expired_grace_period_account(client):
+    """Même statut 'canceled', mais current_period_end passé : la bascule doit réussir."""
+    c, acc, webapp = client
+    _login(c, acc, "admin@sporia.fr", role="admin")
+    compte = acc.create_user("expire@sporia.fr", "password123")
+    acc.set_subscription(compte["id"], "canceled", int(time.time()) - 3600)
+    r = c.post("/api/admin/accounts/access", json={"email": "expire@sporia.fr", "status": "beta"})
+    assert r.status_code == 200, r.text
+    assert acc.get_by_email("expire@sporia.fr")["subscription_status"] == "beta"
 
 
 def test_set_access_rejects_invalid_status_400(client):

@@ -652,9 +652,9 @@ def api_admin_set_access(body: AccountAccessIn, user=Depends(require_admin)):
         raise HTTPException(status_code=404, detail="Compte introuvable.")
     if account.get("role") == "admin":
         raise HTTPException(status_code=409, detail="Un compte admin a déjà l'accès complet.")
-    if account.get("subscription_status") == "active":
+    if account.get("subscription_status") == "active" or billing.in_paid_period(account):
         raise HTTPException(
-            status_code=409, detail="Abonnement Stripe actif : statut géré par Stripe."
+            status_code=409, detail="Abonnement Stripe en cours : statut géré par Stripe."
         )
     accounts.set_subscription(account["id"], status)
     return {"ok": True, "email": account["email"], "status": status}

@@ -42,7 +42,12 @@ def has_access(account: dict | None) -> bool:
     # 'beta' = accès offert accordé par un admin (bêta-testeur), sans passage par Stripe.
     if account.get("subscription_status") in ("active", "beta"):
         return True
-    cpe = account.get("current_period_end")
+    return in_paid_period(account)
+
+
+def in_paid_period(account: dict | None) -> bool:
+    """Période payée encore en cours (grâce Stripe), quel que soit le statut."""
+    cpe = (account or {}).get("current_period_end")
     return bool(cpe) and cpe > int(time.time())
 
 

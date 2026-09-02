@@ -1010,6 +1010,7 @@ function accountKind(a) {
   if (a.role === "admin") return "admin";
   if (a.subscription_status === "beta") return "beta";
   if (a.subscription_status === "active") return "active";
+  if (a.current_period_end && a.current_period_end * 1000 > Date.now()) return "active";
   return "none";
 }
 
