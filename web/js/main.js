@@ -289,6 +289,8 @@ async function startApp() {
   const isBeta = state.access === "beta";
   document.getElementById("manage-sub")?.classList.toggle("hidden", isBeta);
   document.getElementById("beta-badge")?.classList.toggle("hidden", !isBeta);
+  document.querySelector('.profil-act[data-target="manage-sub"]')?.classList.toggle("hidden", isBeta);
+  document.getElementById("beta-badge-mobile")?.classList.toggle("hidden", !isBeta);
   if (state.role === "admin")
     document.querySelectorAll(".admin-only").forEach((el) => el.classList.remove("hidden"));
 
