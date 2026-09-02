@@ -592,6 +592,8 @@ def api_create_account_from_request(
         raise HTTPException(
             status_code=409, detail="Un compte existe déjà pour cet email."
         ) from None
+    # Une demande acceptée = un bêta-testeur : accès offert, sans passage par le paywall.
+    accounts.set_subscription(acc["id"], "beta")
     token = accounts.create_token(acc["id"], "reset", 7 * 24 * 3600)
     invite_url = f"{str(request.base_url).rstrip('/')}/?reset={token}"
     send_email(
