@@ -39,6 +39,7 @@ async function boot() {
     if (me.authenticated) {
       state.name = me.name;
       state.role = me.role;
+      state.access = me.access;
       if (me.subscribed) { startApp(); return; }
       showPaywall(justPaid);
       return;
@@ -70,6 +71,7 @@ async function routeAfterAuth() {
     const me = await API.get("/api/me");
     applyPriceLabel(me.price_label);
     state.role = me.role;
+    state.access = me.access;
     if (me.subscribed) { startApp(); return; }
   } catch (e) { /* ignore */ }
   showPaywall(false);
@@ -283,7 +285,10 @@ async function startApp() {
   document.getElementById("nav-user").textContent = state.name || "";
   const profilUser = document.getElementById("profil-user");
   if (profilUser) profilUser.textContent = state.name ? `Connecté : ${state.name}` : "";
-  document.getElementById("manage-sub")?.classList.remove("hidden");
+  // Un bêta-testeur n'a rien à gérer chez Stripe : on lui dit que l'accès est offert.
+  const isBeta = state.access === "beta";
+  document.getElementById("manage-sub")?.classList.toggle("hidden", isBeta);
+  document.getElementById("beta-badge")?.classList.toggle("hidden", !isBeta);
   if (state.role === "admin")
     document.querySelectorAll(".admin-only").forEach((el) => el.classList.remove("hidden"));
 
@@ -784,6 +789,14 @@ function wireControls() {
   document.getElementById("areq-close").addEventListener("click", closeAccessRequests);
   document.getElementById("areq-backdrop").addEventListener("click", closeAccessRequests);
 
+  // Modale « Comptes » (admin)
+  document.getElementById("admin-accounts-btn")?.addEventListener("click", openAccounts);
+  document.getElementById("acct-close")?.addEventListener("click", closeAccounts);
+  document.getElementById("acct-backdrop")?.addEventListener("click", closeAccounts);
+  document.getElementById("acct-filter")?.addEventListener("input", (e) => {
+    renderAccounts(state.accounts || [], e.target.value);
+  });
+
   document.querySelectorAll(".tab-btn, .tabbar-btn").forEach((b) =>
     b.addEventListener("click", () => setTab(b.dataset.tab)));
   // Onglet Profil (mobile) : chaque bouton relaie vers l'action correspondante du top-nav.
@@ -984,6 +997,87 @@ async function rejectRequest(card) {
     box.innerHTML = `<div class="text-xs text-red-400">${escapeHtml(e.message || "Échec de la suppression.")}</div>`;
   }
 }
+
+/* ---------- Comptes (admin) ---------- */
+const ACCESS_LABEL = {
+  admin: ["Admin", "text-girolle"],
+  beta: ["Bêta — offert", "text-green-300"],
+  active: ["Abonné", "text-green-300"],
+  none: ["Aucun accès", "text-os/50"],
+};
+
+function accountKind(a) {
+  if (a.role === "admin") return "admin";
+  if (a.subscription_status === "beta") return "beta";
+  if (a.subscription_status === "active") return "active";
+  return "none";
+}
+
+async function openAccounts() {
+  const list = document.getElementById("acct-list");
+  list.innerHTML = `<div class="text-sm text-os/50 text-center py-6">Chargement…</div>`;
+  document.getElementById("accounts-modal").classList.remove("hidden");
+  try {
+    const r = await API.get("/api/admin/accounts");
+    state.accounts = r.accounts || [];
+    state.accountsTruncated = !!r.truncated;
+    renderAccounts(state.accounts, document.getElementById("acct-filter").value);
+  } catch (e) {
+    list.innerHTML = `<div class="text-sm text-red-400 text-center py-6">Erreur de chargement.</div>`;
+  }
+}
+
+function closeAccounts() {
+  document.getElementById("accounts-modal").classList.add("hidden");
+}
+
+function renderAccounts(accounts, filter) {
+  const list = document.getElementById("acct-list");
+  const q = (filter || "").trim().toLowerCase();
+  const rows = q
+    ? accounts.filter((a) => `${a.email} ${a.name || ""}`.toLowerCase().includes(q))
+    : accounts;
+  if (!rows.length) {
+    list.innerHTML = `<div class="text-sm text-os/50 text-center py-6">Aucun compte.</div>`;
+    return;
+  }
+  const banner = state.accountsTruncated
+    ? `<div class="text-xs text-amber-300 pb-2">Liste plafonnée aux 500 comptes les plus récents.</div>`
+    : "";
+  list.innerHTML = banner + rows.map((a) => {
+    const kind = accountKind(a);
+    const [label, cls] = ACCESS_LABEL[kind];
+    const date = a.created_at ? new Date(a.created_at * 1000).toLocaleDateString("fr-FR") : "";
+    const locked = kind === "admin" || kind === "active";
+    const btn = locked
+      ? `<span class="text-[11px] text-os/40 shrink-0" title="${kind === "admin" ? "Le rôle admin donne déjà l'accès." : "Statut géré par Stripe."}">non modifiable</span>`
+      : `<button class="acct-toggle px-3 py-1.5 rounded-sm bg-girolle hover:bg-lactaire text-sousbois text-xs font-bold shadow-card transition shrink-0" data-next="${kind === "beta" ? "none" : "beta"}">${kind === "beta" ? "Retirer la bêta" : "Passer en bêta"}</button>`;
+    return `<div class="rounded-sm border border-os/10 bg-os/5 p-3 flex items-center justify-between gap-3" data-email="${escapeHtml(a.email)}">
+      <div class="min-w-0">
+        <div class="font-semibold text-sm text-os truncate">${escapeHtml(a.name || a.email)}</div>
+        <div class="text-xs text-os/60 truncate">${escapeHtml(a.email)}</div>
+        <div class="text-[11px] mt-0.5 ${cls}">${label}${date ? ` · inscrit le ${date}` : ""}</div>
+      </div>
+      ${btn}
+    </div>`;
+  }).join("");
+  list.querySelectorAll(".acct-toggle").forEach((b) => {
+    b.addEventListener("click", () => toggleAccountAccess(b));
+  });
+}
+
+async function toggleAccountAccess(btn) {
+  const email = btn.closest("[data-email]").dataset.email;
+  btn.disabled = true;
+  try {
+    await API.post("/api/admin/accounts/access", { email, status: btn.dataset.next });
+    await openAccounts();   // recharge : le statut vient toujours du serveur
+  } catch (e) {
+    btn.disabled = false;
+    alert(e.message || "Bascule impossible.");
+  }
+}
+
 function setAllSpeciesChecks(v) {
   document.querySelectorAll("#species-list .sp-check").forEach((c) => { c.checked = v; });
   updateSpeciesCount();

@@ -99,3 +99,22 @@
       </div>
     </div>
   </div>
+
+  <!-- ============ MODALE « Comptes » (admin) ============ -->
+  <div id="accounts-modal" class="hidden fixed inset-0 z-[2000] flex items-center justify-center p-4">
+    <div id="acct-backdrop" class="absolute inset-0 bg-sousbois/80"></div>
+    <div class="relative bg-sousbois text-os rounded-sm shadow-lg2 border border-os/10 w-full max-w-2xl max-h-[85vh] flex flex-col">
+      <div class="flex items-start justify-between p-5 border-b border-os/10">
+        <div>
+          <div class="font-black text-lg text-os">Comptes</div>
+          <div class="text-xs text-os/60">Accorder ou retirer l'accès bêta.</div>
+        </div>
+        <button id="acct-close" class="text-os/40 hover:text-os text-xl leading-none">&times;</button>
+      </div>
+      <div class="px-5 pt-4">
+        <input id="acct-filter" type="text" placeholder="Filtrer par email ou nom…"
+               class="w-full px-3 py-2 rounded-sm bg-transparent text-os placeholder:text-os/40 border border-os/20 focus:border-girolle focus:ring-2 focus:ring-girolle/30 outline-none text-sm" />
+      </div>
+      <div id="acct-list" class="flex-1 overflow-y-auto nice-scroll p-5 flex flex-col gap-2"></div>
+    </div>
+  </div>
