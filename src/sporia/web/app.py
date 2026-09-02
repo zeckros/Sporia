@@ -614,6 +614,40 @@ def api_delete_access_request(req_id: str, user=Depends(require_admin)):
     return {"ok": True}
 
 
+class AccountAccessIn(BaseModel):
+    email: str
+    status: str
+
+
+@app.get("/api/admin/accounts")
+def api_admin_accounts(user=Depends(require_admin)):
+    """Liste des comptes pour l'écran d'administration — RÉSERVÉ ADMIN."""
+    items, truncated = accounts.list_accounts()
+    return {"accounts": items, "truncated": truncated}
+
+
+@app.post("/api/admin/accounts/access")
+def api_admin_set_access(body: AccountAccessIn, user=Depends(require_admin)):
+    """Accorde ou retire l'accès bêta d'un compte — RÉSERVÉ ADMIN.
+
+    Refuse les comptes admin (le rôle donne déjà l'accès) et les comptes à
+    abonnement Stripe actif (leur statut appartient à Stripe, pas à cet écran)."""
+    status = (body.status or "").strip()
+    if status not in ("beta", "none"):
+        raise HTTPException(status_code=400, detail="Statut invalide (beta ou none).")
+    account = accounts.get_by_email(_valid_email(body.email))
+    if account is None:
+        raise HTTPException(status_code=404, detail="Compte introuvable.")
+    if account.get("role") == "admin":
+        raise HTTPException(status_code=409, detail="Un compte admin a déjà l'accès complet.")
+    if account.get("subscription_status") == "active":
+        raise HTTPException(
+            status_code=409, detail="Abonnement Stripe actif : statut géré par Stripe."
+        )
+    accounts.set_subscription(account["id"], status)
+    return {"ok": True, "email": account["email"], "status": status}
+
+
 # ===== Statique =====
 OVERLAY_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/overlays", StaticFiles(directory=str(OVERLAY_DIR)), name="overlays")

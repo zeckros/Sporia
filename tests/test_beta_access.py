@@ -104,3 +104,68 @@ def test_list_accounts_flags_truncation(client):
     rows, truncated = acc.list_accounts(limit=2)
     assert len(rows) == 2
     assert truncated is True
+
+
+def test_admin_accounts_requires_admin(client):
+    c, acc, webapp = client
+    _login(c, acc, "simple@sporia.fr")
+    assert c.get("/api/admin/accounts").status_code == 403
+
+
+def test_admin_accounts_lists_without_secrets(client):
+    c, acc, webapp = client
+    _login(c, acc, "admin@sporia.fr", role="admin")
+    r = c.get("/api/admin/accounts")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["truncated"] is False
+    assert "password_hash" not in body["accounts"][0]
+    assert "stripe_customer_id" not in body["accounts"][0]
+
+
+def test_set_access_toggles_beta_then_back(client):
+    c, acc, webapp = client
+    _login(c, acc, "admin@sporia.fr", role="admin")
+    acc.create_user("testeur@sporia.fr", "password123")
+
+    r = c.post("/api/admin/accounts/access", json={"email": "testeur@sporia.fr", "status": "beta"})
+    assert r.status_code == 200, r.text
+    assert acc.get_by_email("testeur@sporia.fr")["subscription_status"] == "beta"
+
+    r = c.post("/api/admin/accounts/access", json={"email": "testeur@sporia.fr", "status": "none"})
+    assert r.status_code == 200
+    assert acc.get_by_email("testeur@sporia.fr")["subscription_status"] == "none"
+
+
+def test_set_access_unknown_email_404(client):
+    c, acc, webapp = client
+    _login(c, acc, "admin@sporia.fr", role="admin")
+    r = c.post("/api/admin/accounts/access", json={"email": "inconnu@sporia.fr", "status": "beta"})
+    assert r.status_code == 404
+
+
+def test_set_access_refuses_admin_account_409(client):
+    c, acc, webapp = client
+    _login(c, acc, "admin@sporia.fr", role="admin")
+    acc.create_user("autre-admin@sporia.fr", "password123", role="admin")
+    r = c.post(
+        "/api/admin/accounts/access", json={"email": "autre-admin@sporia.fr", "status": "beta"}
+    )
+    assert r.status_code == 409
+
+
+def test_set_access_refuses_paying_account_409(client):
+    c, acc, webapp = client
+    _login(c, acc, "admin@sporia.fr", role="admin")
+    payant = acc.create_user("payant@sporia.fr", "password123")
+    acc.set_subscription(payant["id"], "active")
+    r = c.post("/api/admin/accounts/access", json={"email": "payant@sporia.fr", "status": "beta"})
+    assert r.status_code == 409
+
+
+def test_set_access_rejects_invalid_status_400(client):
+    c, acc, webapp = client
+    _login(c, acc, "admin@sporia.fr", role="admin")
+    acc.create_user("testeur@sporia.fr", "password123")
+    r = c.post("/api/admin/accounts/access", json={"email": "testeur@sporia.fr", "status": "admin"})
+    assert r.status_code == 400
