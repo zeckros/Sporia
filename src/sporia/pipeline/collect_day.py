@@ -82,22 +82,32 @@ PAQUET_URL = "https://public-api.meteofrance.fr/public/DPPaquetObs/v1/paquet/sta
 WCS_BASE_URL = (
     "https://public-api.meteofrance.fr/public/arome/1.0/wcs/MF-NWP-HIGHRES-AROME-001-FRANCE-WCS"
 )
+# Le .env vit à la racine du dépôt. Ce module y vivait aussi jusqu'au refactor du
+# 2026-07-02 qui l'a déplacé dans src/sporia/pipeline/ : le chemin relatif au fichier
+# a alors cessé de désigner quoi que ce soit, les clés n'ont plus été lues, et la
+# collecte a tourné deux mois sans rien télécharger. On résout donc la racine
+# explicitement, pour que déplacer ce fichier ne puisse plus repasser la prod en muet.
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+ENV_PATH = PROJECT_ROOT / ".env"
 try:
     from dotenv import load_dotenv
 
-    load_dotenv(Path(__file__).parent / ".env", override=True)
+    # override=False : une vraie variable d'environnement (systemd) prime sur le .env.
+    load_dotenv(ENV_PATH, override=False)
 except Exception:
     pass
+
+API_KEY_NAMES = ("API_KEY_AROME", "API_KEY_STATIONS", "API_KEY_RADAR")
+
+
+def missing_api_keys() -> list[str]:
+    """Noms des clés Météo-France absentes de l'environnement (lu à l'appel)."""
+    return [name for name in API_KEY_NAMES if not os.getenv(name)]
+
 
 API_KEY_AROME = os.getenv("API_KEY_AROME")
 API_KEY_STATIONS = os.getenv("API_KEY_STATIONS")
 API_KEY_RADAR = os.getenv("API_KEY_RADAR")
-
-if not API_KEY_AROME or not API_KEY_STATIONS or not API_KEY_RADAR:
-    logging.warning(
-        "One or more API keys are not set in environment variables (API_KEY_AROME, API_KEY_STATIONS, API_KEY_RADAR).\n"  # noqa: E501
-        "Create a .env file or set the variables in your environment. See .env.example for format."
-    )
 
 TZ = timezone.utc
 SOURCE_PRIORITY = {"station": 3, "radar": 2, "pa_arome": 1}
@@ -944,6 +954,19 @@ def main():
     3. Cumul radar journalier: une fois par jour
     4. AROME: toutes les 6h SEULEMENT, limité à 6h de données
     """
+    # Sans clés, aucune source Météo-France n'est joignable : on sort en erreur plutôt
+    # que de rendre le code 0. Le scheduler ne journalise stderr que sur code non nul —
+    # un succès de façade avait rendu la panne invisible pendant deux mois.
+    absent = missing_api_keys()
+    if absent:
+        logging.error(
+            "Clés Météo-France absentes : %s. Attendues dans %s (ou dans l'environnement). "
+            "Collecte impossible.",
+            ", ".join(absent),
+            ENV_PATH,
+        )
+        raise SystemExit(1)
+
     start_time = time.time()
     state = load_state()
     now = datetime.now(TZ)
@@ -1048,7 +1071,7 @@ def main():
     # Appelé en dernier pour avoir radar + stations + AROME disponibles
     logging.info("\n[5/5] Running interpret_day...")
     try:
-        from interpret_day import interpret_day as interpret_day_func
+        from sporia.pipeline.interpret_day import interpret_day as interpret_day_func
 
         interpret_day_func(day)
         logging.info("✓ interpret_day completed — GeoTIFFs et tuiles mis à jour")

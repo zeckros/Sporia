@@ -91,7 +91,7 @@ def build_terrain_static(force: bool = False) -> dict | None:
         got = load_terrain_static()
         if got is not None:
             return got
-    from interpret_day import build_grid, idw
+    from sporia.pipeline.interpret_day import build_grid, idw
 
     pts = _om_grid_points()
     elevs = []
