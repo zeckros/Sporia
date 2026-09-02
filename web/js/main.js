@@ -1010,9 +1010,13 @@ const ACCESS_LABEL = {
 
 function accountKind(a) {
   if (a.role === "admin") return "admin";
+  // La période payée passe AVANT le statut bêta : le serveur refuse en 409 toute
+  // bascule sur un compte encore dans sa période Stripe, y compris s'il porte
+  // 'beta' (état qu'une écriture directe en base peut créer — cf. ORACLE_DEPLOY.md).
+  // Sans cet ordre, l'admin verrait un bouton actif que le serveur rejetterait.
+  if (a.current_period_end && a.current_period_end * 1000 > Date.now()) return "active";
   if (a.subscription_status === "beta") return "beta";
   if (a.subscription_status === "active") return "active";
-  if (a.current_period_end && a.current_period_end * 1000 > Date.now()) return "active";
   return "none";
 }
 

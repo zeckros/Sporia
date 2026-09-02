@@ -642,8 +642,9 @@ def api_admin_accounts(user=Depends(require_admin)):
 def api_admin_set_access(body: AccountAccessIn, user=Depends(require_admin)):
     """Accorde ou retire l'accès bêta d'un compte — RÉSERVÉ ADMIN.
 
-    Refuse les comptes admin (le rôle donne déjà l'accès) et les comptes à
-    abonnement Stripe actif (leur statut appartient à Stripe, pas à cet écran)."""
+    Refuse les comptes admin (le rôle donne déjà l'accès) et les comptes dont
+    l'abonnement Stripe est en cours — actif, ou encore dans une période payée
+    non expirée : leur statut appartient à Stripe, pas à cet écran."""
     status = (body.status or "").strip()
     if status not in ("beta", "none"):
         raise HTTPException(status_code=400, detail="Statut invalide (beta ou none).")
