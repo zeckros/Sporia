@@ -107,6 +107,15 @@ def test_list_accounts_flags_truncation(client):
     assert truncated is True
 
 
+def test_list_accounts_not_truncated_at_exact_limit(client):
+    c, acc, webapp = client
+    for i in range(3):
+        acc.create_user(f"u{i}@sporia.fr", "password123")
+    rows, truncated = acc.list_accounts(limit=3)
+    assert len(rows) == 3
+    assert truncated is False
+
+
 def test_admin_accounts_requires_admin(client):
     c, acc, webapp = client
     _login(c, acc, "simple@sporia.fr")
