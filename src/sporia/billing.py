@@ -39,7 +39,8 @@ def has_access(account: dict | None) -> bool:
         return False
     if account.get("role") == "admin":
         return True
-    if account.get("subscription_status") == "active":
+    # 'beta' = accès offert accordé par un admin (bêta-testeur), sans passage par Stripe.
+    if account.get("subscription_status") in ("active", "beta"):
         return True
     cpe = account.get("current_period_end")
     return bool(cpe) and cpe > int(time.time())
