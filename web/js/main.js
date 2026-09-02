@@ -1040,13 +1040,14 @@ function renderAccounts(accounts, filter) {
   const rows = q
     ? accounts.filter((a) => `${a.email} ${a.name || ""}`.toLowerCase().includes(q))
     : accounts;
+  const banner = state.accountsTruncated
+    ? `<div class="text-xs text-amber-300 pb-2">Liste plafonnée aux comptes les plus récents.</div>`
+    : "";
   if (!rows.length) {
-    list.innerHTML = `<div class="text-sm text-os/50 text-center py-6">Aucun compte.</div>`;
+    const msg = q ? "Aucun compte ne correspond au filtre." : "Aucun compte.";
+    list.innerHTML = banner + `<div class="text-sm text-os/50 text-center py-6">${msg}</div>`;
     return;
   }
-  const banner = state.accountsTruncated
-    ? `<div class="text-xs text-amber-300 pb-2">Liste plafonnée aux 500 comptes les plus récents.</div>`
-    : "";
   list.innerHTML = banner + rows.map((a) => {
     const kind = accountKind(a);
     const [label, cls] = ACCESS_LABEL[kind];
